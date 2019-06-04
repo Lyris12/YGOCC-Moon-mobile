@@ -17,6 +17,7 @@ end
 	return c:IsCode(100000809) and c:IsAbleToRemoveAsCost()
 end
 function c100000738.spcost1(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(c100000738.spfilter1,tp,LOCATION_GRAVE,0,1,nil,nil)
 		and Duel.IsExistingMatchingCard(c100000738.spfilter,tp,LOCATION_GRAVE,0,1,nil,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
 	local g1=Duel.SelectMatchingCard(tp,c100000738.spfilter1,tp,LOCATION_GRAVE,0,1,1,nil,nil)
