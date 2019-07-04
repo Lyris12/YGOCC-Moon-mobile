@@ -1,88 +1,95 @@
---A.O. Interceptor
-function c21730415.initial_effect(c)
-	--special summon from hand
+--A.O. Domain
+--By Auramram
+local s,id=GetID()
+function s.initial_effect(c)
+	--activate (banish)
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(21730415,0))
-	e1:SetType(EFFECT_TYPE_FIELD)
-	e1:SetCode(EFFECT_SPSUMMON_PROC)
-	e1:SetRange(LOCATION_HAND)
-	e1:SetCondition(c21730415.spcon)
+	e1:SetDescription(aux.Stringid(id,0))
+	e1:SetCategory(CATEGORY_REMOVE)
+	e1:SetType(EFFECT_TYPE_ACTIVATE)
+	e1:SetCode(EVENT_ATTACK_ANNOUNCE)
+	e1:SetCost(s.rmcost)
+	e1:SetTarget(s.rmtg)
+	e1:SetOperation(s.rmop)
 	c:RegisterEffect(e1)
-	--destroy card
+	--activate (negate)
 	local e2=Effect.CreateEffect(c)
-	e2:SetDescription(aux.Stringid(21730415,1))
-	e2:SetCategory(CATEGORY_REMOVE+CATEGORY_RECOVER)
-	e2:SetType(EFFECT_TYPE_QUICK_O)
-	e2:SetProperty(EFFECT_FLAG_CARD_TARGET)
-	e2:SetCode(EVENT_FREE_CHAIN)
-	e2:SetRange(LOCATION_GRAVE)
-	e2:SetHintTiming(TIMING_END_PHASE,TIMINGS_CHECK_MONSTER+TIMING_BATTLE_START+TIMING_END_PHASE)
-	e2:SetCost(c21730415.cost)
-	e2:SetTarget(c21730415.target)
-	e2:SetOperation(c21730415.operation)
+	e2:SetDescription(aux.Stringid(id,1))
+	e2:SetCategory(CATEGORY_DISABLE)
+	e2:SetType(EFFECT_TYPE_ACTIVATE)
+	e2:SetCode(EVENT_CHAINING)
+	e2:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
+	e2:SetCondition(s.discon)
+	e2:SetCost(s.discost)
+	e2:SetTarget(s.distg)
+	e2:SetOperation(s.disop)
 	c:RegisterEffect(e2)
+	--activate (draw)
+	local e3=Effect.CreateEffect(c)
+	e3:SetDescription(aux.Stringid(id,2))
+	e3:SetCategory(CATEGORY_DRAW)
+	e3:SetType(EFFECT_TYPE_ACTIVATE)
+	e3:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e3:SetCode(EVENT_FREE_CHAIN)
+	e3:SetHintTiming(TIMINGS_CHECK_MONSTER+TIMING_END_PHASE,TIMINGS_CHECK_MONSTER+TIMING_BATTLE_START+TIMING_END_PHASE)
+	e3:SetCost(s.drcost)
+	e3:SetTarget(s.drtg)
+	e3:SetOperation(s.drop)
+	c:RegisterEffect(e3)
 end
---special summon from hand
-function c21730415.spcon(e,c)
-	if c==nil then return true end
-	return Duel.GetFieldGroupCount(c:GetControler(),LOCATION_MZONE,0,nil)==0
-		and Duel.GetLocationCount(c:GetControler(),LOCATION_MZONE)>0
+--banish
+function s.rmfilter(c)
+	return c:IsSetCard(0x719) and c:IsLevel(1) and c:IsAbleToRemoveAsCost()
 end
---destroy card on field
-function c21730415.filter(c,tp)
-	return c:IsFaceup() and c:IsSetCard(0x719)
-end
-function c21730415.cost(e,tp,eg,ep,ev,re,r,rp,chk)
-	local c=e:GetHandler()
-	if chk==0 then return c:IsAbleToRemoveAsCost() end
-	if Duel.Remove(c,POS_FACEUP,REASON_COST)~=0 then
-		local e1=Effect.CreateEffect(c)
-		e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		e1:SetCode(EVENT_TURN_END)
-		e1:SetReset(RESET_EVENT+0x1fe0000)
-		e1:SetCountLimit(1)
-		e1:SetRange(LOCATION_REMOVED)
-		e1:SetOperation(c21730415.tgop)
-		c:RegisterEffect(e1)
-	end
-end
-function c21730415.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and c21730415.filter(chkc) end
-	if chk==0 then return Duel.IsExistingTarget(c21730415.filter,tp,LOCATION_MZONE,0,1,nil) end
+function s.rmcost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(s.rmfilter,tp,LOCATION_GRAVE,0,1,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-	local g=Duel.SelectTarget(tp,c21730415.filter,tp,LOCATION_MZONE,0,1,1,nil)
-	Duel.SetOperationInfo(0,CATEGORY_REMOVE,g,1,0,0)
-	Duel.SetOperationInfo(0,CATEGORY_RECOVER,nil,0,tp,1000)
+	local g=Duel.SelectMatchingCard(tp,s.rmfilter,tp,LOCATION_GRAVE,0,1,1,nil)
+	Duel.Remove(g,POS_FACEUP,REASON_COST)
 end
-function c21730415.operation(e,tp,eg,ep,ev,re,r,rp)
-	local tc=Duel.GetFirstTarget()
-	if tc:IsRelateToEffect(e) and Duel.Remove(tc,0,REASON_EFFECT+REASON_TEMPORARY)~=0 and tc:IsLocation(LOCATION_REMOVED) then
-		Duel.Recover(tp,1000,REASON_EFFECT)
-		local e1=Effect.CreateEffect(e:GetHandler())
-		e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		e1:SetCode(EVENT_PHASE+PHASE_END)
-		e1:SetRange(LOCATION_REMOVED)
-		e1:SetCountLimit(1)
-		if Duel.GetCurrentPhase()==PHASE_END then
-			e1:SetLabel(Duel.GetTurnCount()+1)
-		else
-			e1:SetLabel(Duel.GetTurnCount())
-		end
-		e1:SetReset(RESET_EVENT+RESETS_STANDARD)
-		e1:SetCondition(c21730415.retcon)
-		e1:SetOperation(c21730415.retop)
-		tc:RegisterEffect(e1)
-	end
+function s.rmtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsAbleToRemove,tp,0,LOCATION_MZONE,1,nil) end
+	local g=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,0,LOCATION_MZONE,nil)
+	Duel.SetOperationInfo(0,CATEGORY_REMOVE,g,g:GetCount(),0,0)
 end
---return to grave
-function c21730415.tgop(e,tp,eg,ep,ev,re,r,rp)
-	Duel.SendtoGrave(e:GetHandler(),REASON_EFFECT+REASON_RETURN)
+function s.rmop(e,tp,eg,ep,ev,re,r,rp)
+	local g=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,0,LOCATION_MZONE,nil)
+	Duel.Remove(g,POS_FACEUP,REASON_EFFECT)
 end
---return to field
-function c21730415.retcon(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.GetTurnCount()==e:GetLabel()
+--negate
+function s.disfilter(c)
+	return c:IsSetCard(0x719) and c:IsLevel(2) and c:IsAbleToRemoveAsCost()
 end
-function c21730415.retop(e,tp,eg,ep,ev,re,r,rp)
-	Duel.ReturnToField(e:GetHandler())
-	e:Reset()
+function s.discon(e,tp,eg,ep,ev,re,r,rp)
+	return re:IsHasType(EFFECT_TYPE_ACTIVATE) and Duel.IsChainDisablable(ev)
+end
+function s.discost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(s.disfilter,tp,LOCATION_GRAVE,0,1,nil) end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+	local g=Duel.SelectMatchingCard(tp,s.disfilter,tp,LOCATION_GRAVE,0,1,1,nil)
+	Duel.Remove(g,POS_FACEUP,REASON_COST)
+end
+function s.distg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return not re:GetHandler():IsStatus(STATUS_DISABLED) end
+	Duel.SetOperationInfo(0,CATEGORY_DISABLE,eg,1,0,0)
+end
+function s.disop(e,tp,eg,ep,ev,re,r,rp)
+	Duel.NegateEffect(ev)
+end
+--draw
+function s.drfilter(c)
+	return c:IsSetCard(0x719) and c:IsLevel(3) and c:IsAbleToRemoveAsCost()
+end
+function s.drcost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(s.drfilter,tp,LOCATION_GRAVE,0,1,nil) end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+	local g=Duel.SelectMatchingCard(tp,s.drfilter,tp,LOCATION_GRAVE,0,1,1,nil)
+	Duel.Remove(g,POS_FACEUP,REASON_COST)
+end
+function s.drtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	if chk==0 then return Duel.IsPlayerCanDraw(tp,1) end
+	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)
+end
+function s.drop(e,tp,eg,ep,ev,re,r,rp)
+	Duel.Draw(tp,1,REASON_EFFECT)
 end
