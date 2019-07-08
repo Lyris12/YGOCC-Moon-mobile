@@ -1,62 +1,67 @@
 --Not yet finalized values
 --Custom constants
-EFFECT_STAGE							=388		--
-EFFECT_CANNOT_BE_EVOLUTE_MATERIAL		=389		--
-EFFECT_EXTRA_EVOLUTE_MATERIAL			=390
-EFFECT_EVOLUTE_LEVEL					=391
-EFFECT_MUST_BE_EVOLUTE_MATERIAL			=392
-EFFECT_CONVERGENT_EVOLUTE				=393
-EFFECT_PANDEMONIUM						=726
-EFFECT_STABLE							=765
-EFFECT_CANNOT_BE_POLARITY_MATERIAL		=766
-EFFECT_DIMENSION_NUMBER					=500
-EFFECT_CANNOT_BE_SPACE_MATERIAL			=501
-EFFECT_CORONA_DRAW_COST					=550
-EFFECT_DEFAULT_CALL						=31993443
-EFFECT_EXTRA_GEMINI						=86433590
-EFFECT_AVAILABLE_LMULTIPLE				=86433612
-EFFECT_MULTIPLE_LMATERIAL				=86433613
-EFFECT_RANDOM_TARGET					=39759371
-TYPE_EVOLUTE							=0x100000000
-TYPE_PANDEMONIUM						=0x200000000
-TYPE_POLARITY							=0x400000000
-TYPE_SPATIAL							=0x800000000
-TYPE_CORONA								=0x1000000000
-TYPE_SKILL								=0x2000000000
-TYPE_CONJOINT							=0x4000000000
-TYPE_DECKMASTER							=0x40000000000
-TYPE_CUSTOM								=TYPE_EVOLUTE+TYPE_PANDEMONIUM+TYPE_POLARITY+TYPE_SPATIAL+TYPE_CORONA+TYPE_SKILL+TYPE_DECKMASTER+TYPE_CONJOINT
+EFFECT_STAGE						=388		--
+EFFECT_CANNOT_BE_EVOLUTE_MATERIAL	=389	 --
+EFFECT_EXTRA_EVOLUTE_MATERIAL		=390
+EFFECT_EVOLUTE_LEVEL				=391
+EFFECT_MUST_BE_EVOLUTE_MATERIAL		=392
+EFFECT_CONVERGENT_EVOLUTE			=393
+EFFECT_BIGBANG						=624
+EFFECT_CANNOT_BE_BIGBANG_MATERIAL	=625
+EFFECT_MUST_BE_BIGBANG_MATERIAL		=626
+EFFECT_PANDEMONIUM					=726
+EFFECT_STABLE						=765
+EFFECT_CANNOT_BE_POLARITY_MATERIAL	=766
+EFFECT_DIMENSION_NUMBER				=500
+EFFECT_CANNOT_BE_SPACE_MATERIAL		=501
+EFFECT_CORONA_DRAW_COST				=550
+EFFECT_DEFAULT_CALL					=31993443
+EFFECT_EXTRA_GEMINI					=86433590
+EFFECT_AVAILABLE_LMULTIPLE			=86433612
+EFFECT_MULTIPLE_LMATERIAL			=86433613
+EFFECT_RANDOM_TARGET				=39759371
+TYPE_EVOLUTE						=0x100000000
+TYPE_PANDEMONIUM					=0x200000000
+TYPE_POLARITY						=0x400000000
+TYPE_SPATIAL						=0x800000000
+TYPE_CORONA							=0x1000000000
+TYPE_SKILL							=0x2000000000
+TYPE_CONJOINT						=0x4000000000
+TYPE_BIGBANG						=0x8000000000
+TYPE_DECKMASTER						=0x40000000000
+TYPE_CUSTOM							=TYPE_EVOLUTE+TYPE_PANDEMONIUM+TYPE_POLARITY+TYPE_SPATIAL+TYPE_CORONA+TYPE_SKILL+TYPE_DECKMASTER+TYPE_CONJOINT+TYPE_BIGBANG
 
-CTYPE_EVOLUTE							=0x1
-CTYPE_PANDEMONIUM						=0x2
-CTYPE_POLARITY							=0x4
-CTYPE_SPATIAL							=0x8
-CTYPE_CORONA							=0x10
-CTYPE_SKILL								=0x20
-CTYPE_CONJOINT							=0x40
-CTYPE_DECKMASTER						=0x400
-CTYPE_CUSTOM							=CTYPE_EVOLUTE+CTYPE_PANDEMONIUM+CTYPE_POLARITY+CTYPE_SPATIAL+CTYPE_CORONA+CTYPE_SKILL+CTYPE_DECKMASTER+CTYPE_CONJOINT
+CTYPE_EVOLUTE						=0x1
+CTYPE_PANDEMONIUM					=0x2
+CTYPE_POLARITY						=0x4
+CTYPE_SPATIAL						=0x8
+CTYPE_CORONA						=0x10
+CTYPE_SKILL							=0x20
+CTYPE_CONJOINT						=0x40
+CTYPE_DECKMASTER					=0x400
+CTYPE_CUSTOM						=CTYPE_EVOLUTE+CTYPE_PANDEMONIUM+CTYPE_POLARITY+CTYPE_SPATIAL+CTYPE_CORONA+CTYPE_SKILL+CTYPE_DECKMASTER+CTYPE_CONJOINT
 
-SUMMON_TYPE_EVOLUTE						=SUMMON_TYPE_SPECIAL+388
-SUMMON_TYPE_SPATIAL						=SUMMON_TYPE_SPECIAL+500
-SUMMON_TYPE_MASTER						=SUMMON_TYPE_SPECIAL+3338
+SUMMON_TYPE_EVOLUTE					=SUMMON_TYPE_SPECIAL+388
+SUMMON_TYPE_SPATIAL					=SUMMON_TYPE_SPECIAL+500
+SUMMON_TYPE_MASTER					=SUMMON_TYPE_SPECIAL+3338
 
-EVENT_CORONA_DRAW						=EVENT_CUSTOM+0x1600000000
-EVENT_XYZATTACH							=EVENT_CUSTOM+9966607
-EVENT_LP_CHANGE							=EVENT_CUSTOM+68007397
+EVENT_CORONA_DRAW					=EVENT_CUSTOM+0x1600000000
+EVENT_XYZATTACH						=EVENT_CUSTOM+9966607
+EVENT_LP_CHANGE						=EVENT_CUSTOM+68007397
 
-EFFECT_COUNT_SECOND_HOPT				=10000000
+EFFECT_COUNT_SECOND_HOPT			=10000000
 
 --Commonly used cards
-CARD_BLUEEYES_SPIRIT					=59822133
-CARD_CYBER_DRAGON						=70095154
-CARD_INLIGHTENED_PSYCHIC_HELMET			=210400006
-CARD_REDUNDANCY_TOKEN					=210400054
-CARD_NEBULA_TOKEN						=218201917
+CARD_BLUEEYES_SPIRIT				=59822133
+CARD_CYBER_DRAGON					=70095154
+CARD_INLIGHTENED_PSYCHIC_HELMET		=210400006
+CARD_REDUNDANCY_TOKEN				=210400054
+CARD_NEBULA_TOKEN					=218201917
 
 --Custom Type Tables
 Auxiliary.Customs={} --check if card uses custom type, indexing card
 Auxiliary.Evolutes={} --number as index = card, card as index = function() is_xyz
+Auxiliary.Bigbangs={} --number as index = card, card as index = function() is_synchro
 Auxiliary.Pandemoniums={} --number as index = card, card as index = function() is_pendulum
 Auxiliary.Polarities={} --number as index = card, card as index = function() is_synchro
 Auxiliary.Spatials={} --number as index = card, card as index = function() is_xyz
@@ -72,11 +77,11 @@ function Card.IsCustomType(c,tpe,scard,sumtype,p)
 	return (c:GetType(scard,sumtype,p)>>32)&tpe>0
 end
 function GetID()
-    local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-    str=string.sub(str,1,string.len(str)-4)
-    local scard=_G[str]
-    local s_id=tonumber(string.sub(str,2))
-    return scard,s_id
+	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
+	str=string.sub(str,1,string.len(str)-4)
+	local scard=_G[str]
+	local s_id=tonumber(string.sub(str,2))
+	return scard,s_id
 end
 
 --overwrite functions
@@ -141,6 +146,12 @@ Card.GetType=function(c,scard,sumtype,p)
 			tpe=tpe&~TYPE_SYNCHRO
 		end
 	end
+	if Auxiliary.Bigbangs[c] then
+		tpe=tpe|TYPE_BIGBANG
+		if not Auxiliary.Bigbangs[c]() then
+			tpe=tpe&~TYPE_SYNCHRO
+		end
+	end
 	if Auxiliary.Spatials[c] then
 		tpe=tpe|TYPE_SPATIAL
 		if not Auxiliary.Spatials[c]() then
@@ -198,6 +209,12 @@ Card.GetOriginalType=function(c)
 			tpe=tpe&~TYPE_SYNCHRO
 		end
 	end
+	if Auxiliary.Bigbangs[c] then
+		tpe=tpe|TYPE_BIGBANG
+		if not Auxiliary.Bigbangs[c]() then
+			tpe=tpe&~TYPE_SYNCHRO
+		end
+	end
 	if Auxiliary.Spatials[c] then
 		tpe=tpe|TYPE_SPATIAL
 		if not Auxiliary.Spatials[c]() then
@@ -245,6 +262,12 @@ Card.GetPreviousTypeOnField=function(c)
 	if Auxiliary.Polarities[c] then
 		tpe=tpe|TYPE_POLARITY
 		if not Auxiliary.Polarities[c]() then
+			tpe=tpe&~TYPE_SYNCHRO
+		end
+	end
+	if Auxiliary.Bigbangs[c] then
+		tpe=tpe|TYPE_BIGBANG
+		if not Auxiliary.Bigbangs[c]() then
 			tpe=tpe&~TYPE_SYNCHRO
 		end
 	end
@@ -488,8 +511,8 @@ Duel.SelectTarget=function(actp,func,self,loc1,loc2,cmin,cmax,exc,...)
 		return duel_select_target(actp,func,self,loc1,loc2,cmin,cmax,exc,table.unpack(extras))
 	end
 end
-					
-			
+
+
 
 --Custom Functions
 --Evolutes
@@ -542,11 +565,11 @@ function Card.RefillEC(c)
 	return val
 end
 function Card.IsCanRemoveEC(c,p,ct,r)
---	if Auxiliary.GetECounter(p)>=ct then return true end
+--  if Auxiliary.GetECounter(p)>=ct then return true end
 	return c:IsCanRemoveCounter(p,0x1088,ct,REASON_COST)
 end
 function Duel.IsCanRemoveEC(p,s,o,ct,r)
---	if Auxiliary.GetECounter(p)>=ct then return true end
+--  if Auxiliary.GetECounter(p)>=ct then return true end
 	return Duel.IsCanRemoveCounter(p,s,o,0x1088,ct,r)
 end
 function Card.RemoveEC(c,p,ct,r)
@@ -681,7 +704,7 @@ function Auxiliary.ECounterUseOp(e,tp,eg,ep,ev,re,r,rp)
 	Auxiliary.AddECounter(tp,-ev)
 end
 function Auxiliary.StageVal(stage)
-	return	function(e,c)
+	return  function(e,c)
 				local stage=stage
 				--insert modifications here
 				return stage
@@ -724,7 +747,7 @@ function Auxiliary.EvoluteCheckGoal(tp,sg,ec,minc,ct,...)
 end
 function Auxiliary.EvoluteCondition(outdate1,outdate2,min,max,...)
 	local funs={...}
-	return	function(e,c)
+	return  function(e,c)
 				if c==nil then return true end
 				if (c:IsType(TYPE_PENDULUM) or c:IsType(TYPE_PANDEMONIUM)) and c:IsFaceup() then return false end
 				local tp=c:GetControler()
@@ -737,7 +760,7 @@ function Auxiliary.GetEvoluteMaterials(ec,tp)
 end
 function Auxiliary.EvoluteTarget(outdate1,outdate2,minc,maxc,...)
 	local funs={...}
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk,c)
+	return  function(e,tp,eg,ep,ev,re,r,rp,chk,c)
 				local mg=Auxiliary.GetEvoluteMaterials(c,tp)
 				local bg=Group.CreateGroup()
 				local ce={Duel.IsPlayerAffectedByEffect(tp,EFFECT_MUST_BE_EVOLUTE_MATERIAL)}
@@ -827,6 +850,152 @@ function Auxiliary.EvoluteCounter(e,tp,eg,ep,ev,re,r,rp,c,smat,mg)
 		end
 		tc=g:GetNext()
 	end
+end
+
+--Bigbangs
+function Card.IsCanBeBigbangMaterial(c,ec)
+	if c:IsType(TYPE_LINK) then return false end
+	local tef={c:IsHasEffect(EFFECT_CANNOT_BE_BIGBANG_MATERIAL)}
+	for _,te in ipairs(tef) do
+		if te:GetValue()(te,ec) then return false end
+	end
+	return true
+end
+function Card.GetVibe(c)
+	---1 = Negative; +0 = Neutral; +1 = Positive
+	local stat=c:GetAttack()-c:GetDefense()
+	if stat==0 then return stat
+	else return stat/math.abs(stat) end
+end
+function Card.GetBigbangAttack(c)
+	return c:GetAttack()*c:GetVibe()
+end
+function Card.GetBigbangDefense(c)
+	return c:GetDefense()*c:GetVibe()
+end
+function Auxiliary.AddOrigBigbangType(c,issynchro)
+	table.insert(Auxiliary.Bigbangs,c)
+	Auxiliary.Customs[c]=true
+	local issynchro=issynchro==nil and false or issynchro
+	Auxiliary.Bigbangs[c]=function() return issynchro end
+end
+function Auxiliary.AddBigbangProc(c,...)
+	if c:IsStatus(STATUS_COPYING_EFFECT) then return end
+	local t={...}
+	local list={}
+	local min,max
+	for i=1,#t do
+		if type(t[#t])=='number' then
+			max=t[#t]
+			table.remove(t)
+			if type(t[#t])=='number' then
+				min=t[#t]
+				table.remove(t)
+			else
+				min=max
+				max=99
+			end
+			table.insert(list,{t[#t],min,max})
+			table.remove(t)
+		end
+		if #t<2 then break end
+	end
+	local ge2=Effect.CreateEffect(c)
+	ge2:SetType(EFFECT_TYPE_FIELD)
+	ge2:SetCode(EFFECT_SPSUMMON_PROC)
+	ge2:SetProperty(EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE)
+	ge2:SetRange(LOCATION_EXTRA)
+	ge2:SetCondition(Auxiliary.BigbangCondition(table.unpack(list)))
+	ge2:SetTarget(Auxiliary.BigbangTarget(table.unpack(list)))
+	ge2:SetOperation(Auxiliary.BigbangOperation)
+	ge2:SetValue(624)
+	c:RegisterEffect(ge2)
+end
+function Auxiliary.BigbangCondition(...)
+	local funs={...}
+	return  function(e,c)
+				if c==nil then return true end
+				if (c:IsType(TYPE_PENDULUM) or c:IsType(TYPE_PANDEMONIUM)) and c:IsFaceup() then return false end
+				local tp=c:GetControler()
+				local mg=Duel.GetMatchingGroup(Card.IsCanBeBigbangMaterial,tp,LOCATION_MZONE,0,nil,c)
+				return mg:IsExists(Auxiliary.BigbangRecursiveFilter,1,nil,tp,Group.CreateGroup(),mg,c,0,table.unpack(funs))
+			end
+end
+function Auxiliary.BigbangRecursiveFilter(c,tp,sg,mg,bc,ct,...)
+	sg:AddCard(c)
+	ct=ct+1
+	local funs,max,chk={...},0
+	for i=1,#funs do
+		max=max+funs[i][3]
+		if funs[i][1](c) then
+			chk=true
+		end
+	end
+	if max>99 then max=99 end
+	local res=chk and (Auxiliary.BigbangCheckGoal(tp,sg,bc,ct,...)
+		or (ct<max and mg:IsExists(Auxiliary.BigbangRecursiveFilter,1,sg,tp,sg,mg,bc,ct,...)))
+	sg:RemoveCard(c)
+	ct=ct-1
+	return res
+end
+function Auxiliary.BigbangCheckGoal(tp,sg,bc,ct,...)
+	local funs,min={...},0
+	for i=1,#funs do
+		if not sg:IsExists(funs[i][1],1,nil) then return false end
+		min=min+funs[i][2]
+	end
+	return ct>=min and Duel.GetLocationCountFromEx(tp,tp,sg,bc)>0 and sg:GetSum(Card.GetBigbangAttack)>=bc:GetAttack() and sg:GetSum(Card.GetBigbangDefense)>=bc:GetDefense()
+end
+function Auxiliary.BigbangTarget(...)
+	local funs,min,max={...},0,0
+	for i=1,#funs do min=min+funs[i][2] max=max+funs[i][3] end
+	if max>99 then max=99 end
+	return  function(e,tp,eg,ep,ev,re,r,rp,chk,c)
+				local mg=Duel.GetMatchingGroup(Card.IsCanBeBigbangMaterial,tp,LOCATION_MZONE,0,nil,c)
+				local bg=Group.CreateGroup()
+				local ce={Duel.IsPlayerAffectedByEffect(tp,EFFECT_MUST_BE_BIGBANG_MATERIAL)}
+				for _,te in ipairs(ce) do
+					local tc=te:GetHandler()
+					if tc then bg:AddCard(tc) end
+				end
+				if #bg>0 then
+					Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_LMATERIAL)
+					bg:Select(tp,#bg,#bg,nil)
+				end
+				local sg=Group.CreateGroup()
+				sg:Merge(bg)
+				local finish=false
+				while not (sg:GetCount()>=max) do
+					finish=Auxiliary.BigbangCheckGoal(tp,sg,c,#sg,table.unpack(funs))
+					local cg=mg:Filter(Auxiliary.BigbangRecursiveFilter,sg,tp,sg,mg,c,#sg,table.unpack(funs))
+					if #cg==0 then break end
+					local cancel=not finish
+					Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+					local tc=cg:SelectUnselect(sg,tp,finish,cancel,min,max)
+					if not tc then break end
+					if not bg:IsContains(tc) then
+						if not sg:IsContains(tc) then
+							sg:AddCard(tc)
+							if (sg:GetCount()>=max) then finish=true end
+						else
+							sg:RemoveCard(tc)
+						end
+					elseif #bg>0 and #sg<=#bg then
+						return false
+					end
+				end
+				if finish then
+					sg:KeepAlive()
+					e:SetLabelObject(sg)
+					return true
+				else return false end
+			end
+end
+function Auxiliary.BigbangOperation(e,tp,eg,ep,ev,re,r,rp,c,smat,mg)
+	local g=e:GetLabelObject()
+	c:SetMaterial(g)
+	Duel.Destroy(g,REASON_MATERIAL+0x8000000000)
+	g:DeleteGroup()
 end
 
 --Pandemoniums
@@ -992,7 +1161,7 @@ function Auxiliary.PandOperation(e,tp,eg,ep,ev,re,r,rp,c,sg,og)
 		tg=og:Filter(Card.IsLocation,nil,loc):Filter(Auxiliary.PaConditionFilter,nil,e,tp,lscale,rscale)
 	else
 		tg=Duel.GetMatchingGroup(Auxiliary.PaConditionFilter,tp,loc,0,nil,e,tp,lscale,rscale)
-	end	
+	end 
 	ft1=math.min(ft1,tg:FilterCount(Card.IsLocation,nil,LOCATION_HAND))
 	ft2=math.min(ft2,tg:FilterCount(Card.IsLocation,nil,LOCATION_EXTRA))
 	local ect=c29724053 and Duel.IsPlayerAffectedByEffect(tp,29724053) and c29724053[tp]
@@ -1049,7 +1218,7 @@ function Auxiliary.PandActCon(e,tp,eg,ep,ev,re,r,rp)
 	return not Duel.IsExistingMatchingCard(Auxiliary.PaCheckFilter,tp,LOCATION_SZONE,0,1,e:GetHandler())
 end
 function Auxiliary.PandEnConFUInED(tpe)
-	return	function(e,tp,eg,ep,ev,re,r,rp)
+	return  function(e,tp,eg,ep,ev,re,r,rp)
 				if (e:GetHandler():GetFlagEffect(706)>0 or e:GetHandler():GetFlagEffect(726)>0) and e:GetHandler():GetDestination()~=LOCATION_GRAVE then
 					Auxiliary.PandDisableFUInED(e:GetHandler(),tpe)(e,tp,eg,ep,ev,re,r,rp)
 				elseif e:GetHandler():GetDestination()==LOCATION_GRAVE then
@@ -1061,7 +1230,7 @@ function Auxiliary.PandEnConFUInED(tpe)
 end
 function Auxiliary.PandEnableFUInED(tc,reason,tpe)
 	if not tpe then tpe=TYPE_EFFECT end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
+	return  function(e,tp,eg,ep,ev,re,r,rp)
 				if pcall(Group.GetFirst,tc) then
 					local tg=tc:Clone()
 					for cc in aux.Next(tg) do
@@ -1083,7 +1252,7 @@ function Auxiliary.PandDisConFUInED(e,tp,eg,ep,ev,re,r,rp)
 end
 function Auxiliary.PandDisableFUInED(tc,tpe)
 	if not tpe then tpe=TYPE_EFFECT end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
+	return  function(e,tp,eg,ep,ev,re,r,rp)
 				tc:SetCardData(CARDDATA_TYPE,TYPE_MONSTER+tpe)
 			end
 end
@@ -1092,7 +1261,7 @@ function Auxiliary.PandSSetCon(c,e,tp,eg,ep,ev,re,r,rp)
 end
 function Auxiliary.PandSSet(tc,reason,tpe)
 	if not tpe then tpe=TYPE_EFFECT end
-	return	function(e,tp,eg,ep,ev,re,r,rp,c)
+	return  function(e,tp,eg,ep,ev,re,r,rp,c)
 				if pcall(Group.GetFirst,tc) then
 					local tg=tc:Clone()
 					for cc in aux.Next(tg) do
@@ -1129,7 +1298,7 @@ function Auxiliary.PandActCheck(e)
 end
 function Auxiliary.PandActTarget(...)
 	local fx={...}
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk)
+	return  function(e,tp,eg,ep,ev,re,r,rp,chk)
 				if chk==0 then return true end
 				local c=e:GetHandler()
 				c:RegisterFlagEffect(726,RESET_EVENT+0x1fe0000,EFFECT_FLAG_CANNOT_DISABLE,1)
@@ -1159,7 +1328,7 @@ function Auxiliary.PandActTarget(...)
 						re=Duel.GetChainInfo(ev,CHAININFO_TRIGGERING_EFFECT)
 						eg=re:GetHandler()
 					end
-					if tchk and (not condition or condition(e,tp,eg,ep,ev,re,r,rp))
+					if tchk and xe:CheckCountLimit(tp) and (not condition or condition(e,tp,eg,ep,ev,re,r,rp))
 						and (not cost or cost(e,tp,eg,ep,ev,re,r,rp,0))
 						and (not tg or tg(e,tp,eg,ep,ev,re,r,rp,0)) then
 						table.insert(ops,xe:GetDescription())
@@ -1171,9 +1340,9 @@ function Auxiliary.PandActTarget(...)
 					op=Duel.SelectOption(tp,1214,table.unpack(ops))
 					if ops[op]==1214 then op=0 end
 				elseif ops[1]~=1214 and Duel.SelectYesNo(tp,94) then op=1 end
-				e:SetLabel(op)
 				if op>0 then
 					local xe=t[op]
+					xe:UseCountLimit(tp)
 					local confirm_own_label=xe:GetLabelObject()
 					if confirm_own_label then
 						e:SetLabelObject(confirm_own_label)
@@ -1188,11 +1357,12 @@ function Auxiliary.PandActTarget(...)
 					e:SetCategory(0)
 					e:SetLabel(0)
 				end
+				e:SetLabel(op)
 			end
 end
 function Auxiliary.PandActOperation(...)
 	local fx={...}
-	return	function(e,tp,eg,ep,ev,re,r,rp)
+	return  function(e,tp,eg,ep,ev,re,r,rp)
 				if e:GetLabel()==0 then return end
 				local xe=fx[e:GetLabel()]
 				if xe:GetCode()==EVENT_CHAINING then
@@ -1200,12 +1370,16 @@ function Auxiliary.PandActOperation(...)
 					re=Duel.GetChainInfo(ev,CHAININFO_TRIGGERING_EFFECT)
 					eg=re:GetHandler()
 				end
+				local confirm_own_label=xe:GetLabelObject()
+				if confirm_own_label then
+					e:SetLabelObject(confirm_own_label)
+				end
 				local op=xe:GetOperation()
 				if op then op(e,tp,eg,ep,ev,re,r,rp) end
 			end
 end
 function Auxiliary.PandAct(tc)
-	return	function(e,tp,eg,ep,ev,re,r,rp)
+	return  function(e,tp,eg,ep,ev,re,r,rp)
 				tc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
 				if not tc:IsOnField() then
 					Duel.MoveToField(tc,tp,tp,LOCATION_SZONE,POS_FACEUP,true)
@@ -1260,7 +1434,7 @@ function Auxiliary.AddPolarityProc(c,stability,f1,f2)
 	c:RegisterEffect(e2)
 end
 function Auxiliary.StabilityVal(stability)
-	return	function(e,c)
+	return  function(e,c)
 				local stability=stability
 				--insert modifications here
 				return stability
@@ -1274,20 +1448,20 @@ function Auxiliary.PolarityMatFilter(c,ec,tp,...)
 	return false
 end
 function Auxiliary.PolarCheckRecursive1(g2,pc,stability)
-	return	function(sg,e,tp,mg)
+	return  function(sg,e,tp,mg)
 				local sg2=g2:Filter(aux.TRUE,sg)
 				return Auxiliary.SelectUnselectGroup(sg2,e,tp,nil,nil,Auxiliary.PolarCheckRecursive2(sg,pc,stability),0)
 			end
 end
 function Auxiliary.PolarCheckRecursive2(g1,pc,stability)
-	return	function(g2,e,tp,mg)
+	return  function(g2,e,tp,mg)
 				local sg=g1:Clone()
 				sg:Merge(g2)
 				return Duel.GetLocationCountFromEx(tp,tp,sg,pc)>0 and math.abs(g1:GetSum(Card.GetLevel)-g2:GetSum(Card.GetLevel))==stability
 			end
 end
 function Auxiliary.PolarityCondition(f1,f2)
-	return	function(e,c)
+	return  function(e,c)
 				if c==nil then return true end
 				if c:IsType(TYPE_PENDULUM) and c:IsFaceup() then return false end
 				local tp=c:GetControler()
@@ -1299,7 +1473,7 @@ function Auxiliary.PolarityCondition(f1,f2)
 			end
 end
 function Auxiliary.PolarityTarget(f1,f2)
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk,c)
+	return  function(e,tp,eg,ep,ev,re,r,rp,chk,c)
 				local mg=Duel.GetMatchingGroup(Auxiliary.PolarityMatFilter,tp,LOCATION_MZONE,0,nil,c,tp,f1,f2)
 				local g1=mg:Filter(f1,nil,c,tp)
 				local g2=mg:Filter(f2,nil,c,tp)
@@ -1383,7 +1557,7 @@ function Auxiliary.AddOrigSpatialType(c,isxyz)
 end
 function Auxiliary.AddSpatialProc(c,sptcheck,djn,adiff,ddiff,...)
 	--sptcheck - extra check after everything is settled, djn - Spatial "level", adiff - max material ATK difference, ddiff - max material DEF difference
-	--... format - any number of materials	use aux.TRUE for generic materials
+	--... format - any number of materials  use aux.TRUE for generic materials
 	if c:IsStatus(STATUS_COPYING_EFFECT) then return end
 	local ge1=Effect.CreateEffect(c)
 	ge1:SetType(EFFECT_TYPE_SINGLE)
@@ -1432,7 +1606,7 @@ function Auxiliary.SpatialToGraveReplace(e,tp,eg,ep,ev,re,r,rp,chk)
 	return true
 end
 function Auxiliary.DimensionNoVal(djn)
-	return	function(e,c)
+	return  function(e,c)
 				local djn=djn
 				--insert modifications here
 				return djn
@@ -1478,7 +1652,7 @@ function Auxiliary.SptMatCheckRecursive(c,mg,sg,adiff,ddiff,fc)
 end
 function Auxiliary.SpatialCondition(sptcheck,adiff,ddiff,...)
 	local funs={...}
-	return	function(e,c)
+	return  function(e,c)
 				if c==nil then return true end
 				if c:IsType(TYPE_PENDULUM) and c:IsFaceup() then return false end
 				local tp=c:GetControler()
@@ -1490,7 +1664,7 @@ function Auxiliary.SpatialCondition(sptcheck,adiff,ddiff,...)
 end
 function Auxiliary.SpatialTarget(sptcheck,adiff,ddiff,...)
 	local funs={...}
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk,c)
+	return  function(e,tp,eg,ep,ev,re,r,rp,chk,c)
 				local mg=Duel.GetMatchingGroup(Auxiliary.SpaceMatFilter,tp,LOCATION_MZONE,0,nil,c,tp,table.unpack(funs))
 				local ct=#funs
 				local djn=c:GetDimensionNo()
@@ -1579,7 +1753,7 @@ function Auxiliary.EquipFilter(c,p,f,e,tp)
 	return (p==PLAYER_ALL or c:IsControler(p)) and c:IsFaceup() and (not f or f(c,e,tp))
 end
 function Auxiliary.EquipTarget(tg,p,f)
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	return  function(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 				local player=nil
 				if p==0 then
 					player=tp
@@ -1736,50 +1910,6 @@ end
 function Auxiliary.cdrewcon(e,tp)
 	return Duel.GetFlagEffect(tp,1600000000)~=0
 end
-
-function Auxiliary.EnableCorona(c,f,auramin,auramax,type,gf)
-	--Debug.Message("Registering Corona "..c:GetCode())
-	if c:IsStatus(STATUS_COPYING_EFFECT) then return end
-	table.insert(Auxiliary.Coronas,c)
-	Auxiliary.Coronas[c]=function() return true end
-	Auxiliary.Customs[c]=true
-	--Add Aura
-	local mt=getmetatable(c)
-	mt.aura=auramin
-	mt.max_aura=auramax
-	mt.corona_condition=f
-	mt.corona_global_condition=gf
-	mt.original_type=type
-	--Debug.Message("Aura is "..aura.."; Set to "..c.aura)
-	--ChainCount
-	local chain=Effect.CreateEffect(c)
-	chain:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	chain:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_SET_AVAILABLE)
-	chain:SetCode(EVENT_CHAINING)
-	chain:SetRange(LOCATION_EXTRA)
-	chain:SetOperation(Auxiliary.CoronaChainCount(f,gf))
-	c:RegisterEffect(chain)
-	--Chrona Draw
-	local dr=Effect.CreateEffect(c)
-	dr:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	dr:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_SET_AVAILABLE)
-	dr:SetCode(EVENT_CHAIN_END)
-	dr:SetRange(LOCATION_EXTRA)
-	dr:SetOperation(Auxiliary.CoronaDraw)
-	dr:SetLabelObject(chain)
-	c:RegisterEffect(dr)
-	if not Global_CoronaRedirects then
-		Global_CoronaRedirects=true
-		--Redirect
-		local ge1=Effect.GlobalEffect()
-		ge1:SetType(EFFECT_TYPE_FIELD)
-		ge1:SetCode(EFFECT_TO_DECK_REDIRECT)
-		ge1:SetTargetRange(0xff,0xff)
-		ge1:SetTarget(Auxiliary.CoronaToExtra)
-		ge1:SetValue(LOCATION_EXTRA)
-		Duel.RegisterEffect(ge1,0)
-	end
-end
 --Aura Functions
 function Card.GetAura(c)
 	if not c.aura then return 0 end
@@ -1792,75 +1922,6 @@ end
 function Card.IsAuraAbove(c,val)
 	if not c.aura then return false end
 	return c.aura >= val
-end
---ChainCount+Check
-function Auxiliary.CoronaChainCount(func,gf)
-	return function(e,tp,eg,ep,ev,re,r,rp)
-		local c=e:GetHandler()
-		c:ResetFlagEffect(1600000001)
-		e:SetLabel(Duel.GetCurrentChain())
-		if gf and not gf(ev) then return false end
-		for i=1,ev do
-			local te=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT)
-			if (not func) or func(te,e) then c:RegisterFlagEffect(1600000001,RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD+RESET_PHASE+PHASE_END,0,1) end
-		end
-	end
-end
---Chrona Draw
-function Auxiliary.CoronaFilter(c,chain)
-	return c:IsType(TYPE_CORONA) and c.aura<=chain and c.max_aura>=chain and c:GetFlagEffect(1600000001)~=0
-end
-function Auxiliary.CoronaCostCheck(c,e,tp,eg,ep,ev,re,r,rp)
-	if not c:IsHasEffect(EFFECT_CORONA_DRAW_COST) then return true end
-	local tef={c:IsHasEffect(EFFECT_CORONA_DRAW_COST)}
-	for _,te in ipairs(tef) do
-		if not te:GetValue(e,tp,eg,ep,ev,re,r,rp,0) then return false end
-	end
-	return true
-end
-function Auxiliary.CoronaDraw(e,tp,eg,ep,ev,re,r,rp)
-	local chain=e:GetLabelObject():GetLabel()
-	local cg=Duel.GetMatchingGroup(Auxiliary.CoronaFilter,tp,LOCATION_EXTRA,0,nil,chain)
-	g=cg:Filter(Auxiliary.CoronaCostCheck,nil,e,tp,eg,ep,ev,re,r,rp)
-	for cc in aux.Next(g) do
-		cc:ResetFlagEffect(1600000001)
-	end
-	e:GetLabelObject():SetLabel(0)
-	if Duel.GetTurnPlayer()==tp and Duel.GetFlagEffect(tp,1600000000)==0 and g:GetCount()>0 and Duel.SelectYesNo(tp,94) then --and Duel.SelectYesNo(tp,aux.Stringid(557,0)) then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-		local tc=g:Select(tp,1,1,nil):GetFirst()
-		if tc then
-			if tc:IsHasEffect(EFFECT_CORONA_DRAW_COST) then
-				local tef={tc:IsHasEffect(EFFECT_CORONA_DRAW_COST)}
-				for _,te in ipairs(tef) do
-					local costf=te:GetValue()
-					costf(e,tp,eg,ep,ev,re,r,rp,1)
-				end
-			end
-			local tpe=tc:GetOriginalType()-TYPE_FUSION
-			Auxiliary.AddCoronaToHand(tc,REASON_RULE,tpe)
-			Duel.RegisterFlagEffect(tp,1600000000,RESET_PHASE+PHASE_END,0,0)
-		end
-	end
-end
-function Auxiliary.AddCoronaToHand(tc,reason,tpe)
-	local tp=tc:GetOwner()
-	Duel.MoveSequence(tc,0)
-	Duel.MoveToField(tc,tp,tp,LOCATION_HAND,POS_FACEDOWN_ATTACK,true)
-	tc:SetCardData(CARDDATA_TYPE,tpe)
-	Duel.SendtoHand(tc,tp,reason)
-	Duel.ConfirmCards(1-tp,tc)
-	Duel.RaiseEvent(tc,EVENT_DRAW,e,REASON_RULE,tp,tp,1)
-	Duel.RaiseEvent(tc,EVENT_CORONA_DRAW,e,REASON_RULE,tp,tp,1)
-end
---Corona Redirect (ED card)
-function Auxiliary.CoronaToExtra(e,c)
-	if c:IsType(TYPE_CORONA) then
-		Duel.MoveSequence(c,0)
-		Card.SetCardData(c,CARDDATA_TYPE,c.original_type+TYPE_FUSION)
-		return true
-	end
-	return false
 end
 
 --Fusion Summon shorthand
@@ -2281,7 +2342,7 @@ end
 --Penalty Effect
 function Auxiliary.RegisterPenaltyEffect(e,tp,eg,ep,ev,re,r,rp)
 	e:GetHandler():RegisterFlagEffect(3341,RESET_EVENT+EVENT_CUSTOM+3341,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_SET_AVAILABLE,1)
-end	
+end 
 function Auxiliary.PenaltyCheck(penaltycon)
 	return function(e,tp,eg,ep,ev,re,r,rp)
 		return Duel.GetTurnPlayer()==tp and e:GetHandler():GetFlagEffect(3341)~=0 and not Duel.IsExistingMatchingCard(Auxiliary.DeckmasterFilter,tp,LOCATION_ONFIELD,0,1,nil) and (not penaltycon or penaltycon(e,tp,eg,ep,ev,re,r,rp))
