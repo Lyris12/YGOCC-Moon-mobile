@@ -25,7 +25,6 @@ function cid.initial_effect(c)
 	e4:SetType(EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_SINGLE)
 	e4:SetCode(EVENT_TO_GRAVE)
 	e4:SetProperty(EFFECT_FLAG_DELAY)
-	e4:SetCondition(function(e,tp,eg,ep,ev,re,r,rp) return r&REASON_EFFECT~=0 end)
 	e4:SetCategory(CATEGORY_DAMAGE+CATEGORY_SPECIAL_SUMMON)
 	e4:SetTarget(cid.tg)
 	e4:SetOperation(cid.op)
@@ -81,9 +80,9 @@ function cid.cfilter(c)
 	return c:IsCode(id) and c:IsAbleToRemoveAsCost()
 end
 function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsAbleToRemoveAsCost() and Duel.IsExistingMatchingCard(cid.cfilter,tp,LOCATION_GRAVE,0,2,nil) end
+	if chk==0 then return e:GetHandler():IsAbleToRemoveAsCost() and Duel.IsExistingMatchingCard(cid.cfilter,tp,LOCATION_GRAVE,0,2,e:GetHandler()) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-	local g=Duel.SelectMatchingCard(tp,cid.cfilter,tp,LOCATION_GRAVE,0,2,2,nil)
+	local g=Duel.SelectMatchingCard(tp,cid.cfilter,tp,LOCATION_GRAVE,0,2,2,e:GetHandler())
 	Duel.Remove(g+e:GetHandler(),POS_FACEUP,REASON_COST)
 end
 function cid.destg(e,tp,eg,ep,ev,re,r,rp,chk)
