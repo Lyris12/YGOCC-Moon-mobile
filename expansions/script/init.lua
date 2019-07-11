@@ -24,6 +24,7 @@ EFFECT_RANDOM_TARGET				=39759371
 EFFECT_CANNOT_BE_TIMELEAP_MATERIAL	=825
 EFFECT_MUST_BE_TIMELEAP_MATERIAL	=826
 EFFECT_FUTURE						=827
+EFFECT_CANNOT_BANISH_FD_EFFECT		=856
 TYPE_EVOLUTE						=0x100000000
 TYPE_PANDEMONIUM					=0x200000000
 TYPE_POLARITY						=0x400000000
@@ -97,11 +98,11 @@ end
 --overwrite functions
 local get_rank, get_orig_rank, prev_rank_field, is_rank, is_rank_below, is_rank_above, get_type, is_type, get_orig_type, get_prev_type_field, get_level, get_syn_level, get_rit_level, get_orig_level, is_xyz_level, 
 	get_prev_level_field, is_level, is_level_below, is_level_above, change_position, card_remcounter, duel_remcounter, card_is_able_to_extra, card_is_able_to_extra_as_cost, duel_draw, registereff, effect_set_target_range, add_xyz_proc, add_xyz_proc_nlv,
-	duel_overlay, duel_set_lp, duel_select_target= 
+	duel_overlay, duel_set_lp, duel_select_target, duel_banish = 
 	Card.GetRank, Card.GetOriginalRank, Card.GetPreviousRankOnField, Card.IsRank, Card.IsRankBelow, Card.IsRankAbove, Card.GetType, Card.IsType, Card.GetOriginalType, Card.GetPreviousTypeOnField, Card.GetLevel, 
 	Card.GetSynchroLevel, Card.GetRitualLevel, Card.GetOriginalLevel, Card.IsXyzLevel, Card.GetPreviousLevelOnField, Card.IsLevel, Card.IsLevelBelow, Card.IsLevelAbove, Duel.ChangePosition, Card.RemoveCounter, 
 	Duel.RemoveCounter, Card.IsAbleToExtra, Card.IsAbleToExtraAsCost, Duel.Draw, Card.RegisterEffect, Effect.SetTargetRange, 
-	Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget
+	Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget, Duel.Remove
 
 Card.GetRank=function(c)
 	if Auxiliary.Evolutes[c] or Auxiliary.Spatials[c] then return 0 end
@@ -395,7 +396,7 @@ Duel.ChangePosition=function(cc, au, ad, du, dd)
 	for c in aux.Next(tg) do
 		if c:SwitchSpace() then cc=cc-c end
 	end
-	change_position(cc,au,ad,du,dd)
+	return change_position(cc,au,ad,du,dd)
 end
 
 Card.RemoveCounter=function(c,p,typ,ct,r)
@@ -556,6 +557,21 @@ Duel.SelectTarget=function(actp,func,self,loc1,loc2,cmin,cmax,exc,...)
 	else
 		return duel_select_target(actp,func,self,loc1,loc2,cmin,cmax,exc,table.unpack(extras))
 	end
+end
+Duel.Remove=function(cc,pos,r)
+	local cc=Group.CreateGroup()+cc
+	local tg=cc:Clone()
+	for c in aux.Next(tg) do
+		if pos&POS_FACEDOWN~=0 and r&REASON_EFFECT~=0 then
+			local ef=c:IsHasEffect(EFFECT_CANNOT_BANISH_FD_EFFECT)
+			local cf=ef:GetValue()
+			local typ=aux.GetValueType(cf)
+			if typ=="function" then
+				if cf(ef,c:GetReasonEffect(),c:GetReasonPlayer()) then cc=cc-c end
+			elseif cf>0 then cc=cc-c end
+		end
+	end
+	return duel_banish(cc,pos,r)
 end
 
 --Custom Functions
@@ -923,15 +939,6 @@ function Auxiliary.EnableConjointAttribute(c,ce)
 	e1:SetCode(EFFECT_CONJOINT_EVOLUTE_RATING)
 	e1:SetValue(Auxiliary.CEVal(ce))
 	c:RegisterEffect(e1)
-	local e4=Effect.CreateEffect(c)
-	e4:SetType(EFFECT_TYPE_FIELD)
-	e4:SetCode(EFFECT_SPSUMMON_PROC_G)
-	e4:SetRange(LOCATION_MZONE)
-	e4:SetDescription(2)
-	e4:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
-	e4:SetCondition(Auxiliary.DisjointTarget)
-	e4:SetOperation(Auxiliary.DisjointOp)
-	c:RegisterEffect(e4)
 	local e5=Effect.CreateEffect(c)
 	e5:SetType(EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_CONTINUOUS)
 	e5:SetCode(EFFECT_DESTROY_REPLACE)
@@ -939,7 +946,7 @@ function Auxiliary.EnableConjointAttribute(c,ce)
 	e5:SetTarget(Auxiliary.DesRepDisjoint(ce))
 	c:RegisterEffect(e5)
 	if c:IsType(TYPE_MONSTER) then
-		local e3=Effect.CreateEffect(c)
+		e3=Effect.CreateEffect(c)
 		e3:SetType(EFFECT_TYPE_FIELD)
 		e3:SetCode(EFFECT_SPSUMMON_PROC_G)
 		e3:SetRange(LOCATION_MZONE)
@@ -953,13 +960,13 @@ function Auxiliary.EnableConjointAttribute(c,ce)
 		e2:SetCode(EVENT_MOVE)
 		e2:SetOperation(Auxiliary.AddCE(ce))
 		c:RegisterEffect(e2)
-		local e6=Effect.CreateEffect(c)
-		e6:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		e6:SetCode(EVENT_CHAIN_SOLVED)
-		e6:SetRange(LOCATION_SZONE)
-		e6:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
-		e6:SetOperation(Auxiliary.STConjointOp(ce))
-		c:RegisterEffect(e6)
+		e3=Effect.CreateEffect(c)
+		e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+		e3:SetCode(EVENT_CHAIN_SOLVED)
+		e3:SetRange(LOCATION_SZONE)
+		e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+		e3:SetOperation(Auxiliary.STConjointOp(ce))
+		c:RegisterEffect(e3)
 	end
 end
 function Auxiliary.CEVal(ce)
@@ -987,6 +994,19 @@ function Auxiliary.ConjointOp(ce)
 				Duel.Overlay(tc,c)
 				Auxiliary.AddCE(ce)(e,tp)
 				if c:IsLocation(LOCATION_OVERLAY) and c:IsType(TYPE_EVOLUTE) then c:RegisterFlagEffect(394,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_IGNORE_IMMUNE,1,ce) end
+				if tc:GetFlagEffect(2)==0 then
+					tc:RegisterFlagEffect(2,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_IGNORE_IMMUNE,1)
+					local e4=Effect.CreateEffect(c)
+					e4:SetType(EFFECT_TYPE_FIELD)
+					e4:SetCode(EFFECT_SPSUMMON_PROC_G)
+					e4:SetRange(LOCATION_MZONE)
+					e4:SetDescription(2)
+					e4:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+					e4:SetCondition(Auxiliary.DisjointTarget)
+					e4:SetOperation(Auxiliary.DisjointOp)
+					e4:SetReset(RESET_EVENT+RESETS_STANDARD)
+					tc:RegisterEffect(e4)
+				end
 				c:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END,0,1)
 			end
 end
@@ -1005,7 +1025,7 @@ function Auxiliary.DisjointOp(e,tp,eg,ep,ev,re,r,rp,c,sg,og)
 	c:RemoveEC(tp,math.min(tc:GetConjointNumber(),c:GetEC()),REASON_RULE)
 	if tc:IsType(TYPE_EFFECT) then
 		sg:AddCard(tc)
-		if tc:IsType(TYPE_EVOLUTE) then
+		if c:IsType(TYPE_CONJOINT) then
 			local e1=Effect.CreateEffect(c)
 			e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
 			e1:SetCode(EVENT_SPSUMMON_SUCCESS)
@@ -1014,8 +1034,9 @@ function Auxiliary.DisjointOp(e,tp,eg,ep,ev,re,r,rp,c,sg,og)
 			e1:SetOperation(Auxiliary.SwapConjoint)
 			c:RegisterEffect(e1)
 		end
-		else Duel.SendtoDeck(tc,nil,2,REASON_RULE) end
-		tc:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END,0,1)
+	else Duel.SendtoDeck(tc,nil,2,REASON_RULE) end
+	tc:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD+RESET_PHASE+PHASE_END,0,1)
+		e:Reset()
 end
 function Auxiliary.SwapConjoint(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
@@ -1027,6 +1048,19 @@ function Auxiliary.SwapConjoint(e,tp,eg,ep,ev,re,r,rp)
 	if c:IsLocation(LOCATION_OVERLAY) then
 		Auxiliary.AddCE(cn)(e,tp)
 		c:RegisterFlagEffect(394,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_IGNORE_IMMUNE,1,cn)
+		if tc:GetFlagEffect(2)==0 then
+			tc:RegisterFlagEffect(2,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_IGNORE_IMMUNE,1)
+			local e4=Effect.CreateEffect(c)
+			e4:SetType(EFFECT_TYPE_FIELD)
+			e4:SetCode(EFFECT_SPSUMMON_PROC_G)
+			e4:SetRange(LOCATION_MZONE)
+			e4:SetDescription(2)
+			e4:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+			e4:SetCondition(Auxiliary.DisjointTarget)
+			e4:SetOperation(Auxiliary.DisjointOp)
+			e4:SetReset(RESET_EVENT+RESETS_STANDARD)
+			tc:RegisterEffect(e4)
+		end
 		c:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END,0,1)
 	end
 	e:Reset()
@@ -1053,9 +1087,23 @@ function Auxiliary.STConjointOp(ce)
 				Duel.HintSelection(g+c)
 				c:CancelToGrave()
 				local cn=c:GetConjointNumber()
-				Duel.Overlay(g:GetFirst(),c)
+				local tc=g:GetFirst()
+				Duel.Overlay(tc,c)
 				Auxiliary.AddCE(ce)(e,tp)
 				c:RegisterFlagEffect(394,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_IGNORE_IMMUNE,1,cn)
+				if tc:GetFlagEffect(2)==0 then
+					tc:RegisterFlagEffect(2,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_IGNORE_IMMUNE,1)
+					local e4=Effect.CreateEffect(c)
+					e4:SetType(EFFECT_TYPE_FIELD)
+					e4:SetCode(EFFECT_SPSUMMON_PROC_G)
+					e4:SetRange(LOCATION_MZONE)
+					e4:SetDescription(2)
+					e4:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+					e4:SetCondition(Auxiliary.DisjointTarget)
+					e4:SetOperation(Auxiliary.DisjointOp)
+					e4:SetReset(RESET_EVENT+RESETS_STANDARD)
+					tc:RegisterEffect(e4)
+				end
 				c:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END,0,1)
 			end
 end
@@ -1064,7 +1112,7 @@ function Auxiliary.DesRepDisjoint(ce)
 				local c=e:GetHandler()
 				if chk==0 then return c:IsReason(REASON_BATTLE+REASON_EFFECT) and not c:IsReason(REASON_REPLACE) and c:CheckRemoveOverlayCard(tp,1,REASON_RULE) end
 				if Duel.SelectEffectYesNo(tp,c,96) then
-					c:RemoveEC(tp,math.min(ce,tc:GetEC()),REASON_RULE)
+				c:RemoveEC(tp,math.min(ce,c:GetEC()),REASON_RULE)
 					c:RemoveOverlayCard(tp,1,1,REASON_RULE)
 					return true
 				else return false end
