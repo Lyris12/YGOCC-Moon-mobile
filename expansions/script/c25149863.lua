@@ -21,17 +21,25 @@ function cid.initial_effect(c)
 	e0:SetTarget(cid.prttg)
 	e0:SetValue(1)
 	c:RegisterEffect(e0)
-	--search
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
-	e1:SetType(EFFECT_TYPE_QUICK_O)
-	e1:SetCode(EVENT_FREE_CHAIN)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e1:SetCode(EFFECT_INDESTRUCTABLE_BATTLE)
 	e1:SetRange(LOCATION_MZONE)
-	e1:SetCost(cid.thcost)
-	e1:SetTarget(cid.thtg)
-	e1:SetOperation(cid.thop)
+	e1:SetCondition(cid.selfprt)
+	e1:SetValue(1)
 	c:RegisterEffect(e1)
+	--search
+	-- local e1=Effect.CreateEffect(c)
+	-- e1:SetDescription(aux.Stringid(id,0))
+	-- e1:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
+	-- e1:SetType(EFFECT_TYPE_QUICK_O)
+	-- e1:SetCode(EVENT_FREE_CHAIN)
+	-- e1:SetRange(LOCATION_MZONE)
+	-- e1:SetCost(cid.thcost)
+	-- e1:SetTarget(cid.thtg)
+	-- e1:SetOperation(cid.thop)
+	-- c:RegisterEffect(e1)
 	--extra effects
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(id,1))
@@ -50,44 +58,50 @@ end
 function cid.prttg(e,c)
 	return c:IsType(TYPE_XYZ) and c:IsRank(4)
 end
+function cid.xyzfilterprot(c)
+	return c:IsFaceup() and c:IsType(TYPE_XYZ) and c:IsType(TYPE_MONSTER)
+end
+function cid.selfprt(e)
+	return Duel.IsExistingMatchingCard(cid.xyzfilterprot,e:GetHandlerPlayer(),LOCATION_MZONE,LOCATION_MZONE,1,nil)
+end
 --search
-function cid.thcost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsReleasable() end
-	Duel.Release(e:GetHandler(),REASON_COST)
-end
-function cid.thfilter(c)
-	return c:IsSetCard(0x2595) and c:IsType(TYPE_MONSTER) and c:IsAbleToHand()
-end
-function cid.hcheck(c,tp)
-	return c:IsLocation(LOCATION_HAND) and c:IsControler(tp)
-end
-function cid.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cid.thfilter,tp,LOCATION_DECK,0,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
-end
-function cid.thop(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-	local g=Duel.SelectMatchingCard(tp,cid.thfilter,tp,LOCATION_DECK,0,1,1,nil)
-	if #g>0 then
-		if Duel.SendtoHand(g,nil,REASON_EFFECT)~=0 then
-			local og=g:Filter(cid.hcheck,nil,tp)
-			if #og<=0 then return end
-			Duel.ConfirmCards(1-tp,og)
-			for tc in aux.Next(og) do
-				--prevent hand effects
-				local e1=Effect.CreateEffect(e:GetHandler())
-				e1:SetType(EFFECT_TYPE_FIELD)
-				e1:SetCode(EFFECT_CANNOT_ACTIVATE)
-				e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
-				e1:SetTargetRange(1,0)
-				e1:SetValue(cid.actlimit)
-				e1:SetLabel(tc:GetOriginalCode())
-				e1:SetReset(RESET_PHASE+PHASE_END)
-				Duel.RegisterEffect(e1,tp)
-			end
-		end
-	end
-end
+-- function cid.thcost(e,tp,eg,ep,ev,re,r,rp,chk)
+	-- if chk==0 then return e:GetHandler():IsReleasable() end
+	-- Duel.Release(e:GetHandler(),REASON_COST)
+-- end
+-- function cid.thfilter(c)
+	-- return c:IsSetCard(0x2595) and c:IsType(TYPE_MONSTER) and c:IsAbleToHand()
+-- end
+-- function cid.hcheck(c,tp)
+	-- return c:IsLocation(LOCATION_HAND) and c:IsControler(tp)
+-- end
+-- function cid.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	-- if chk==0 then return Duel.IsExistingMatchingCard(cid.thfilter,tp,LOCATION_DECK,0,1,nil) end
+	-- Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
+-- end
+-- function cid.thop(e,tp,eg,ep,ev,re,r,rp)
+	-- Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
+	-- local g=Duel.SelectMatchingCard(tp,cid.thfilter,tp,LOCATION_DECK,0,1,1,nil)
+	-- if #g>0 then
+		-- if Duel.SendtoHand(g,nil,REASON_EFFECT)~=0 then
+			-- local og=g:Filter(cid.hcheck,nil,tp)
+			-- if #og<=0 then return end
+			-- Duel.ConfirmCards(1-tp,og)
+			-- for tc in aux.Next(og) do
+				-- --prevent hand effects
+				-- local e1=Effect.CreateEffect(e:GetHandler())
+				-- e1:SetType(EFFECT_TYPE_FIELD)
+				-- e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+				-- e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+				-- e1:SetTargetRange(1,0)
+				-- e1:SetValue(cid.actlimit)
+				-- e1:SetLabel(tc:GetOriginalCode())
+				-- e1:SetReset(RESET_PHASE+PHASE_END)
+				-- Duel.RegisterEffect(e1,tp)
+			-- end
+		-- end
+	-- end
+-- end
 --SECONDARY-LEVEL EFFECT: prevent hand effects
 function cid.actlimit(e,re,tp)
 	return re:GetHandler():GetOriginalCode()==e:GetLabel() and bit.band(re:GetRange(),LOCATION_HAND)>0
@@ -103,6 +117,7 @@ function cid.eop(e,tp,eg,ep,ev,re,r,rp)
 		e1:SetDescription(aux.Stringid(id,2))
 		e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 		e1:SetType(EFFECT_TYPE_IGNITION)
+		e1:SetProperty(EFFECT_FLAG_CARD_TARGET)
 		e1:SetCountLimit(1,id+100)
 		e1:SetRange(LOCATION_MZONE)
 		e1:SetTarget(cid.xyztg)
@@ -120,6 +135,7 @@ function cid.eop(e,tp,eg,ep,ev,re,r,rp)
 		e1:SetCode(EVENT_FREE_CHAIN)
 		e1:SetRange(LOCATION_MZONE)
 		e1:SetCountLimit(1,id+200)
+		e1:SetCondition(cid.ptcon)
 		e1:SetCost(cid.ptcost)
 		e1:SetTarget(cid.pttg)
 		e1:SetOperation(cid.ptop)
@@ -153,15 +169,23 @@ function cid.xyzop(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetLocationCountFromEx(tp)>0 then
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 		local g=Duel.SelectMatchingCard(tp,cid.xyzfilter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp)
-		if #g==1 then
-			if Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)~=0 then
-				local og=Duel.GetOperatedGroup():GetFirst()
-				local tg=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS):Filter(Card.IsRelateToEffect,nil,e)
-				if og:IsFaceup() and og:IsType(TYPE_XYZ) and #tg>0 then
-					Duel.Overlay(og,tg)
-				end
+		local tc=g:GetFirst()
+		if tc and Duel.SpecialSummonStep(tc,0,tp,tp,false,false,POS_FACEUP) then
+			local tg=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS):Filter(Card.IsRelateToEffect,nil,e)
+			if tc:IsFaceup() and tc:IsType(TYPE_XYZ) and #tg>0 then
+				Duel.Overlay(tc,tg)
 			end
+			local e1=Effect.CreateEffect(c)
+			e1:SetType(EFFECT_TYPE_SINGLE)
+			e1:SetCode(EFFECT_SET_ATTACK_FINAL)
+			e1:SetValue(0)
+			e1:SetReset(RESET_EVENT+RESETS_STANDARD)
+			tc:RegisterEffect(e1)
+			local e2=e1:Clone()
+			e2:SetCode(EFFECT_SET_DEFENSE_FINAL)
+			tc:RegisterEffect(e2)
 		end
+		Duel.SpecialSummonComplete()
 	end
 end
 --reveal xyz
@@ -169,6 +193,14 @@ function cid.costfilter(c,e,tp,eg,ep,ev,re,r,rp)
 	if not c:IsRank(4) or not c:IsType(TYPE_XYZ) or not c:IsType(TYPE_EFFECT) or c:IsFaceup() or c:IsSetCard(0x2595) 
 		or not Duel.IsExistingMatchingCard(cid.rmfilter,tp,LOCATION_EXTRA,0,1,nil,c:GetCode()) then return false 
 	end
+	--start check
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e1:SetCode(id)
+	e1:SetTargetRange(1,0)
+	Duel.RegisterEffect(e1,e:GetHandlerPlayer())
+	--
 	local check=0
 	local egroup={c:IsHasEffect(EFFECT_DEFAULT_CALL)}
 	for _,te1 in ipairs(egroup) do
@@ -186,10 +218,15 @@ function cid.costfilter(c,e,tp,eg,ep,ev,re,r,rp)
 			local cost,tg=ce:GetCost(),ce:GetTarget()
 			if (ce:IsHasType(EFFECT_TYPE_IGNITION) or ce:IsHasType(EFFECT_TYPE_TRIGGER_O) or ce:IsHasType(EFFECT_TYPE_TRIGGER_F) or ce:IsHasType(EFFECT_TYPE_QUICK_O) or ce:IsHasType(EFFECT_TYPE_QUICK_F))
 				and bit.band(ce:GetRange(),LOCATION_MZONE)~=0 and cost and not cost(e,tp,eg,ep,ev,re,r,rp,0) and (not tg or tg==nil or (tg and tg(e,tp,eg,ep,ev,re,r,rp,0))) then
-					check=check+1
+					if Duel.GetFlagEffect(tp,id)>0 or Duel.GetFlagEffect(1-tp,id)>0 then
+						check=check+1
+						Duel.ResetFlagEffect(tp,id)
+						Duel.ResetFlagEffect(1-tp,id)
+					end
 			end
 		end
 	end
+	e1:Reset()
 	return check>0
 end
 function cid.rmfilter(c,code)
@@ -203,6 +240,9 @@ function cid.tgxyz(c)
 end
 function cid.matxyz(c)
 	return c:IsType(TYPE_MONSTER) and c:IsSetCard(0x2595)
+end
+function cid.ptcon(e,tp,eg,ep,ev,re,r,rp)
+	return Duel.GetTurnPlayer()~=tp
 end
 function cid.ptcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	e:SetLabel(100)
@@ -250,6 +290,14 @@ function cid.pttg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 				tc:CreateEffectRelation(e)
 				tc=tcg:GetNext()
 			end
+			--start check
+			local check=Effect.CreateEffect(e:GetHandler())
+			check:SetType(EFFECT_TYPE_FIELD)
+			check:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+			check:SetCode(id)
+			check:SetTargetRange(1,0)
+			Duel.RegisterEffect(check,tp)
+			--
 			local flag,desc=1,{}
 			local egroup={rv:IsHasEffect(EFFECT_DEFAULT_CALL)}
 			for _,te1 in ipairs(egroup) do
@@ -267,26 +315,31 @@ function cid.pttg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 					local cost,tg=ce:GetCost(),ce:GetTarget()
 					if (ce:IsHasType(EFFECT_TYPE_IGNITION) or ce:IsHasType(EFFECT_TYPE_TRIGGER_O) or ce:IsHasType(EFFECT_TYPE_TRIGGER_F) or ce:IsHasType(EFFECT_TYPE_QUICK_O) or ce:IsHasType(EFFECT_TYPE_QUICK_F))
 						and bit.band(ce:GetRange(),LOCATION_MZONE)>0 and cost and not cost(e,tp,eg,ep,ev,re,r,rp,0) and (not tg or tg==nil or (tg and tg(e,tp,eg,ep,ev,re,r,rp,0))) then
-							local eflag=Effect.CreateEffect(c)
-							eflag:SetType(EFFECT_TYPE_FIELD)
-							eflag:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_PLAYER_TARGET)
-							eflag:SetCode(EFFECT_DEFAULT_CALL)
-							eflag:SetTargetRange(1,1)
-							eflag:SetLabel(id+flag)
-							eflag:SetLabelObject(ce)
-							--eflag:SetCondition(function (e,tp,eg,ep,ev,re,r,rp) return false end)
-							eflag:SetReset(RESET_CHAIN)
-							Duel.RegisterEffect(eflag,tp)
-							if ce:GetDescription() then
-								table.insert(desc,ce:GetDescription())
-							else
-								table.insert(desc,aux.Stringid(id,0))
+							if Duel.GetFlagEffect(tp,id)>0 or Duel.GetFlagEffect(1-tp,id)>0 then
+								local eflag=Effect.CreateEffect(c)
+								eflag:SetType(EFFECT_TYPE_FIELD)
+								eflag:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_PLAYER_TARGET)
+								eflag:SetCode(EFFECT_DEFAULT_CALL)
+								eflag:SetTargetRange(1,1)
+								eflag:SetLabel(id+flag)
+								eflag:SetLabelObject(ce)
+								--eflag:SetCondition(function (e,tp,eg,ep,ev,re,r,rp) return false end)
+								eflag:SetReset(RESET_CHAIN)
+								Duel.RegisterEffect(eflag,tp)
+								if ce:GetDescription() then
+									table.insert(desc,ce:GetDescription())
+								else
+									table.insert(desc,aux.Stringid(id,0))
+								end
+								flag=flag+1
+								Duel.ResetFlagEffect(tp,id)
+								Duel.ResetFlagEffect(1-tp,id)
 							end
-							flag=flag+1
 						
 					end
 				end
 			end
+			check:Reset()
 			if #desc>0 then
 				local opt=Duel.SelectOption(tp,table.unpack(desc))+1
 				if opt>0 then
