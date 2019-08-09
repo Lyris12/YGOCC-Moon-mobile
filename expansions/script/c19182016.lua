@@ -17,6 +17,7 @@ function cid.initial_effect(c)
 	e6:SetDescription(2)
 	e6:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e6:SetType(EFFECT_TYPE_IGNITION)
+	e6:SetCountLimit(1)
 	e6:SetProperty(EFFECT_FLAG_CARD_TARGET)
 	e6:SetRange(LOCATION_FZONE)
 	e6:SetTarget(cid.sptg2)
@@ -67,7 +68,7 @@ end
 function cid.eqtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and cid.filter(chkc,tp) end
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0
-		and Duel.IsExistingTarget(cid.filter,tp,LOCATION_MZONE,0,1,nil,tp)
+		and Duel.IsExistingTarget(cid.filter,tp,LOCATION_MZONE,0,1,nil,tp) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_FACEUP)
 	Duel.SelectTarget(tp,cid.filter,tp,LOCATION_MZONE,0,1,1,nil,tp)
 	Duel.SetOperationInfo(0,CATEGORY_EQUIP,nil,1,tp,LOCATION_DECK)
