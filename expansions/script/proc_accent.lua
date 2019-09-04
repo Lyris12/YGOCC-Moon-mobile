@@ -15,6 +15,7 @@ REASON_ACCENT						=0x4000000000
 
 --Custom Type Table
 Auxiliary.Accents={} --number as index = card, card as index = function() is_fusion
+table.insert(aux.CannotBeEDMatCodes,EFFECT_CANNOT_BE_ACCENTED_MATERIAL)
 
 --overwrite constants
 TYPE_EXTRA							=TYPE_EXTRA|TYPE_ACCENT
@@ -70,8 +71,8 @@ Card.IsPreviousLocation=function(c,loc)
 end
 Card.GetReason=function(c)
 	local rs=get_reason(c)
-	local rc=c:GetReasonCard()
-	if rc and Auxiliary.Accents[rc] or Auxiliary.Accents[c:GetReasonEffect():GetOwner()] then
+	local rc=c:GetReasonCard() or c:GetReasonEffect():GetOwner()
+	if rc and Auxiliary.Accents[rc] then
 		rs=rs|REASON_ACCENT
 	end
 	return rs

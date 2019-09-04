@@ -54,7 +54,7 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function cid.cfilter(c,tp)
-	return (c:IsPreviousLocation(LOCATION_MZONE) or c:IsType(TYPE_MONSTER)) and (c:IsPreviousPosition(POS_FACEUP) or c:GetPreviousControler()==tp) and c:IsSetCard(0x7c4) and c:IsType(TYPE_MONSTER)
+	return c:GetOriginalType()&TYPE_MONSTER~=0 and (c:IsPreviousPosition(POS_FACEUP) or c:GetPreviousControler()==tp) and c:IsSetCard(0x7c4)
 end
 function cid.filter2(c,e,sp)
 	return c:IsSetCard(0x7c4) and c:IsCanBeSpecialSummoned(e,0,sp,false,false) and not c:IsCode(id)
@@ -69,29 +69,15 @@ function cid.sumtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 end
 function cid.sumop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
+	if e:IsHasType(EFFECT_TYPE_FIELD) and not c:IsRelateToEffect(e) then return end
 	local tc=Duel.GetFirstTarget()
 	if tc:IsRelateToEffect(e) and Duel.SpecialSummonStep(tc,0,tp,tp,false,false,POS_FACEUP) then
-		if e:IsHasType(EFFECT_TYPE_FIELD) then
-			local e0=Effect.CreateEffect(c)
-			e0:SetType(EFFECT_TYPE_SINGLE)
-			e0:SetCode(EFFECT_CANNOT_ATTACK)
-			e0:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-			e0:SetReset(RESET_EVENT+RESETS_STANDARD)
-			tc:RegisterEffect(e0,true)
-		else
-			local e1=Effect.CreateEffect(c)
-			e1:SetType(EFFECT_TYPE_SINGLE)
-			e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-			e1:SetCode(EFFECT_DISABLE)
-			e1:SetReset(RESET_EVENT+RESETS_STANDARD)
-			tc:RegisterEffect(e1,true)
-			local e2=Effect.CreateEffect(c)
-			e2:SetType(EFFECT_TYPE_SINGLE)
-			e2:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-			e2:SetCode(EFFECT_DISABLE_EFFECT)
-			e2:SetReset(RESET_EVENT+RESETS_STANDARD)
-			tc:RegisterEffect(e2,true)
-		end
+		local e0=Effect.CreateEffect(c)
+		e0:SetType(EFFECT_TYPE_SINGLE)
+		e0:SetCode(EFFECT_CANNOT_ATTACK)
+		e0:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+		e0:SetReset(RESET_EVENT+RESETS_STANDARD)
+		tc:RegisterEffect(e0,true)
 		Duel.SpecialSummonComplete()
 	end
 end

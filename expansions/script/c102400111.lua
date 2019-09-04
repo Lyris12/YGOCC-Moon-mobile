@@ -53,12 +53,12 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function cid.cfilter(c,tp)
-	return (c:IsPreviousLocation(LOCATION_MZONE) or c:IsType(TYPE_MONSTER)) and (c:IsPreviousPosition(POS_FACEUP) or c:GetPreviousControler()==tp) and c:IsSetCard(0x7c4) and c:IsType(TYPE_MONSTER)
+	return c:GetOriginalType()&TYPE_MONSTER~=0 and (c:IsPreviousPosition(POS_FACEUP) or c:GetPreviousControler()==tp) and c:IsSetCard(0x7c4)
 end
 function cid.filter(c,e,tp,n)
 	if not c:IsSetCard(0x7c4) and c:IsCanBeSpecialSummoned(e,0,tp,false,false) then return false end
-	if n==0 then return c:IsAttribute(ATTRIBUTE_DARK)
-	else return c:IsAttribute(ATTRIBUTE_LIGHT)
+	if n==0 then return c:IsAttribute(ATTRIBUTE_FIRE)
+	else return c:IsAttribute(ATTRIBUTE_WATER) end
 end
 function cid.tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	local n=e:IsHasType(EFFECT_TYPE_FIELD) and 1 or 0

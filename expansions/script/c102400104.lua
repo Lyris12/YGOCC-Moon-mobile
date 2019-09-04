@@ -53,7 +53,7 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function cid.cfilter(c,tp)
-	return (c:IsPreviousLocation(LOCATION_MZONE) or c:IsType(TYPE_MONSTER)) and (c:IsPreviousPosition(POS_FACEUP) or c:GetPreviousControler()==tp) and c:IsSetCard(0x7c4) and c:IsType(TYPE_MONSTER)
+	return c:GetOriginalType()&TYPE_MONSTER~=0 and (c:IsPreviousPosition(POS_FACEUP) or c:GetPreviousControler()==tp) and c:IsSetCard(0x7c4)
 end
 function cid.filter(c,e,tp)
 	return c:IsSetCard(0x7c4) and c:IsCanBeSpecialSummoned(e,0,tp,false,false) and not c:IsCode(id)
@@ -72,10 +72,11 @@ function cid.op(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()
 	local n=e:IsHasType(EFFECT_TYPE_FIELD) and 1 or 0
 	if n~=0 then
-		if not c:IsRelateToEffect(e) or Duel.Destroy(c,REASON_EFFECT)==0 or not tc:IsRelateToEffect(e) then return end
+		if not c:IsRelateToEffect(e) or not c:IsDestructable() or not tc:IsRelateToEffect(e) or not tc:IsSetCard(0x7c4) or tc:IsCode(id) or not tc:IsCanBeSpecialSummoned(e,0,tp,false,false) then return end
+		Duel.Destroy(c,REASON_EFFECT)
 		Duel.BreakEffect()
 	end
-	if (n~=0 or tc:IsRelateToEffect(e)) and Duel.SpecialSummonStep(tc,0,tp,tp,false,false,POS_FACEUP) and n~=0 then
+	if (n~=0 or (tc:IsRelateToEffect(e) and tc:IsSetCard(0x7c4) and not tc:IsCode(id))) and Duel.SpecialSummonStep(tc,0,tp,tp,false,false,POS_FACEUP) and n~=0 then
 		local fid=c:GetFieldID()
 		local e2=Effect.CreateEffect(c)
 		e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)

@@ -12,6 +12,7 @@ REASON_BIGBANG						=0x8000000000
 
 --Custom Type Table
 Auxiliary.Bigbangs={} --number as index = card, card as index = function() is_synchro
+table.insert(aux.CannotBeEDMatCodes,EFFECT_CANNOT_BE_BIGBANG_MATERIAL)
 
 --overwrite constants
 TYPE_EXTRA							=TYPE_EXTRA|TYPE_BIGBANG
@@ -75,10 +76,10 @@ function Card.GetVibe(c)
 	else return stat/math.abs(stat) end
 end
 function Card.GetBigbangAttack(c)
-	return c:GetAttack()*c:GetVibe()
+	return c:GetAttack()*math.abs(c:GetVibe())
 end
 function Card.GetBigbangDefense(c)
-	return c:GetDefense()*c:GetVibe()
+	return c:GetDefense()*math.abs(c:GetVibe())
 end
 function Auxiliary.AddOrigBigbangType(c,issynchro)
 	table.insert(Auxiliary.Bigbangs,c)
