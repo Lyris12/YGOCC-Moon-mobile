@@ -1,66 +1,40 @@
---created & coded by Lyris, art at https://static.zerochan.net/Sendou.Emi.full.490053.jpg
---ニュートリックス・エミー
+--created & coded by Lyris, art from Shadowverse's "Destruction in White"
+--破びの白い天使
 local cid,id=GetID()
 function cid.initial_effect(c)
-	local e1=Effect.CreateEffect(c)
-	e1:SetType(EFFECT_TYPE_QUICK_O)
-	e1:SetCode(EVENT_FREE_CHAIN)
-	e1:SetRange(LOCATION_HAND)
-	e1:SetProperty(EFFECT_FLAG_CARD_TARGET)
-	e1:SetCondition(function(e,tp) return Duel.GetTurnPlayer()~=tp or Duel.IsPlayerAffectedByEffect(tp,102400153) end)
-	e1:SetCost(cid.cost)
-	e1:SetTarget(cid.target)
-	e1:SetOperation(cid.operation)
-	c:RegisterEffect(e1)
+	local e0=Effect.CreateEffect(c)
+	e0:SetType(EFFECT_TYPE_ACTIVATE)
+	e0:SetCode(EVENT_FREE_CHAIN)
+	e0:SetCategory(CATEGORY_TODECK)
+	e0:SetTarget(cid.target)
+	e0:SetOperation(cid.activate)
+	c:RegisterEffect(e0)
+	local e2=Effect.CreateEffect(c)
+	e2:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_FIELD)
+	e2:SetCode(EVENT_DESTROYED)
+	e2:SetRange(LOCATION_SZONE)
+	e2:SetOperation(cid.acop)
+	c:RegisterEffect(e2)
+	c:SetUniqueOnField(1,0,id)
 end
-function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
+function cid.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if chk==0 then return c:IsAbleToRemove() end
-	Duel.Remove(c,POS_FACEUP,REASON_COST)
+	if chk==0 then return c:IsAbleToDeck() end
+	Duel.SetOperationInfo(0,CATEGORY_TODECK,c,1,0,0)
 end
-function cid.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsType(TYPE_LINK) end
-	if chk==0 then return Duel.IsExistingTarget(Card.IsType,tp,LOCATION_MZONE,LOCATION_MZONE,1,nil,TYPE_LINK) end
-	Duel.SelectTarget(tp,Card.IsType,tp,LOCATION_MZONE,LOCATION_MZONE,1,1,nil,TYPE_LINK)
-end
-function cid.operation(e,tp,eg,ep,ev,re,r,rp)
-	local g=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS):Filter(Card.IsRelateToEffect,nil,e)
-	if g:GetCount()==0 then return end
-	Duel.Hint(HINT_SELECTMSG,tp,aux.Stringid(id,0))
-	local op=Duel.SelectOption(tp,aux.Stringid(id,1),aux.Stringid(id,2))
-	for tc in aux.Next(g) do
-		local lpt,nlpt=tc:GetLinkMarker(),0
-		local j=0
-		for i=0,8 do
-			j=0x1<<i&lpt
-			if j>0 and cid.link_table[op][j] then
-				nlpt=nlpt|j
-			end
-		end
-		local e1=Effect.CreateEffect(e:GetHandler())
-		e1:SetType(EFFECT_TYPE_SINGLE)
-		e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-		e1:SetCode(EFFECT_CHANGE_LINK_MARKER_KOISHI)
-		e1:SetValue(nlpt)
-		e1:SetReset(RESET_EVENT+RESETS_STANDARD)
-		tc:RegisterEffect(e1)
+function cid.activate(e,tp,eg,ep,ev,re,r,rp)
+	if e:GetHandler():IsRelateToEffect(e) then
+		Duel.SendtoDeck(e:GetHandler(),nil,2,REASON_EFFECT)
 	end
 end
-cid.link_table={
-	[0]={
-		[LINK_MARKER_BOTTOM_LEFT]=LINK_MARKER_TOP_RIGHT,
-		[LINK_MARKER_BOTTOM]=LINK_MARKER_RIGHT,
-		[LINK_MARKER_LEFT]=LINK_MARKER_TOP,
-		[LINK_MARKER_RIGHT]=LINK_MARKER_BOTTOM,
-		[LINK_MARKER_TOP]=LINK_MARKER_LEFT,
-		[LINK_MARKER_TOP_RIGHT]=LINK_MARKER_BOTTOM_LEFT,
-	},
-	[1]={
-		[LINK_MARKER_BOTTOM]=LINK_MARKER_LEFT,
-		[LINK_MARKER_BOTTOM_RIGHT]=LINK_MARKER_TOP_LEFT,
-		[LINK_MARKER_LEFT]=LINK_MARKER_BOTTOM,
-		[LINK_MARKER_RIGHT]=LINK_MARKER_TOP,
-		[LINK_MARKER_TOP_LEFT]=LINK_MARKER_BOTTOM_RIGHT,
-		[LINK_MARKER_TOP]=LINK_MARKER_RIGHT,
-	}
-}
+function cid.cfilter(c,tp)
+	return c:GetOriginalType()&TYPE_MONSTER~=0 and c:GetPreviousControler()==tp
+end
+function cid.acop(e,tp,eg,ep,ev,re,r,rp)
+	local ct=eg:Filter(cid.cfilter,nil,tp):GetMaxGroup(Card.GetTextAttack)
+	if #ct>0 then
+		Duel.Hint(HINT_CARD,0,id)
+		if #ct>1 then ct=ct:RandomSelect(tp,1) end
+		Duel.Recover(tp,ct:GetFirst():GetTextAttack(),REASON_EFFECT)
+	end
+end

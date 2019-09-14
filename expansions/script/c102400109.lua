@@ -45,7 +45,7 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	Duel.NegateAttack()
 	if c:IsRelateToEffect(e) and Duel.Destroy(c,REASON_EFFECT)~=0 then
-		local g=Duel.SelectMatchingCard(tp,nil,tp,0,LOCATION_ONFIELD,1,1,nil)
+		local g=Duel.SelectMatchingCard(tp,nil,tp,0,LOCATION_MZONE,1,1,nil)
 		if #g>0 then
 			Duel.BreakEffect()
 			Duel.Destroy(g,REASON_EFFECT)
@@ -63,7 +63,7 @@ function cid.tg(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_EXTRA)
 end
 function cid.op(e,tp,eg,ep,ev,re,r,rp)
-	if e:IsHasType(EFFECT_TYPE_FIELD) and not c:IsRelateToEffect(e) then return end
+	if e:IsHasType(EFFECT_TYPE_FIELD) and not e:GetHandler():IsRelateToEffect(e) then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
 	local g=Duel.SelectMatchingCard(tp,cid.filter,tp,LOCATION_EXTRA,0,1,1,nil)
 	if #g>0 then
