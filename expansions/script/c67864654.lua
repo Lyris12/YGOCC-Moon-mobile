@@ -1,4 +1,5 @@
---Mekbuster Activation
+--VECTOR Engineering Initiation
+--Scripted by Keddy, updated by Zerry
 function c67864654.initial_effect(c)
     --Search Lvl 6 or higher Light Machine
     local e1=Effect.CreateEffect(c)
@@ -6,6 +7,7 @@ function c67864654.initial_effect(c)
     e1:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
     e1:SetType(EFFECT_TYPE_ACTIVATE)
     e1:SetCode(EVENT_FREE_CHAIN)
+	e1:SetCountLimit(1,67864654)
     e1:SetCondition(c67864654.thcon1)
     e1:SetTarget(c67864654.thtg1)
     e1:SetOperation(c67864654.thop1)
@@ -15,6 +17,7 @@ function c67864654.initial_effect(c)
     e2:SetDescription(aux.Stringid(67864654,1))
     e2:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
     e2:SetType(EFFECT_TYPE_ACTIVATE)
+	e2:SetCountLimit(1,67864654)
     e2:SetCode(EVENT_FREE_CHAIN)
     e2:SetCondition(c67864654.thcon2)
     e2:SetTarget(c67864654.thtg2)
@@ -25,6 +28,7 @@ function c67864654.initial_effect(c)
     e3:SetDescription(aux.Stringid(67864654,2))
     e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
     e3:SetType(EFFECT_TYPE_ACTIVATE)
+	e3:SetCountLimit(1,67864654)
     e3:SetCode(EVENT_FREE_CHAIN)
     e3:SetCondition(c67864654.spcon)
     e3:SetTarget(c67864654.sptg)
@@ -32,11 +36,10 @@ function c67864654.initial_effect(c)
     c:RegisterEffect(e3)
 end
 function c67864654.cfilter1(c)
-    return c:IsFaceup() and c:IsCode(67864641)
+    return c:IsFaceup() and c:IsSetCard(0xa2a6)
 end
 function c67864654.cfilter2(c)
-    return c:IsFaceup() and c:IsAttribute(ATTRIBUTE_LIGHT) and c:IsRace(RACE_MACHINE)
-        and c:IsLevelAbove(6)
+    return c:IsFaceup() and c:IsSetCard(0x62a6)
 end
 function c67864654.thcon1(e,c)
     if c==nil then return true end
@@ -44,8 +47,7 @@ function c67864654.thcon1(e,c)
         and not Duel.IsExistingMatchingCard(c67864654.cfilter2,e:GetHandler(),LOCATION_ONFIELD,0,1,nil)
 end
 function c67864654.thfilter1(c)
-    return c:IsAttribute(ATTRIBUTE_LIGHT) and c:IsRace(RACE_MACHINE)
-        and c:IsLevelAbove(6) and c:IsAbleToHand()
+    return c:IsSetCard(0x62a6) and c:IsAbleToHand()
 end
 function c67864654.thtg1(e,tp,eg,ep,ev,re,r,rp,chk)
     if chk==0 then return Duel.IsExistingMatchingCard(c67864654.thfilter1,tp,LOCATION_DECK,0,1,nil) end
@@ -65,7 +67,7 @@ function c67864654.thcon2(e,c)
         and not Duel.IsExistingMatchingCard(c67864654.cfilter1,e:GetHandler(),LOCATION_ONFIELD,0,1,nil)
 end
 function c67864654.thfilter2(c)
-    return c:IsCode(67864641) and c:IsAbleToHand()
+    return c:IsCode(0xa2a6) and c:IsAbleToHand()
 end
 function c67864654.thtg2(e,tp,eg,ep,ev,re,r,rp,chk)
     if chk==0 then return Duel.IsExistingMatchingCard(c67864654.thfilter2,tp,LOCATION_DECK,0,1,nil) end

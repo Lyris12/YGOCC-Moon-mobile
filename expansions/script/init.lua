@@ -65,6 +65,8 @@ dofile("expansions/script/proc_bypath.lua") --Bypaths
 dofile("expansions/script/proc_toxia.lua") --Toxias
 dofile("expansions/script/proc_annotee.lua") --Annotees
 dofile("expansions/script/proc_chroma.lua") --Chromas
+dofile("expansions/script/proc_perdition.lua") --Perditions
+dofile("expansions/script/proc_impure.lua") --Impures
 
 Card.IsReason=function(c,rs)
 	local cusrs=rs>>32
@@ -601,5 +603,24 @@ if not global_card_effect_table_global_check then
 		if not global_card_effect_table[self] then global_card_effect_table[self]={} end
 		table.insert(global_card_effect_table[self],e)
 		self.register_global_card_effect_table(self,e)
+	end
+end
+
+--Hardcode AZW Phalanx Unicorn (39510) allow equipped monster to activate its effect without detaching
+local ocheck,oremove=Card.CheckRemoveOverlayCard,Card.RemoveOverlayCard
+function Card.CheckRemoveOverlayCard(c,p,ct,r)
+	local tc=c:GetEquipGroup()
+	if tc and tc:FilterCount(Card.IsHasEffect,nil,39510)>0 and r and (r&REASON_COST>0) then
+		return true
+	else
+		return ocheck(c,p,ct,r)
+	end
+end
+function Card.RemoveOverlayCard(c,p,minct,maxct,r)
+	local tc=c:GetEquipGroup()
+	if tc and tc:FilterCount(Card.IsHasEffect,nil,39510)>0 and r and (r&REASON_COST>0) and (not ocheck(c,p,minct,r) or Duel.SelectYesNo(p,aux.Stringid(39510,0))) then
+		return 0
+	else
+		return oremove(c,p,minct,maxct,r)
 	end
 end

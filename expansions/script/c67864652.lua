@@ -1,9 +1,9 @@
---Mekbuster Frame LS3-I6
---Keddy was here~
+--VECTOR Frame Omnis
+--Scripted by Keddy, updated by Zerry
 function c67864652.initial_effect(c)
 	--fusion material
 	c:EnableReviveLimit()
-	aux.AddFusionProcCodeFun(c,67864641,aux.FilterBoolFunction(Card.IsRace,RACE_MACHINE),1,true,true)
+	aux.AddFusionProcFun2(c,c67864652.ffilter,c67864652.ffilter2,false)
 	--move
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(67864652,0))
@@ -27,15 +27,24 @@ function c67864652.initial_effect(c)
 	c:RegisterEffect(e2)
 	--Special Summon
 	local e3=Effect.CreateEffect(c)
-	e3:SetDescription(aux.Stringid(67864650,2))
+	e3:SetDescription(aux.Stringid(678646452,1))
 	e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
-	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
-	e3:SetCode(EVENT_LEAVE_FIELD)
+	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e3:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_CARD_TARGET)
+	e3:SetCode(EVENT_TO_GRAVE)
+	e3:SetCountLimit(1,67864652+100)
 	e3:SetCondition(c67864652.spcon)
 	e3:SetTarget(c67864652.sptg)
 	e3:SetOperation(c67864652.spop)
 	c:RegisterEffect(e3)
 end
+function c67864652.ffilter(c)
+	return c:IsSetCard(0xa2a6)
+end
+function c67864652.ffilter2(c)
+	return c:IsRace(RACE_MACHINE)
+end
+
 function c67864652.mvcon(e,tp,eg,ep,ev,re,r,rp)
 	return e:GetHandler():IsSummonType(SUMMON_TYPE_FUSION) and Duel.GetFlagEffect(tp,67864652)==0
 end
@@ -58,7 +67,7 @@ function c67864652.mvop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function c67864652.thfilter(c)
-	return c:IsType(TYPE_SPELL) and (c:IsSetCard(0x2a6) or c:IsSetCard(0x3a6))
+	return c:IsType(TYPE_SPELL) and c:IsSetCard(0x2a6)
 end
 function c67864652.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetFieldGroupCount(tp,LOCATION_HAND,0)>=2
@@ -82,40 +91,22 @@ function c67864652.thop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function c67864652.spcon(e,tp,eg,ep,ev,re,r,rp)
-	return e:GetHandler():IsPreviousPosition(POS_FACEUP) and e:GetHandler():IsPreviousLocation(LOCATION_ONFIELD) and not c:IsFacedown()
+  return e:GetHandler():IsPreviousLocation(LOCATION_ONFIELD)
 end
-function c67864652.spfilter(c,e,tp,slv)
-	local lv=c:GetLevel()
-	return (c:IsSetCard(0x2a6) or c:IsRace(RACE_MACHINE)) and lv>0 and (not slv or lv==slv) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+function c67864652.spfilter(c,e,tp)
+  return ((c:IsRace(RACE_MACHINE) and c:IsAttribute(ATTRIBUTE_LIGHT) and c:IsLevelAbove(6)) or c:IsSetCard(0x2a6)) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
-function c67864652.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then
-		local ft=Duel.GetLocationCount(tp,LOCATION_MZONE)
-		if ft<=0 then return false end
-		if ft==1 or Duel.IsPlayerAffectedByEffect(tp,59822133) then
-			return Duel.IsExistingMatchingCard(c67864652.spfilter,tp,LOCATION_GRAVE+LOCATION_REMOVED,0,1,nil,e,tp,8)
-		else
-			local g=Duel.GetMatchingGroup(c67864652.spfilter,tp,LOCATION_GRAVE+LOCATION_REMOVED,0,nil,e,tp)
-			return g:CheckWithSumEqual(Card.GetLevel,8,1,ft)
-		end
-	end
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_GRAVE+LOCATION_REMOVED)
+function c67864652.sptg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	if chkc then return chkc:IsLocation(LOCATION_GRAVE) and chkc:IsControler(tp) and c67864652.spfilter(chkc,e,tp) end
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		and Duel.IsExistingTarget(c67864652.spfilter,tp,LOCATION_GRAVE,0,1,nil,e,tp) end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local g=Duel.SelectTarget(tp,c67864652.spfilter,tp,LOCATION_GRAVE,0,1,1,nil,e,tp)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,0,0)
 end
-function c67864652.spop(e,tp,eg,ep,ev,re,r,rp)
-	local ft=Duel.GetLocationCount(tp,LOCATION_MZONE)
-	if ft<=0 then return end
-	if ft==1 or Duel.IsPlayerAffectedByEffect(tp,59822133) then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local g=Duel.SelectMatchingCard(tp,c67864652.spfilter,tp,LOCATION_GRAVE+LOCATION_REMOVED,0,1,1,nil,e,tp,8)
-		if g:GetCount()>0 then
-			Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
-		end
-	else
-		local g=Duel.GetMatchingGroup(c67864652.spfilter,tp,LOCATION_GRAVE+LOCATION_REMOVED,0,nil,e,tp)
-		if g:CheckWithSumEqual(Card.GetLevel,8,1,ft) then
-			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-			local sg=g:SelectWithSumEqual(tp,Card.GetLevel,8,1,ft)
-			Duel.SpecialSummon(sg,0,tp,tp,false,false,POS_FACEUP)
-		end
+function c67864652.spop(e,tp,eg,ep,ev,re,r,rp,chk)
+	local tc=Duel.GetFirstTarget()
+	if tc:IsRelateToEffect(e) then
+		Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)
 	end
 end

@@ -1,4 +1,5 @@
---Mekbuster Emperor MS8-Z1
+--VECTOR Mech Emperor MS8-Z1
+--Scripted by Keddy, updated by Zerry
 function c67864648.initial_effect(c)
 	--special summon
 	local e1=Effect.CreateEffect(c)
@@ -26,19 +27,16 @@ function c67864648.initial_effect(c)
 	e3:SetDescription(aux.Stringid(67864648,1))
 	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
-	e3:SetProperty(EFFECT_FLAG_DELAY)
-	e3:SetCode(EVENT_LEAVE_FIELD)
+	e3:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_CARD_TARGET)
+	e3:SetCode(EVENT_TO_GRAVE)
 	e3:SetCountLimit(1,67964648)
 	e3:SetCondition(c67864648.spcon)
 	e3:SetTarget(c67864648.sptg)
 	e3:SetOperation(c67864648.spop)
 	c:RegisterEffect(e3)
-	local e4=e3:Clone()
-	e4:SetCode(EVENT_REMOVE)
-	c:RegisterEffect(e4)
 end
 function c67864648.rfilter(c,tp)
-	return c:IsRace(RACE_MACHINE) or c:IsSetCard(0x2a6) and (c:IsControler(tp) or c:IsFaceup())
+	return c:IsSetCard(0x2a6) and (c:IsControler(tp) or c:IsFaceup())
 end
 function c67864648.mzfilter(c,tp)
 	return c:IsControler(tp) and c:GetSequence()<5
@@ -71,7 +69,7 @@ function c67864648.hspop(e,tp,eg,ep,ev,re,r,rp,c)
 	Duel.Release(g,REASON_COST)
 end
 function c67864648.tgcon(e,tp,eg,ep,ev,re,r,rp)
-	return re and re:IsActiveType(TYPE_MONSTER) and re:GetHandler():IsCode(67864641)
+	return re and re:IsActiveType(TYPE_MONSTER) and re:GetHandler():IsSetCard(0xa2a6)
 end
 function c67864648.tgfilter(c)
 	return c:IsRace(RACE_MACHINE) or c:IsSetCard(0x2a6) and c:IsType(TYPE_MONSTER) and c:IsAbleToGrave()
@@ -92,18 +90,30 @@ function c67864648.spcon(e,tp,eg,ep,ev,re,r,rp)
 	return c:IsPreviousPosition(POS_FACEUP) and c:IsPreviousLocation(LOCATION_ONFIELD) and not c:IsFacedown()
 end
 function c67864648.spfilter(c,e,tp)
-	return c:IsRace(RACE_MACHINE) and not c:IsCode(67864648) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+  return ((c:IsRace(RACE_MACHINE) and c:IsAttribute(ATTRIBUTE_LIGHT) and c:IsLevelAbove(6)) or c:IsSetCard(0x2a6)) and not c:IsCode(67864648) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
-function c67864648.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 
-		and Duel.IsExistingMatchingCard(c67864648.spfilter,tp,LOCATION_GRAVE,0,1,nil,e,tp) end
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_GRAVE)
-end
-function c67864648.spop(e,tp,eg,ep,ev,re,r,rp)
-	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+function c67864648.sptg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	if chkc then return chkc:IsLocation(LOCATION_GRAVE) and chkc:IsControler(tp) and c67864648.spfilter(chkc,e,tp) end
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		and Duel.IsExistingTarget(c67864648.spfilter,tp,LOCATION_GRAVE,0,1,nil,e,tp) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectMatchingCard(tp,c67864648.spfilter,tp,LOCATION_GRAVE,0,1,1,nil,e,tp)
-	if g:GetCount()>0 then
-		Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
+	local g=Duel.SelectTarget(tp,c67864648.spfilter,tp,LOCATION_GRAVE,0,1,1,nil,e,tp)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,0,0)
+end
+function c67864648.spop(e,tp,eg,ep,ev,re,r,rp,chk)
+	local tc=Duel.GetFirstTarget()
+	if tc:IsRelateToEffect(e) then
+		Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)
+			local e4=Effect.CreateEffect(e:GetHandler())
+				e4:SetType(EFFECT_TYPE_FIELD)
+				e4:SetProperty(EFFECT_FLAG_PLAYER_TARGET)	
+				e4:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+				e4:SetReset(RESET_PHASE+PHASE_END)
+				e4:SetTargetRange(1,0)
+				e4:SetTarget(c67864648.splimit)
+				Duel.RegisterEffect(e4,tp)
 	end
 end
+function c67864648.splimit(e,c,sump,sumtype,sumpos,targetp,se)
+	return not (c:IsSetCard(0x2a6) or (c:IsRace(RACE_MACHINE) and c:IsAttribute(ATTRIBUTE_LIGHT)))
+end	

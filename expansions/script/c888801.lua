@@ -20,7 +20,7 @@ function cm.initial_effect(c)
     c:RegisterEffect(e2)
     local e3=Effect.CreateEffect(c)
     e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-    e3:SetCode(EVENT_CHAIN_SOLVED)
+    e3:SetCode(EVENT_CHAINING)
     e3:SetRange(LOCATION_GRAVE)
     e3:SetCondition(cm.damcon)
     e3:SetOperation(cm.damop)
@@ -74,6 +74,6 @@ function cm.damop(e,tp,eg,ep,ev,re,r,rp)
     end
     if totalatk>0 then
         local lp=math.floor(totalatk/2)
-        Duel.Damage(1-tp,lp,REASON_EFFECT)
+        Duel.Damage(1-tp,lp,REASON_ADJUST)
     end
 end

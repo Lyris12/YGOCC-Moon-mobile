@@ -27,8 +27,8 @@ end
 
 function cm.condition2(e,tp,eg,ep,ev,re,r,rp)
     local c=e:GetHandler()
-    local rc=re:GetHandler()
-    return re:IsActiveType(TYPE_MONSTER) and rc~=c and not c:IsStatus(STATUS_BATTLE_DESTROYED) and Duel.IsChainNegatable(ev)
+    if e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED) then return false end
+    return re:IsActiveType(TYPE_MONSTER)
 end
 
 function cm.filter(c)
