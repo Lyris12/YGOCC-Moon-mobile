@@ -1,7 +1,7 @@
 --created by Walrus, coded by Lyris
 local cid,id=GetID()
 function cid.initial_effect(c)
-	aux.CannotBeEDMaterial(c,nil,LOCATION_ONFIELD)
+	aux.CannotBeEDMaterial(c,nil,LOCATION_MZONE)
 	local e2=Effect.CreateEffect(c)
 	e2:SetCategory(CATEGORY_DISABLE+CATEGORY_REMOVE)
 	e2:SetType(EFFECT_TYPE_QUICK_O)
@@ -16,19 +16,19 @@ function cid.initial_effect(c)
 	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e3:SetCode(EVENT_REMOVE)
 	e3:SetCountLimit(1,id)
-	e3:SetProperty(EFFECT_FLAG_DELAY)
+	e3:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
 	e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e3:SetTarget(cid.target)
 	e3:SetOperation(cid.operation)
 	c:RegisterEffect(e3)
 end
 function cid.cfilter(c,tp)
-	return c:IsSetCard(0xc97) and c:IsType(TYPE_MONSTER)
+	return c:IsSetCard(0xc97) and c:IsLocation(LOCATION_MZONE) and c:IsControler(tp)
 end
 function cid.discon(e,tp,eg,ep,ev,re,r,rp)
-	if rp==tp or not Duel.IsChainDisablable(ev) then return false end
-	local ex,tg,tc=Duel.GetOperationInfo(ev,CATEGORY_DESTROY)
-	return ex and tg~=nil and tc+tg:FilterCount(cid.cfilter,nil,tp)-tg:GetCount()>0
+	if rp==tp or e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED) or not re:IsHasProperty(EFFECT_FLAG_CARD_TARGET) or not Duel.IsChainDisablable(ev) then return false end
+	local tg=Duel.GetChainInfo(ev,CHAININFO_TARGET_CARDS)
+	return tg and tg:IsExists(cid.cfilter,1,nil,tp)
 end
 function cid.distg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local rc=re:GetHandler()

@@ -1,3 +1,5 @@
+--created by Zolanark, coded by Lyris
+local cid,id=GetID()
 local function getID()
 	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
 	str=string.sub(str,1,string.len(str)-4)
@@ -6,8 +8,6 @@ local function getID()
 	return id,cod
 end
 local id,cid=getID()
---created by Zolanark, coded by Lyris
---Arthro-Lord, Venogust
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.EnablePendulumAttribute(c)
@@ -15,6 +15,7 @@ function cid.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
 	e1:SetCode(EVENT_TO_HAND)
 	e1:SetRange(LOCATION_PZONE)
+	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP)
 	e1:SetCategory(CATEGORY_TODECK+CATEGORY_TOHAND)
 	e1:SetCondition(cid.pcon)
 	e1:SetCost(cid.pcost)

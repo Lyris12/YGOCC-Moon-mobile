@@ -32,12 +32,12 @@ function cid.initial_effect(c)
 	e3:SetTarget(cid.target)
 	e3:SetOperation(cid.activate)
 	c:RegisterEffect(e3)
-	aux.EnablePandemoniumAttribute(c,e3,true,TYPE_EFFECT+TYPE_EVOLUTE)
+	aux.EnablePandemoniumAttribute(c,e3,true,TYPE_EFFECT+TYPE_EVOLUTE+TYPE_XYZ)
 	aux.AddEvoluteProc(c,nil,10,aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_FIRE),aux.FilterBoolFunction(Card.IsRace,RACE_DINOSAUR))
 	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e4:SetCode(EVENT_SPSUMMON_SUCCESS)
-	e4:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_CARD_TARGET)
+	e4:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY+EFFECT_FLAG_CARD_TARGET)
 	e4:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e4:SetCondition(function(e) return e:GetHandler():IsSummonType(SUMMON_TYPE_EVOLUTE) end)
 	e4:SetTarget(cid.sptg)
@@ -63,14 +63,14 @@ function cid.initial_effect(c)
 	local e7=Effect.CreateEffect(c)
 	e7:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e7:SetCode(EVENT_DESTROYED)
-	e7:SetProperty(EFFECT_FLAG_DELAY)
+	e7:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
 	e7:SetTarget(cid.pentg)
 	e7:SetOperation(cid.penop)
 	c:RegisterEffect(e7)
 end
 function cid.splimit(e,c,sump,sumtype,sumpos,targetp)
 	if c:IsRace(RACE_DINOSAUR) then return false end
-	return bit.band(sumtype,SUMMON_TYPE_SPECIAL+726)==SUMMON_TYPE_SPECIAL+726
+	return bit.band(sumtype,SUMMON_TYPE_PANDEMONIUM)==SUMMON_TYPE_PANDEMONIUM
 end
 function cid.etarget(e,c)
 	return c:IsType(TYPE_FUSION) and c:IsRace(RACE_DINOSAUR)
@@ -129,14 +129,14 @@ function cid.tg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local ct=Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)*500
 	if chk==0 then return ct>0 end
 	Duel.SetOperationInfo(0,CATEGORY_DAMAGE,nil,0,1-tp,ct)
-	local g=Duel.GetMatchingGroup(cid.desfilter,tp,0x47,0x47,nil,ct)
+	local g=Duel.GetMatchingGroup(cid.desfilter,tp,LOCATION_MZONE,LOCATION_MZONE,nil,ct)
 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,#g,0,0)
 end
 function cid.operation(e,tp,eg,ep,ev,re,r,rp,chk)
 	local ct=Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)
 	local d=Duel.Damage(1-tp,ct*500,REASON_EFFECT)
 	if d==0 then return end
-	local g=Duel.GetMatchingGroup(cid.desfilter,tp,0x47,0x47,nil,d)
+	local g=Duel.GetMatchingGroup(cid.desfilter,tp,LOCATION_MZONE,LOCATION_MZONE,nil,d)
 	Duel.Destroy(g,REASON_EFFECT)
 end
 function cid.pentg(e,tp,eg,ep,ev,re,r,rp,chk)

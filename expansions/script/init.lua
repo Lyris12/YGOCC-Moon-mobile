@@ -19,9 +19,10 @@ EFFECT_COUNT_SECOND_HOPT			=10000000
 CARD_BLUEEYES_SPIRIT				=59822133
 CARD_CYBER_DRAGON					=70095154
 CARD_PYRO_CLOCK						=1082946
-CARD_INLIGHTENED_PSYCHIC_HELMET		=210400006
-CARD_REDUNDANCY_TOKEN				=210400054
+CARD_INLIGHTENED_PSYCHIC_HELMET		=102400006
 CARD_NEBULA_TOKEN					=218201917
+CARD_DRAGON_EGG_TOKEN				=20157305
+CARD_BLACK_GARDEN					=71645242
 
 --Custom Type Tables
 Auxiliary.Customs={} --check if card uses custom type, indexing card
@@ -67,6 +68,7 @@ dofile("expansions/script/proc_annotee.lua") --Annotees
 dofile("expansions/script/proc_chroma.lua") --Chromas
 dofile("expansions/script/proc_perdition.lua") --Perditions
 dofile("expansions/script/proc_impure.lua") --Impures
+dofile("expansions/script/proc_runic.lua") --Runic
 
 Card.IsReason=function(c,rs)
 	local cusrs=rs>>32

@@ -2,18 +2,19 @@
 --scripted by Rawstone
 local s,id=GetID()
 function s.initial_effect(c)
-	--counter
+	--banish GY
 	local e1=Effect.CreateEffect(c)
-	e1:SetCategory(CATEGORY_NEGATE+CATEGORY_DESTROY)
+	e1:SetDescription(aux.Stringid(id,0))
+	e1:SetCategory(CATEGORY_REMOVE)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
-	e1:SetCode(EVENT_CHAINING)
+	e1:SetCode(EVENT_FREE_CHAIN)
 	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
-	e1:SetCondition(s.condition)
 	e1:SetTarget(s.target)
 	e1:SetOperation(s.activate)
 	c:RegisterEffect(e1)
 	--SSummon
 	local e2=Effect.CreateEffect(c)
+	e1:SetDescription(aux.Stringid(id,1))
 	e2:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e2:SetProperty(EFFECT_FLAG_DELAY)
@@ -23,26 +24,39 @@ function s.initial_effect(c)
 	e2:SetOperation(s.summon)
 	c:RegisterEffect(e2)
 end
-	function s.condition(e,tp,eg,ep,ev,re,r,rp)
-	return rp~=tp and not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED) and Duel.IsChainNegatable(ev)
-end
-	function s.filter(c)
-	return c:IsFaceup() and c:IsSetCard(0x10ec) and c:IsDestructable()
+	function s.filter(c,tp)
+	return c:IsFaceup() and c:IsSetCard(0x10ec) and c:IsType(TYPE_PENDULUM)
 end
 	function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_ONFIELD,0,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,1,0,0)
-	Duel.SetOperationInfo(0,CATEGORY_NEGATE,eg,1,0,0)
+	local g=Duel.GetMatchingGroup(s.filter,tp,LOCATION_MZONE,0,nil)
+	if chk==0 then return g:GetCount()~=0
+		and Duel.IsExistingMatchingCard(Card.IsAbleToRemove,tp,0,LOCATION_GRAVE,1,nil) end
+	Duel.SetOperationInfo(0,CATEGORY_REMOVE,nil,1,1-tp,LOCATION_GRAVE)
 end
 	function s.activate(e,tp,eg,ep,ev,re,r,rp)
-	local g=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_ONFIELD,0,1,1,nil)
+	local cg=Duel.GetMatchingGroup(s.filter,tp,LOCATION_MZONE,0,nil)
+	local ct=cg:GetClassCount(Card.GetCode)
+	if ct==0 then return end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+	local g=Duel.SelectMatchingCard(tp,Card.IsAbleToRemove,tp,0,LOCATION_GRAVE,1,ct,nil)
 	if g:GetCount()>0 then
-		if  Duel.Destroy(g,REASON_EFFECT)~=0 then
-			if Duel.NegateActivation(ev) and re:GetHandler():IsRelateToEffect(re) then
-		Duel.Destroy(eg,REASON_EFFECT)
+		Duel.Remove(g,POS_FACEUP,REASON_EFFECT)
 	end
-		end
-			end
+	local sg=Duel.GetMatchingGroup(s.filter2,tp,LOCATION_MZONE,0,nil,tp)
+	if sg:GetCount()>0 and Duel.SelectYesNo(tp,aux.Stringid(30003,1)) then
+		Duel.BreakEffect()
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SELECT)
+		local tg=sg:Select(tp,1,1,nil):GetFirst()
+		local e1=Effect.CreateEffect(e:GetHandler())
+			e1:SetType(EFFECT_TYPE_SINGLE)
+			e1:SetCode(EFFECT_IMMUNE_EFFECT)
+			e1:SetValue(s.efilter)
+			e1:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END)
+			tg:RegisterEffect(e1)
+	end
+end
+	function s.efilter(e,re)
+	return e:GetHandler()~=re:GetOwner()
 end
 	function s.filter2(c)
 	return c:IsSetCard(0x10ec) and c:IsFaceup() and c:IsType(TYPE_PENDULUM)
@@ -71,7 +85,4 @@ end
 		local sg2=g:Select(tp,1,1,nil)
 		sg1:Merge(sg2)
 	end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	Duel.SpecialSummon(sg1,0,tp,tp,false,false,POS_FACEUP)
-	Duel.ConfirmCards(1-tp,sg1)
 end

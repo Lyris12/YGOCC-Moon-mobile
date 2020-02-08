@@ -6,6 +6,7 @@ function cid.initial_effect(c)
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e2:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e2:SetProperty(EFFECT_FLAG_DAMAGE_STEP)
 	e2:SetCategory(CATEGORY_DAMAGE+CATEGORY_SPECIAL_SUMMON)
 	e2:SetCondition(function(e) return e:GetHandler():IsSummonType(SUMMON_TYPE_LINK) end)
 	e2:SetCountLimit(1,id+2000)
@@ -60,7 +61,7 @@ end
 function cid.rmop(e,tp,eg,ep,ev,re,r,rp)
 	local hg=Duel.GetFieldGroup(1-tp,LOCATION_HAND,0)
 	if Duel.IsChainDisablable(0) and hg:GetCount()>0
-		and Duel.SelectYesNo(1-tp,aux.Stringid(2318620,2)) then
+		and Duel.SelectYesNo(1-tp,aux.Stringid(math.floor(id/100),2)) then
 		Duel.DiscardHand(1-tp,Card.IsDiscardable,1,1,REASON_EFFECT+REASON_DISCARD,nil)
 		Duel.NegateEffect(0)
 		return

@@ -25,7 +25,7 @@ function cid.initial_effect(c)
 	e4:SetType(EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_SINGLE)
 	e4:SetCode(EVENT_TO_GRAVE)
 	e4:SetCountLimit(1,id)
-	e4:SetProperty(EFFECT_FLAG_DELAY)
+	e4:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
 	e4:SetCategory(CATEGORY_DAMAGE+CATEGORY_SPECIAL_SUMMON)
 	e4:SetTarget(cid.tg)
 	e4:SetOperation(cid.op)
@@ -42,7 +42,7 @@ function cid.initial_effect(c)
 end
 function cid.splimit(e,c,sump,sumtype,sumpos,targetp)
 	if c:IsRace(RACE_DINOSAUR) then return false end
-	return bit.band(sumtype,SUMMON_TYPE_SPECIAL+726)==SUMMON_TYPE_SPECIAL+726
+	return bit.band(sumtype,SUMMON_TYPE_PANDEMONIUM)==SUMMON_TYPE_PANDEMONIUM
 end
 function cid.tgfilter(c)
 	return c:IsSetCard(0x9b5) and c:IsType(TYPE_MONSTER) and c:IsAbleToGrave() and not c:IsCode(id)

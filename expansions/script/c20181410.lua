@@ -22,7 +22,7 @@ function cid.initial_effect(c)
 	e0:SetOperation(cid.spop)
 	c:RegisterEffect(e0)
 	aux.EnablePandemoniumAttribute(c,e0,true,TYPE_EFFECT+TYPE_FUSION)
-	aux.AddFusionProcCodeFunRep(c,20181407,aux.FilterBoolFunction(Card.IsRace,RACE_DINOSAUR),1,63,true,true)
+	aux.AddFusionProcCodeFunRep(c,id-3,aux.FilterBoolFunction(Card.IsRace,RACE_DINOSAUR),1,63,true,true)
 	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_FIELD)
 	e4:SetCode(EFFECT_SPSUMMON_PROC)
@@ -41,7 +41,7 @@ function cid.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_SINGLE)
 	e1:SetCode(EVENT_SPSUMMON_SUCCESS)
-	e1:SetProperty(EFFECT_FLAG_DELAY)
+	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
 	e1:SetCategory(CATEGORY_DAMAGE+CATEGORY_ATKCHANGE)
 	e1:SetCondition(cid.condition)
 	e1:SetTarget(cid.tg)
@@ -70,7 +70,7 @@ function cid.initial_effect(c)
 	local e7=Effect.CreateEffect(c)
 	e7:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e7:SetCode(EVENT_LEAVE_FIELD)
-	e7:SetProperty(EFFECT_FLAG_DELAY)
+	e7:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
 	e7:SetCondition(cid.condition)
 	e7:SetTarget(cid.pentg)
 	e7:SetOperation(cid.penop)
@@ -97,7 +97,7 @@ function cid.splimit(e,se,sp,st)
 end
 function cid.pslimit(e,c,sump,sumtype,sumpos,targetp)
 	if c:IsRace(RACE_DINOSAUR) then return false end
-	return bit.band(sumtype,SUMMON_TYPE_SPECIAL+726)==SUMMON_TYPE_SPECIAL+726
+	return bit.band(sumtype,SUMMON_TYPE_PANDEMONIUM)==SUMMON_TYPE_PANDEMONIUM
 end
 function cid.tgfilter(c,e,tp)
 	return c:IsAbleToGraveAsCost() and c:IsSetCard(0x9b5) and c:IsType(TYPE_MONSTER)
@@ -197,4 +197,3 @@ function cid.penop(e,tp,eg,ep,ev,re,r,rp)
 		Duel.ConfirmCards(1-tp,c)
 	end
 end
-

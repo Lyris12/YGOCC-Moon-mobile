@@ -45,21 +45,25 @@ function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
 	if chk==0 then return aux.PandSSetCon(c,-1)(c,e,tp,eg,ep,ev,re,r,rp) end
 	c:SetCardData(CARDDATA_TYPE,TYPE_TRAP)
-	Duel.SSet(c:GetControler(),c)
+	Duel.SSet(c:GetControler(),c,c:GetControler(),false)
 end
 function cid.ssetop(e,tp,eg,ep,ev,re,r,rp,c)
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetCode(EFFECT_MONSTER_SSET)
+	e1:SetValue(TYPE_TRAP)
+	e1:SetReset(RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD)
+	c:RegisterEffect(e1,true)
+	Duel.SSet(c:GetControler(),c,c:GetControler(),false)
+	e1:Reset()
 	c:SetCardData(CARDDATA_TYPE,TYPE_TRAP)
-	Duel.SSet(c:GetControler(),c)
 end
 function cid.filter1(c)
 	return c:IsFaceup() and c:IsType(TYPE_MONSTER) and c:IsSetCard(0xf7a) and c:IsAbleToDeck() and not c:IsCode(id)
 end
-function cid.filter2(c)
-	return c:IsFaceup() and not c:IsDisabled() or c:IsType(TYPE_TRAPMONSTER)
-end
 function cid.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cid.filter1,tp,LOCATION_REMOVED,0,1,nil)
-		and Duel.IsExistingMatchingCard(cid.filter2,tp,0,LOCATION_ONFIELD,1,nil) end
+		and Duel.IsExistingMatchingCard(aux.disfilter1,tp,0,LOCATION_ONFIELD,1,nil) end
 	Duel.SetOperationInfo(0,CATEGORY_TODECK,nil,1,tp,LOCATION_REMOVED)
 	Duel.SetOperationInfo(0,CATEGORY_DISABLE,nil,1,1-tp,LOCATION_ONFIELD)
 end
@@ -69,7 +73,8 @@ function cid.activate(e,tp,eg,ep,ev,re,r,rp)
 	if #g1==0 or Duel.SendtoDeck(g1,nil,2,REASON_EFFECT)==0
 		or g1:FilterCount(Card.IsLocation,nil,LOCATION_DECK+LOCATION_EXTRA)==0 then return end
 	Duel.ShuffleDeck(tp)
-	local g2=Duel.SelectMatchingCard(tp,cid.filter2,tp,0,LOCATION_ONFIELD,1,1,nil)
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_FACEUP)
+	local g2=Duel.SelectMatchingCard(tp,aux.disfilter1,tp,0,LOCATION_ONFIELD,1,1,nil)
 	local c=e:GetHandler()
 	local tc=g2:GetFirst()
 	if tc then

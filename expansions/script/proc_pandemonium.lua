@@ -161,8 +161,7 @@ function Auxiliary.EnablePandemoniumAttribute(c,...)
 		Duel.RegisterEffect(ge1,0)
 	end
 	--register og type
-	c:RegisterFlagEffect(1074,0,0,0)
-	c:SetFlagEffectLabel(1074,typ)
+	c:RegisterFlagEffect(1074,0,0,0,typ)
 	--summon
 	local ge6=Effect.CreateEffect(c)
 	ge6:SetType(EFFECT_TYPE_FIELD)
@@ -202,6 +201,9 @@ function Auxiliary.EnablePandemoniumAttribute(c,...)
 	local rem=th:Clone()
 	rem:SetCode(EVENT_REMOVE)
 	c:RegisterEffect(rem)
+	local tg=th:Clone()
+	tg:SetCode(EVENT_TO_GRAVE)
+	c:RegisterEffect(tg)
 	--keep on field
 	local kp=Effect.CreateEffect(c)
 	kp:SetType(EFFECT_TYPE_SINGLE)
@@ -630,14 +632,21 @@ function Auxiliary.PandSSet(tc,reason,tpe)
 				if pcall(Group.GetFirst,tc) then
 					local tg=tc:Clone()
 					for cc in aux.Next(tg) do
-						cc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
+						local e1=Effect.CreateEffect(cc)
+						e1:SetType(EFFECT_TYPE_SINGLE)
+						e1:SetCode(EFFECT_MONSTER_SSET)
+						e1:SetValue(TYPE_TRAP+TYPE_CONTINUOUS)
+						e1:SetReset(RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD)
+						cc:RegisterEffect(e1,true)
 						if cc:IsLocation(LOCATION_SZONE) then
 							--if cc:IsCanTurnSet() then
 								Duel.ChangePosition(cc,POS_FACEDOWN_ATTACK)
 								Duel.RaiseEvent(cc,EVENT_SSET,e,reason,cc:GetControler(),cc:GetControler(),0)
 								cc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1)
 							--end
-						else Duel.SSet(cc:GetControler(),cc) cc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1) end
+						else Duel.SSet(cc:GetControler(),cc,cc:GetControler(),false) cc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1) end
+						e1:Reset()
+						cc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
 						if not cc:IsLocation(LOCATION_SZONE) then
 							local edcheck=0
 							if cc:IsLocation(LOCATION_EXTRA) then edcheck=TYPE_PENDULUM end
@@ -645,14 +654,21 @@ function Auxiliary.PandSSet(tc,reason,tpe)
 						end
 					end
 				else
-					tc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
+					local e1=Effect.CreateEffect(tc)
+					e1:SetType(EFFECT_TYPE_SINGLE)
+					e1:SetCode(EFFECT_MONSTER_SSET)
+					e1:SetValue(TYPE_TRAP+TYPE_CONTINUOUS)
+					e1:SetReset(RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD)
+					tc:RegisterEffect(e1,true)
 					if tc:IsLocation(LOCATION_SZONE) then
 						if tc:IsCanTurnSet() then
 							Duel.ChangePosition(tc,POS_FACEDOWN_ATTACK)
 							Duel.RaiseEvent(tc,EVENT_SSET,e,reason,tc:GetControler(),tc:GetControler(),0)
 							tc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1)
 						end
-					else Duel.SSet(tc:GetControler(),tc) tc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1) end
+					else Duel.SSet(tc:GetControler(),tc,tc:GetControler(),false) tc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1) end
+					e1:Reset()
+					tc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
 					if not tc:IsLocation(LOCATION_SZONE) then
 						local edcheck=0
 						if tc:IsLocation(LOCATION_EXTRA) then edcheck=TYPE_PENDULUM end
@@ -792,8 +808,8 @@ Auxiliary.PendCondition=function()
 				if c==nil then return true end
 				local tp=c:GetControler()
 				local eset={Duel.IsPlayerAffectedByEffect(tp,EFFECT_EXTRA_PENDULUM_SUMMON)}
-				if PENDULUM_CHECKLIST&(0x1<<tp)~=0 and #eset==0 then return false end
-				--if Auxiliary.PendulumChecklist&(0x1<<tp)~=0 and #eset==0 then return false end
+				--if PENDULUM_CHECKLIST&(0x1<<tp)~=0 and #eset==0 then return false end
+				if Auxiliary.PendulumChecklist&(0x1<<tp)~=0 and #eset==0 then return false end
 				local rpz=Duel.GetFieldCard(tp,LOCATION_PZONE,1)
 				if (rpz==nil or rpz:IsType(TYPE_PANDEMONIUM)) and Duel.IsExistingMatchingCard(Auxiliary.PandePendScale,tp,LOCATION_SZONE,0,1,c,c:GetSequence()) then
 					rpz=Duel.GetMatchingGroup(Auxiliary.PandePendScale,tp,LOCATION_SZONE,0,c,c:GetSequence()):GetFirst()
@@ -877,8 +893,8 @@ Auxiliary.PendOperation=function()
 					tg=Duel.GetMatchingGroup(Auxiliary.PConditionFilter,tp,loc,0,nil,e,tp,lscale,rscale,eset)
 				end
 				local ce=nil
-				local b1=PENDULUM_CHECKLIST&(0x1<<tp)==0
-				--local b1=Auxiliary.PendulumChecklist&(0x1<<tp)==0
+				--local b1=PENDULUM_CHECKLIST&(0x1<<tp)==0
+				local b1=Auxiliary.PendulumChecklist&(0x1<<tp)==0
 				local b2=#eset>0
 				if b1 and b2 then
 					local options={1163}
@@ -909,8 +925,8 @@ Auxiliary.PendOperation=function()
 					Duel.Hint(HINT_CARD,0,ce:GetOwner():GetOriginalCode())
 					ce:Reset()
 				else
-					PENDULUM_CHECKLIST=PENDULUM_CHECKLIST|(0x1<<tp)
-					--Auxiliary.PendulumChecklist=Auxiliary.PendulumChecklist|(0x1<<tp)
+					--PENDULUM_CHECKLIST=PENDULUM_CHECKLIST|(0x1<<tp)
+					Auxiliary.PendulumChecklist=Auxiliary.PendulumChecklist|(0x1<<tp)
 				end
 				sg:Merge(g)
 				Duel.HintSelection(Group.FromCards(c))

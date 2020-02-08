@@ -19,13 +19,13 @@ function cid.initial_effect(c)
 	e1:SetTarget(cid.rttg)
 	e1:SetOperation(cid.rtop)
 	c:RegisterEffect(e1)
-	aux.CannotBeEDMaterial(c,nil,LOCATION_ONFIELD)
+	aux.CannotBeEDMaterial(c,nil,LOCATION_MZONE)
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_QUICK_F)
 	e2:SetCategory(CATEGORY_DISABLE_SUMMON+CATEGORY_REMOVE)
 	e2:SetRange(LOCATION_MZONE)
 	e2:SetCode(EVENT_SUMMON)
-	e2:SetCountLimit(1)
+	e2:SetCountLimit(1,id)
 	e2:SetCondition(cid.rmcon)
 	e2:SetTarget(cid.rmtg)
 	e2:SetOperation(cid.rmop)
@@ -49,11 +49,11 @@ function cid.splimit(e,c,sump,sumtype,sumpos,targetp)
 	if c:IsSetCard(0xc97) then return false end
 	return bit.band(sumtype,SUMMON_TYPE_PENDULUM)==SUMMON_TYPE_PENDULUM
 end
-function cid.filter(c)
+function cid.filter1(c)
 	return c:IsFaceup() and c:IsSetCard(0xc97) and c:IsAbleToDeck()
 end
 function cid.rttg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_REMOVED) and chkc:IsControler(tp) and cid.filter(chkc) end
+	if chkc then return chkc:IsLocation(LOCATION_REMOVED) and chkc:IsControler(tp) and cid.filter1(chkc) end
 	if chk==0 then return Duel.IsPlayerCanDraw(tp) and Duel.IsExistingTarget(cid.filter1,tp,LOCATION_REMOVED,0,1,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
 	local g=Duel.SelectTarget(tp,cid.filter1,tp,LOCATION_REMOVED,0,1,1,nil)
