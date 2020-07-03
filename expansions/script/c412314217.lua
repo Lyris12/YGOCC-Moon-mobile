@@ -1,13 +1,5 @@
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
 --created by Jake, coded by Lyris, art from Cardfight!! Vanguard's "Fighting Spirit Revenger, Macart"
---Dawn Blader - Experienced Paladin
+local cid,id=GetID()
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddSynchroProcedure(c,nil,aux.NonTuner(nil),1)
@@ -48,20 +40,19 @@ function cid.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return true end
 	Duel.SetOperationInfo(0,CATEGORY_TODECK,nil,1,tp,LOCATION_GRAVE)
 end
-function cid.filter(c)
+function cid.tdfilter(c)
 	return c:IsType(TYPE_MONSTER) and c:IsSetCard(0x613) and c:IsAbleToDeck()
 end
 function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
-	local g=Duel.SelectMatchingCard(tp,cid.filter,tp,LOCATION_GRAVE,0,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,cid.tdfilter,tp,LOCATION_GRAVE,0,1,1,nil)
 	Duel.HintSelection(g)
 	local tc=g:GetFirst()
 	if tc and Duel.SendtoDeck(g,nil,2,REASON_EFFECT)~=0 and tc:IsLocation(LOCATION_DECK) then
 		Duel.ShuffleDeck(tp)
-		local dg=Duel.GetFieldGroup(tp,LOCATION_HAND,0)
-		if #dg>0 and Duel.SelectYesNo(tp,1108) then
+		if Duel.IsExistingMatchingCard(Card.IsDiscardable,tp,LOCATION_HAND,0,1,nil,REASON_EFFECT) and Duel.SelectYesNo(tp,1108) then
 			Duel.BreakEffect()
-			Duel.DiscardHand(tp,aux.TRUE,1,1,REASON_EFFECT+REASON_DISCARD)
+			Duel.DiscardHand(tp,Card.IsDiscardable,1,1,REASON_EFFECT+REASON_DISCARD,nil,REASON_EFFECT)
 		end
 	end
 end

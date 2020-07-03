@@ -1,13 +1,5 @@
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
 --created by Hawknad777, coded by Lyris
---Bright Star Red Giant
+local cid,id=GetID()
 function cid.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
@@ -38,7 +30,7 @@ function cid.atkop(e,tp,eg,ep,ev,re,r,rp)
 	e1:SetType(EFFECT_TYPE_SINGLE)
 	e1:SetCode(EFFECT_UPDATE_ATTACK)
 	e1:SetValue(1000)
-	e1:SetReset(RESET_EVENT+RESETS_STANDARD_DISABLE+RESET_PHASE+PHASE_END+RESET_OPPO_TURN,d)
+	e1:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_DISABLE+RESET_PHASE+PHASE_END+RESET_OPPO_TURN,d)
 	c:RegisterEffect(e1)
 	local e2=e1:Clone()
 	e2:SetCode(EFFECT_UPDATE_DEFENSE)

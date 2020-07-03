@@ -3,7 +3,7 @@ local cid,id=GetID()
 function cid.initial_effect(c)
    aux.AddOrigEvoluteType(c)
 	c:EnableReviveLimit()
-  aux.AddEvoluteProc(c,nil,6,cid.filter1,cid.filter2,1,99)
+  aux.AddEvoluteProc(c,nil,6,aux.FilterBoolFunction(Card.IsSetCard,0xc50),2,99)
 	--attack up
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_CONTROL+CATEGORY_DISABLE)
@@ -24,7 +24,7 @@ function cid.initial_effect(c)
 	e2:SetCategory(CATEGORY_TODECK+CATEGORY_DRAW)
 	e2:SetType(EFFECT_TYPE_IGNITION)
 	e2:SetRange(LOCATION_GRAVE)
- --   e2:SetCondition(aux.exccon)
+	e2:SetCondition(cid.sscon)
 	e2:SetCost(cid.thcost)
 	e2:SetTarget(cid.thtg)
 	e2:SetOperation(cid.thop)
@@ -34,11 +34,9 @@ function cid.checku(sg,ec,tp)
 return sg:IsExists(Card.IsType,1,nil,TYPE_NORMAL)
 end
 function cid.filter1(c,ec,tp)
-	return c:IsRace(RACE_FAIRY) or c:IsAttribute(ATTRIBUTE_LIGHT)
+	return  c:IsType(TYPE_TOKEN)
 end
-function cid.filter2(c,ec,tp)
-	return c:IsSetCard(0xc50)
-end
+
 function cid.condition(e,tp,eg,ep,ev,re,r,rp)
 	local ph=Duel.GetCurrentPhase()
 	return Duel.GetTurnPlayer()~=tp 
@@ -52,7 +50,7 @@ function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.Remove(g,POS_FACEUP,REASON_COST)
 end
 function cid.cfilter(c)
-	return  not c:IsType(TYPE_SPELL+TYPE_TRAP) and (c:IsLocation(LOCATION_GRAVE+LOCATION_HAND) or (c:IsLocation(LOCATION_EXTRA) and c:IsType(TYPE_PENDULUM) and c:IsFaceup())) and not c:IsType(TYPE_EFFECT) and c:IsAbleToRemoveAsCost()
+	return  not c:IsType(TYPE_SPELL+TYPE_TRAP) and (c:IsLocation(LOCATION_HAND) or (c:IsLocation(LOCATION_EXTRA) and c:IsType(TYPE_PENDULUM) and c:IsFaceup())) and not c:IsType(TYPE_EFFECT) and c:IsAbleToRemoveAsCost()
 end
 
 function cid.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
@@ -97,7 +95,9 @@ if tc:GetLevel()>0 then
 
 	 end
 end
-
+function cid.sscon(e,tp,eg,ep,ev,re,r,rp)
+return aux.exccon(e) and e:GetHandler():IsPreviousLocation(LOCATION_ONFIELD)
+end
 function cid.thcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return e:GetHandler():IsAbleToRemoveAsCost() end
 	Duel.Remove(e:GetHandler(),POS_FACEUP,REASON_COST)

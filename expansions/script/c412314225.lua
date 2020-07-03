@@ -1,25 +1,10 @@
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
 --created by Jake, coded by Lyris, art from "The Sanctuary in the Sky"
---A Soldier's Resting Place
+local cid,id=GetID()
 function cid.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(EVENT_FREE_CHAIN)
 	c:RegisterEffect(e1)
-	--local e2=Effect.CreateEffect(c)
-	--e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	--e2:SetCode(EVENT_PRE_BATTLE_DAMAGE)
-	--e2:SetRange(LOCATION_FZONE)
-	--e2:SetCondition(cid.damcon)
-	--e2:SetOperation(cid.damop)
-	--c:RegisterEffect(e2)
 	local e3=Effect.CreateEffect(c)
 	e3:SetType(EFFECT_TYPE_FIELD)
 	e3:SetCode(EFFECT_AVOID_BATTLE_DAMAGE)
@@ -112,7 +97,7 @@ end
 function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local ct=e:GetLabel()
 	if chk==0 then return Duel.GetMatchingGroupCount(Card.IsDiscardable,tp,LOCATION_HAND,0,nil)>=ct end
-	Duel.DiscardHand(tp,aux.TRUE,ct,ct,REASON_COST+REASON_DISCARD)
+	Duel.DiscardHand(tp,Card.IsDiscardable,ct,ct,REASON_COST+REASON_DISCARD)
 	local n=e:GetHandler():GetFlagEffectLabel(id)
 	if not n then
 		e:GetHandler():RegisterFlagEffect(id,RESET_PHASE+PHASE_END+RESET_EVENT+RESET_TOFIELD+RESET_TURN_SET,0,1,1)

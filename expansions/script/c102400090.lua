@@ -6,7 +6,7 @@ function cid.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
 	e1:SetCode(EVENT_DESTROYED)
 	e1:SetRange(LOCATION_HAND)
-	e1:SetProperty(EFFECT_FLAG_DELAY)
+	e1:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetCondition(cid.spcon)
 	e1:SetTarget(cid.sptg)
@@ -44,11 +44,11 @@ function cid.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chk==0 then return true end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 	local g=Duel.SelectTarget(tp,Card.IsCanBeSpecialSummoned,tp,LOCATION_GRAVE,0,1,1,nil,e,0,tp,false,false,POS_FACEUP_DEFENSE)
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,#g,0,0)
 end
 function cid.activate(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()
-	if tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP_DEFENSE)~=0 then
+	if tc and tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP_DEFENSE)~=0 then
 		Duel.BreakEffect()
 		Duel.Destroy(e:GetHandler(),REASON_EFFECT,LOCATION_REMOVED)
 	end

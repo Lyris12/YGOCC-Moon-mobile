@@ -1,11 +1,11 @@
 --created & coded by Lyris
 --S－VINEの騎士クライッシャ
 local cid,id=GetID()
-cid.spt_other_space=id+75
+cid.spt_other_space=id+65
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddOrigSpatialType(c,false,true)
-	aux.AddSpatialProc(c,nil,8,300,nil,aux.TRUE,2,2)
+	aux.AddSpatialProc(c,nil,8,aux.TRUE,2)
 	local e3=Effect.CreateEffect(c)
 	e3:SetType(EFFECT_TYPE_QUICK_O)
 	e3:SetCode(EVENT_FREE_CHAIN)
@@ -29,8 +29,7 @@ function cid.destg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsOnField() and chkc:IsFaceup() end
 	if chk==0 then return Duel.IsExistingTarget(nil,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RTOHAND)
-	local g=Duel.SelectTarget(tp,nil,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,nil)
-	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,1,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_DESTROY,Duel.SelectTarget(tp,nil,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,nil),1,0,0)
 end
 function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()

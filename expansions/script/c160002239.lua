@@ -44,9 +44,6 @@ function cid.initial_effect(c)
 	c:RegisterEffect(e3)
 end
 
-function cid.checku(sg,ec,tp)
-return sg:IsExists(Card.IsType,1,nil,TYPE_NORMAL)
-end
 function cid.filter1(c,ec,tp)
 	return c:IsRace(RACE_FAIRY) or c:IsAttribute(ATTRIBUTE_LIGHT)
 end
@@ -73,6 +70,6 @@ function cid.psop(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.SelectMatchingCard(tp,cid.psfilter,tp,LOCATION_EXTRA,0,1,1,nil)
 	local tc=g:GetFirst()
 	if g:GetCount()>0 then
-		Duel.MoveToField(g:GetFirst(),tp,tp,LOCATION_SZONE,POS_FACEUP,true)
+		Duel.MoveToField(g:GetFirst(),tp,tp,LOCATION_PZONE,POS_FACEUP,true)
 	end
 end

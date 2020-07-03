@@ -1,13 +1,5 @@
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
 --created by Jake, coded by Lyris, art from Cardfight!! Vanguard's "Dust Storm Eradicator, Toko" & Granblue Fantasy's Albert
---Dawn Blader - Young Paladin
+local cid,id=GetID()
 function cid.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_IGNITION)
@@ -29,7 +21,7 @@ function cid.initial_effect(c)
 end
 function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsDiscardable,tp,LOCATION_HAND,0,1,nil) end
-	Duel.DiscardHand(tp,aux.TRUE,1,1,REASON_COST+REASON_DISCARD)
+	Duel.DiscardHand(tp,Card.IsDiscardable,1,1,REASON_COST+REASON_DISCARD)
 end
 function cid.filter(c)
 	return c:GetLevel()>0 and c:IsSetCard(0x613)

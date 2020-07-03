@@ -23,6 +23,7 @@ CARD_INLIGHTENED_PSYCHIC_HELMET		=102400006
 CARD_NEBULA_TOKEN					=218201917
 CARD_DRAGON_EGG_TOKEN				=20157305
 CARD_BLACK_GARDEN					=71645242
+CARD_EVIL_DRAGON_ANANTA				=8400623
 
 --Custom Type Tables
 Auxiliary.Customs={} --check if card uses custom type, indexing card
@@ -46,8 +47,8 @@ function GetID()
 	return scard,s_id
 end
 --overwrite functions
-local is_type, card_remcounter, duel_remcounter, registereff, effect_set_target_range, add_xyz_proc, add_xyz_proc_nlv, duel_overlay, duel_set_lp, duel_select_target, duel_banish, card_check_remove_overlay_card, is_reason, duel_check_tribute, select_tribute = 
-	Card.IsType, Card.RemoveCounter, Duel.RemoveCounter, Card.RegisterEffect, Effect.SetTargetRange, Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget, Duel.Remove, Card.CheckRemoveOverlayCard, Card.IsReason, Duel.CheckTribute, Duel.SelectTribute
+local is_type, card_remcounter, duel_remcounter, effect_set_target_range, add_xyz_proc, add_xyz_proc_nlv, duel_overlay, duel_set_lp, duel_select_target, duel_banish, card_check_remove_overlay_card, is_reason, duel_check_tribute, select_tribute = 
+	Card.IsType, Card.RemoveCounter, Duel.RemoveCounter, Effect.SetTargetRange, Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget, Duel.Remove, Card.CheckRemoveOverlayCard, Card.IsReason, Duel.CheckTribute, Duel.SelectTribute
 
 dofile("expansions/script/proc_evolute.lua") --Evolutes
 dofile("expansions/script/proc_conjoint.lua") --Conjoints
@@ -108,19 +109,26 @@ Duel.RemoveCounter=function(p,s,o,typ,ct,r,rp)
 		return n-Duel.GetCounter(p,0,o,typ)
 	end
 end
-Card.RegisterEffect=function(c,e,forced)
-	if c:IsStatus(STATUS_INITIALIZING) and not e then return end
-	registereff(c,e,forced)
-	local prop=EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_SET_AVAILABLE
-	if e:IsHasProperty(EFFECT_FLAG_UNCOPYABLE) then prop=prop|EFFECT_FLAG_UNCOPYABLE end
-	local ex=Effect.CreateEffect(c)
-	ex:SetType(EFFECT_TYPE_SINGLE)
-	ex:SetProperty(prop)
-	ex:SetCode(EFFECT_DEFAULT_CALL)
-	ex:SetLabelObject(e)
-	ex:SetLabel(c:GetOriginalCode())
-	registereff(c,ex,forced)
-end
+-- Card.RegisterEffect=function(c,e,forced)
+	-- if c:IsStatus(STATUS_INITIALIZING) and not e then return end
+	-- registereff(c,e,forced)
+	-- local m=_G["c"..c:GetOriginalCode()]
+	-- if not m then return false end
+	-- if not m.default_call_table then
+		-- m.default_call_table={}
+	-- end
+	-- local etable=m.default_call_table
+	-- table.insert(etable,e)
+	-- -- local prop=EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_SET_AVAILABLE
+	-- -- if e:IsHasProperty(EFFECT_FLAG_UNCOPYABLE) then prop=prop|EFFECT_FLAG_UNCOPYABLE end
+	-- -- local ex=Effect.CreateEffect(c)
+	-- -- ex:SetType(EFFECT_TYPE_SINGLE)
+	-- -- ex:SetProperty(prop)
+	-- -- ex:SetCode(EFFECT_DEFAULT_CALL)
+	-- -- ex:SetLabelObject(e)
+	-- -- ex:SetLabel(c:GetOriginalCode())
+	-- -- registereff(c,ex,forced)
+-- end
 Auxiliary.kaiju_procs={}
 Effect.SetTargetRange=function(e,self,oppo)
 	if e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G then
@@ -229,23 +237,30 @@ end
 Duel.Remove=function(cc,pos,r)
 	local cc=Group.CreateGroup()+cc
 	local tg=cc:Clone()
+	local ct=0
 	for c in aux.Next(tg) do
-		if pos&POS_FACEDOWN~=0 and r&REASON_EFFECT~=0 then
-			local ef={c:IsHasEffect(EFFECT_CANNOT_BANISH_FD_EFFECT)}
-			for _,te1 in ipairs(ef) do
-				local cf=te1:GetValue()
-				local typ=aux.GetValueType(cf)
-				if typ=="function" then
-					if cf(te1,c:GetReasonEffect(),c:GetReasonPlayer()) then 
+		if pos&POS_FACEDOWN~=0 then
+			if r&REASON_EFFECT~=0 then
+				local ef={c:IsHasEffect(EFFECT_CANNOT_BANISH_FD_EFFECT)}
+				for _,te1 in ipairs(ef) do
+					local cf=te1:GetValue()
+					local typ=aux.GetValueType(cf)
+					if typ=="function" then
+						if cf(te1,c:GetReasonEffect(),c:GetReasonPlayer()) then 
+							cc=cc-c 
+						end
+					elseif cf>0 then 
 						cc=cc-c 
 					end
-				elseif cf>0 then 
-					cc=cc-c 
 				end
+			end
+			if c:SwitchSpace() then
+				ct=ct+duel_banish(c,POS_FACEUP,r)
+				cc=cc-c
 			end
 		end
 	end
-	return duel_banish(cc,pos,r)
+	return duel_banish(cc,pos,r)+ct
 end
 Card.CheckRemoveOverlayCard=function(c,tp,ct,r)
 	if Duel.IsPlayerAffectedByEffect(tp,25149863) and bit.band(r,REASON_COST)~=0 then

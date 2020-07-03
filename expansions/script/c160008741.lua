@@ -3,7 +3,7 @@ local cid,id=GetID()
 function cid.initial_effect(c)
    aux.AddOrigEvoluteType(c)
 	c:EnableReviveLimit()
-  aux.AddEvoluteProc(c,nil,8,cid.filter1,cid.filter1,2,99)
+  aux.AddEvoluteProc(c,nil,8,aux.FilterBoolFunction(Card.IsSetCard,0xc50),2,99)
 	--destroy
   local e3=Effect.CreateEffect(c)
 	e3:SetDescription(aux.Stringid(id,0))
@@ -40,13 +40,7 @@ function cid.initial_effect(c)
 	e5:SetValue(cid.atkval)
 	c:RegisterEffect(e5)
  end
---filters
-function cid.filter1(c,ec,tp)
-	return  c:IsSetCard(0xc50)
-end
-function cid.filter2(c,ec,tp)
-	return c:IsAttribute(ATTRIBUTE_LIGHT) or c:IsRace(RACE_FAIRY) 
-end
+
 
 
 function cid.costfilter(c)
@@ -64,10 +58,10 @@ end
 
 function cid.destg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	 local c=e:GetHandler()
-	if chkc then return chkc:IsLocation(LOCATION_ONFIELD) and chkc:IsDestructable() and chkc~=c end
-	if chk==0 then return Duel.IsExistingTarget(Card.IsDestructable,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,c) end
+	if chkc then return chkc:IsLocation(LOCATION_ONFIELD) and chkc:IsFaceup() and chkc~=c end
+	if chk==0 then return Duel.IsExistingTarget(Card.IsFaceup,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,c) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-	local g=Duel.SelectTarget(tp,Card.IsDestructable,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,c)
+	local g=Duel.SelectTarget(tp,Card.IsFaceup,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,c)
 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,1,0,0)
 end
 function cid.desop(e,tp,eg,ep,ev,re,r,rp)

@@ -68,10 +68,7 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 		end
 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local g=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(cid.desfilter),tp,LOCATION_HAND+LOCATION_GRAVE,0,1,1,nil,e,tp)
-		if #g>0 then
-			Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
-		end
+		Duel.SpecialSummon(Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(cid.desfilter),tp,LOCATION_HAND+LOCATION_GRAVE,0,1,1,nil,e,tp),0,tp,tp,false,false,POS_FACEUP)
 	end
 end
 function cid.disop(e,tp,eg,ep,ev,re,r,rp)
@@ -104,7 +101,7 @@ function cid.op(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.GetDecktopGroup(tp,1)
 	local tc=g:GetFirst()
 	Duel.DisableShuffleCheck()
-	if Duel.Destroy(g,REASON_EFFECT)~=0 and tc:IsType(TYPE_MONSTER) and tc:IsSetCard(0x7c4) then
-		Duel.Draw(tp,1,REASON_EFFECT)
-	end
+	if Duel.Destroy(g,REASON_EFFECT)~=0 then
+		if tc:IsType(TYPE_MONSTER) and tc:IsSetCard(0x7c4) then Duel.Draw(tp,1,REASON_EFFECT) end
+	else Duel.ConfirmDecktop(tp,1) end
 end

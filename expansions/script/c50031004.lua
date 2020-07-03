@@ -1,11 +1,10 @@
 --Sweethard-Powered: Daffa Goose
 local cid,id=GetID()
 function cid.initial_effect(c)
-   aux.AddOrigEvoluteType(c)
+	aux.AddOrigEvoluteType(c)
 	c:EnableReviveLimit()
- aux.AddEvoluteProc(c,nil,5,cid.filter1,cid.filter2,2,99)  
-
---spsummon proc
+	aux.AddEvoluteProc(c,nil,5,cid.filter1,cid.filter2,2,99)  
+	--spsummon proc
 	local e0=Effect.CreateEffect(c)
 	e0:SetDescription(aux.Stringid(id,0))
 	e0:SetType(EFFECT_TYPE_FIELD)
@@ -17,7 +16,7 @@ function cid.initial_effect(c)
 	e0:SetOperation(cid.hspop)
 	e0:SetValue(SUMMON_TYPE_SPECIAL+388)
 	c:RegisterEffect(e0)
-		--deck check
+	--deck check
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetType(EFFECT_TYPE_QUICK_O)
@@ -30,26 +29,25 @@ function cid.initial_effect(c)
 	e1:SetOperation(cid.operation)
 	c:RegisterEffect(e1)
 end
-
 function cid.filter1(c,ec,tp)
 	return c:IsAttribute(ATTRIBUTE_DARK)
 end
 function cid.filter2(c,ec,tp)
 	return c:IsRace(RACE_BEASTWARRIOR)
 end
-function cid.spfilter(c)
-	return c:IsFaceup() and c:IsCode(500310040) 
+function cid.spfilter(c,ec,tp)
+	return c:IsFaceup() and c:IsCode(500310040) and c:IsCanBeEvoluteMaterial(ec)
+		and Duel.GetLocationCountFromEx(tp,tp,c,ec)>0 and aux.MustMaterialCheck(c,tp,EFFECT_MUST_BE_EVOLUTE_MATERIAL)
 end
 function cid.hspcon(e,c)
   if c==nil then return true end
 	if chk==0 then return Duel.GetFlagEffect(tp,id)==0 end
 	local tp=c:GetControler()
-	return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
-		and Duel.IsExistingMatchingCard(cid.spfilter,tp,LOCATION_MZONE,0,1,nil)  and Duel.GetLocationCountFromEx(tp,tp,g,c)>0
+	return Duel.IsExistingMatchingCard(cid.spfilter,tp,LOCATION_MZONE,0,1,nil,c,tp)
 end
-function cid.hspop(e,tp,eg,ep,ev,re,r,rp)
+function cid.hspop(e,tp,eg,ep,ev,re,r,rp,c)
 	   Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_MATERIAL)
-	local g=Duel.SelectMatchingCard(tp,cid.spfilter,tp,LOCATION_MZONE,0,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,cid.spfilter,tp,LOCATION_MZONE,0,1,1,nil,c,tp)
    Duel.SendtoGrave(g,REASON_MATERIAL+0x10000000)
 	Duel.RegisterFlagEffect(tp,id,RESET_PHASE+PHASE_END,0,1)
 end
@@ -92,17 +90,15 @@ function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 	Duel.ShuffleDeck(tp)
 	--getting the option and executing
 	if opt==0 then
- local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
-	if Duel.Draw(p,d,REASON_EFFECT)==0 then return end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
-	local g=Duel.SelectMatchingCard(tp,Card.IsAbleToDeck,tp,LOCATION_HAND,0,1,1,nil)
-	if g:GetCount()>0 then
-		Duel.BreakEffect()
-		Duel.SendtoDeck(g,nil,1,REASON_EFFECT)
+	   local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
+	   if Duel.Draw(tp,1,REASON_EFFECT)<1 then return end
+	   Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
+	   local g=Duel.SelectMatchingCard(tp,Card.IsAbleToDeck,tp,LOCATION_HAND,0,1,1,nil)
+	   if g:GetCount()>0 then
+			Duel.BreakEffect()
+			Duel.SendtoDeck(g,nil,1,REASON_EFFECT)
+		end
 	end
-end
-
-
 	if opt==1 then
 		local c=e:GetHandler()
 		local e1=Effect.CreateEffect(c)

@@ -27,11 +27,12 @@ function s.initial_effect(c)
 		c:RegisterEffect(e2)  
 end
 	function s.cfilter(c,tp)
-	return c:IsReason(REASON_DESTROY) and c:IsPreviousLocation(LOCATION_ONFIELD) and c:GetPreviousControler()==1-tp
+	return c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsReason(REASON_EFFECT)
 end
 	function s.cond(e,tp,eg,ep,ev,re,r,rp)
-	local rc=re:GetHandler()
-	return rc:IsControler(tp) and rc:IsType(TYPE_MONSTER) and eg:IsExists(s.cfilter,1,nil,tp)
+	if not re then return false end
+	local rc=re:GetHandler() 
+	return rp==tp and bit.band(r,REASON_EFFECT)~=0 and rc:IsType(TYPE_MONSTER) and re:GetActivateLocation()==LOCATION_MZONE and eg:IsExists(s.cfilter,1,nil,tp)
 end
 	function s.strg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
@@ -55,7 +56,7 @@ end
 	return c:IsCode(03113667) and c:IsFaceup()
 end
 	function s.spfilter(c,e,tp)
-	return c:IsAttribute(ATTRIBUTE_DARK) and c:IsType(RACE_MACHINE) and c:IsLevelBelow(6) and c:IsCanBeSpecialSummoned(e,0,tp,false,false) and c:IsType(TYPE_MONSTER)
+	return c:IsAttribute(ATTRIBUTE_DARK) and c:IsRace(RACE_MACHINE) and c:IsLevelBelow(6) and c:IsCanBeSpecialSummoned(e,0,tp,false,false) and c:IsType(TYPE_MONSTER)
 end
 	function s.cond1(e,tp,eg,ep,ev,re,r,rp)
 	local cf=Duel.GetFieldCard(tp,LOCATION_SZONE,5)

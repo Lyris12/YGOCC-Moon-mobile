@@ -2,7 +2,7 @@
 local cid,id=GetID()
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
-	aux.AddLinkProcedure(c,aux.FilterBoolFunction(Card.IsRace,RACE_PSYCHO),3)
+	aux.AddLinkProcedure(c,aux.FilterBoolFunction(Card.IsLinkRace,RACE_PSYCHO),3)
 	local e0=Effect.CreateEffect(c)
 	e0:SetType(EFFECT_TYPE_SINGLE)
 	e0:SetCode(EFFECT_UPDATE_ATTACK)
@@ -27,13 +27,13 @@ function cid.initial_effect(c)
 	e1:SetOperation(cid.op)
 	c:RegisterEffect(e1)
 end
-function cid.repfilter(c,eg)
-	return (eg and eg:IsContains(c) or c:IsLocation(LOCATION_MZONE)) and c:IsType(TYPE_MONSTER) and not c:IsForbidden()
+function cid.repfilter(c)
+	return c:IsLocation(LOCATION_MZONE) and not c:IsForbidden()
 end
 function cid.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if chk==0 then return eg:IsExists(cid.repfilter,1,c,eg) end
-	local g=eg:Filter(cid.repfilter,c,eg)
+	if chk==0 then return eg:IsExists(cid.repfilter,1,c) end
+	local g=eg:Filter(cid.repfilter,c)
 	for tc in aux.Next(g) do
 		if Duel.Equip(tp,tc,c,true,true) then
 			local e1=Effect.CreateEffect(c)

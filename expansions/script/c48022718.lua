@@ -45,7 +45,7 @@ function cid.eqop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 or c:IsFacedown() or not c:IsRelateToEffect(e) then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_EQUIP)
-	local g=Duel.SelectMatchingCard(tp,aux.AND(Card.CheckUniqueOnField,aux.NOT(Card.IsForbidden)),tp,LOCATION_HAND,0,1,1,nil,tp)
+	local g=Duel.SelectMatchingCard(tp,cid.eqfilter,tp,LOCATION_HAND,0,1,1,nil,tp)
 	local tc=g:GetFirst()
 	if tc then
 		if not Duel.Equip(tp,tc,c) then return end
@@ -62,20 +62,19 @@ function cid.eqlimit(e,c)
 	return e:GetOwner()==c
 end
 function cid.cfilter(c)
-	return c:GetOriginalType()&TYPE_MONSTER~=0
+	return c:GetOriginalType()&TYPE_MONSTER~=0 and c:IsDestructable()
 end
 function cid.tg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local g=e:GetHandler():GetEquipGroup():Filter(cid.cfilter,nil)
 	if chk==0 then return #g>0 and Duel.IsExistingTarget(Card.IsAbleToHand,tp,0,LOCATION_MZONE,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,1,0,0)
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
+	Duel.Destroy(g:Select(tp,1,1,nil),REASON_COST)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RTOHAND)
 	Duel.SetOperationInfo(0,CATEGORY_TOHAND,Duel.SelectTarget(tp,Card.IsAbleToHand,tp,0,LOCATION_MZONE,1,1,nil),1,0,0)
 end
 function cid.op(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-	local g=e:GetHandler():GetEquipGroup():FilterSelect(tp,cid.cfilter,1,1,nil)
 	local tc=Duel.GetFirstTarget()
-	if #g>0 and Duel.Destroy(g,REASON_EFFECT)~=0 and tc:IsRelateToEffect(e) then Duel.SendtoHand(tc,nil,REASON_EFFECT) end
+	if tc:IsRelateToEffect(e) then Duel.SendtoHand(tc,nil,REASON_EFFECT) end
 end
 function cid.desfilter(c,e)
 	return c:IsLocation(LOCATION_SZONE)

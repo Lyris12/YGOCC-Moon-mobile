@@ -3,24 +3,24 @@ function c500310990.initial_effect(c)
 	 --link summon
 	aux.AddLinkProcedure(c,c500310990.matfilter,2,2)
 	c:EnableReviveLimit()
-
-			--summon success
+	--summon success
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e1:SetCode(EVENT_SPSUMMON_SUCCESS)
-	e1:SetCountLimit(1,500310990)
-	e1:SetProperty(EFFECT_FLAG_CARD_TARGET)
+	e1:SetCountLimit(1,310990)
+	e1:SetProperty(EFFECT_FLAG_DELAY)
 	e1:SetCondition(c500310990.thcon)
+	 e1:SetCost(c500310990.costxxl)
 	e1:SetTarget(c500310990.thtg)
 	e1:SetOperation(c500310990.thop)
 	c:RegisterEffect(e1)
---SpecialSummon
+	--SpecialSummon
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(500310990,0))
 	e2:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e2:SetType(EFFECT_TYPE_IGNITION)
-	e2:SetCountLimit(1,500310991)
+	e2:SetCountLimit(1,310991)
 	e2:SetProperty(EFFECT_FLAG_CARD_TARGET)
 	e2:SetRange(LOCATION_MZONE)
 	e2:SetCost(c500310990.cost)
@@ -41,7 +41,10 @@ end
 function c500310990.matfilter(c)
 	return c:IsSetCard(0xa34) 
 end
-
+function c500310990.costxxl(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsDiscardable,tp,LOCATION_HAND,0,1,e:GetHandler()) end
+	Duel.DiscardHand(tp,Card.IsDiscardable,1,1,REASON_COST+REASON_DISCARD)
+end
 function c500310990.thfilter(c)
 	return c:IsLevelBelow(4) and c:IsRace(RACE_BEASTWARRIOR) and c:IsAbleToHand()
 end
@@ -80,28 +83,30 @@ function c500310990.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 end
 function c500310990.operation(e,tp,eg,ep,ev,re,r,rp)
 	 local ct=math.min(3,Duel.GetFieldGroupCount(tp,LOCATION_DECK,0))
-		local c=e:GetHandler()
+	local c=e:GetHandler()
 	local zone=c:GetLinkedZone(tp)
 	local tc=Duel.GetFirstTarget()
-	if tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP,zone)  then
+	if tc:IsRelateToEffect(e) and Duel.SpecialSummonStep(tc,0,tp,tp,false,false,POS_FACEUP,zone)  then
 		local e1=Effect.CreateEffect(c)
 		e1:SetType(EFFECT_TYPE_SINGLE)
+		e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE)
 		e1:SetCode(EFFECT_CANNOT_BE_LINK_MATERIAL)
 		e1:SetReset(RESET_EVENT+RESETS_STANDARD)
 		e1:SetValue(1)
 		tc:RegisterEffect(e1)
-		if Duel.SpecialSummonComplete() ~=0 and tc:IsType(TYPE_EVOLUTE) then
-	if ct==0 then return end
-	local t={}
-	for i=1,ct do
-		t[i]=i
-	end
-	local ac=1
-	if ct>1 then
-		Duel.Hint(HINT_SELECTMSG,tp,aux.Stringid(16768387,1))
-		ac=Duel.AnnounceNumber(tp,table.unpack(t))
-	end
-	Duel.SortDecktop(tp,tp,ac)
-end
+		Duel.SpecialSummonComplete()
+		if tc:IsType(TYPE_EVOLUTE) then
+			if ct==0 then return end
+			local t={}
+			for i=1,ct do
+				t[i]=i
+			end
+			local ac=1
+			if ct>1 then
+				Duel.Hint(HINT_SELECTMSG,tp,aux.Stringid(16768387,1))
+				ac=Duel.AnnounceNumber(tp,table.unpack(t))
+			end
+			Duel.SortDecktop(tp,tp,ac)
+		end
 	end
 end

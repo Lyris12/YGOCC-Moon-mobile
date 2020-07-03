@@ -20,7 +20,7 @@ function cid.initial_effect(c)
 	e3:SetCondition(function(e,tp) return Duel.GetTurnPlayer()==tp and e:GetHandler():GetFlagEffect(id)>0 end)
 	e3:SetOperation(cid.mtop)
 	c:RegisterEffect(e3)
-	local e1=Effect.CreateEffect(c)
+	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e4:SetCode(EVENT_TO_GRAVE)
 	e4:SetCountLimit(1,id)
@@ -39,8 +39,8 @@ function cid.chainop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function cid.mtop(e,tp,eg,ep,ev,re,r,rp)
-	if Duel.GetFieldGroupCount(tp,LOCATION_HAND,0)>0 and Duel.SelectYesNo(tp,aux.Stringid(id,0)) then
-		Duel.DiscardHand(tp,nil,1,1,REASON_COST+REASON_DISCARD)
+	if Duel.IsExistingMatchingCard(Card.IsDiscardable,tp,LOCATION_HAND,0,1,nil) and Duel.SelectYesNo(tp,aux.Stringid(id,0)) then
+		Duel.DiscardHand(tp,Card.IsDiscardable,1,1,REASON_COST+REASON_DISCARD)
 	else
 		Duel.SendtoGrave(e:GetHandler(),REASON_COST)
 	end

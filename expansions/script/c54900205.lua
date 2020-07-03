@@ -60,7 +60,7 @@ function cid.lvop(e,tp,eg,ep,ev,re,r,rp)
 		e1:SetType(EFFECT_TYPE_SINGLE)
 		e1:SetCode(EFFECT_SET_ATTACK_FINAL)
 		e1:SetValue(0)
-		e1:SetReset(RESET_EVENT+0x1fe0000)
+		e1:SetReset(RESET_EVENT+RESETS_STANDARD)
 		tc:RegisterEffect(e1,true)
 		local e2=e1:Clone()
 		e2:SetCode(EFFECT_SET_DEFENSE_FINAL)
@@ -69,7 +69,7 @@ function cid.lvop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function cid.filter(c,e,tp)
-	return c:IsCode(id) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+	return c:IsCode(81450658) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 function cid.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
@@ -109,13 +109,13 @@ function cid.atkop(e,tp,eg,ep,ev,re,r,rp)
 		e1:SetType(EFFECT_TYPE_SINGLE)
 		e1:SetCode(EFFECT_UPDATE_ATTACK)
 		e1:SetValue(lv*100)
-		e1:SetReset(RESET_EVENT+0x1fe0000)
+		e1:SetReset(RESET_EVENT+RESETS_STANDARD)
 		tc:RegisterEffect(e1)
 		local e2=Effect.CreateEffect(e:GetHandler())
 		e2:SetType(EFFECT_TYPE_SINGLE)
 		e2:SetCode(EFFECT_UPDATE_DEFENSE)
 		e2:SetValue(lv*100)
-		e2:SetReset(RESET_EVENT+0x1fe0000)
+		e2:SetReset(RESET_EVENT+RESETS_STANDARD)
 		tc:RegisterEffect(e2)
 	end
 end

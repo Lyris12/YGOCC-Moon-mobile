@@ -48,8 +48,7 @@ function cid.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 		e:SetProperty(0)
 	else
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
-		local g=Duel.SelectTarget(tp,cid.thfilter,tp,LOCATION_GRAVE,0,1,1,nil)
-		Duel.SetOperationInfo(0,CATEGORY_TODECK,g,1,0,0)
+		Duel.SetOperationInfo(0,CATEGORY_TODECK,Duel.SelectTarget(tp,cid.thfilter,tp,LOCATION_GRAVE,0,1,1,nil),#g,0,0)
 		e:SetProperty(EFFECT_FLAG_CARD_TARGET)
 	end
 end
@@ -61,10 +60,7 @@ function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 	if ct==1 then
 		if Duel.GetMatchingGroupCount(cid.cfilter,tp,LOCATION_GRAVE,0,e:GetHandler())==0 then return end
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-		local g=Duel.SelectMatchingCard(tp,cid.filter,tp,LOCATION_DECK,0,1,1,nil)
-		if g:GetCount()>0 then
-			Duel.SendtoGrave(g,REASON_EFFECT)
-		end
+		Duel.SendtoGrave(Duel.SelectMatchingCard(tp,cid.filter,tp,LOCATION_DECK,0,1,1,nil),REASON_EFFECT)
 	else
 		local tc=Duel.GetFirstTarget()
 		if tc and tc:IsRelateToEffect(e) then

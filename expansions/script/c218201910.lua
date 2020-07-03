@@ -1,16 +1,8 @@
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
 --created by Hawknad777, coded by Lyris
---Bright Star Cluster
+local cid,id=GetID()
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
-	aux.AddLinkProcedure(c,aux.FilterBoolFunction(Card.IsSetCard,0x88f),2)
+	aux.AddLinkProcedure(c,aux.FilterBoolFunction(Card.IsLinkSetCard,0x88f),2)
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_IGNITION)
 	e2:SetRange(LOCATION_MZONE)

@@ -4,7 +4,7 @@ local cid,id=GetID()
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddOrigSpatialType(c)
-	aux.AddSpatialProc(c,cid.mcheck,4,300,nil,cid.mfilter,1,1,aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_WATER),1,1)
+	aux.AddSpatialProc(c,cid.mcheck,4,cid.mfilter,1,1,aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_WATER),1)
 	local ae3=Effect.CreateEffect(c)
 	ae3:SetCategory(CATEGORY_REMOVE)
 	ae3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
@@ -44,9 +44,6 @@ function cid.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.SetOperationInfo(0,CATEGORY_TOGRAVE,nil,1,tp,LOCATION_REMOVED)
 end
 function cid.operation(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-	local g=Duel.SelectMatchingCard(tp,cid.filter2,tp,LOCATION_REMOVED,0,1,e:GetLabel(),nil)
-	if g:GetCount()>0 then
-		Duel.SendtoGrave(g,REASON_EFFECT+REASON_RETURN)
-	end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+	Duel.SendtoGrave(Duel.SelectMatchingCard(tp,cid.filter2,tp,LOCATION_REMOVED,0,1,e:GetLabel(),nil),REASON_EFFECT+REASON_RETURN)
 end

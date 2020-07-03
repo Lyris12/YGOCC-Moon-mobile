@@ -16,7 +16,6 @@ function s.initial_effect(c)
 		c:RegisterEffect(e1)
 		local e2=Effect.CreateEffect(c)
 		e2:SetCategory(CATEGORY_DESTROY)
-		e2:SetDescription(aux.Stringid(id,1))
 		e2:SetType(EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_FIELD)
 		e2:SetProperty(EFFECT_FLAG_DELAY)
 		e2:SetCode(EVENT_SPSUMMON_SUCCESS)
@@ -48,7 +47,7 @@ end
 	local p=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER)
 	Duel.ConfirmDecktop(p,ct)
 	local g=Duel.GetDecktopGroup(p,ct)
-	if g:GetCount()>0 and g:IsExists(s.filter3,1,nil) and Duel.SelectYesNo(p,aux.Stringid(40001,1)) then
+	if g:GetCount()>0 and g:IsExists(s.filter3,1,nil) and Duel.SelectYesNo(p,aux.Stringid(40001,0)) then
 		Duel.Hint(HINT_SELECTMSG,p,HINTMSG_ATOHAND)
 		local sg=g:FilterSelect(p,s.filter3,1,1,nil)
 		Duel.SendtoHand(sg,nil,REASON_EFFECT)

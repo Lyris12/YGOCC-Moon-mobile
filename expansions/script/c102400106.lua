@@ -32,6 +32,16 @@ function cid.initial_effect(c)
 	e2:SetTarget(cid.tg)
 	e2:SetOperation(cid.op)
 	c:RegisterEffect(e2)
+	local e4=Effect.CreateEffect(c)
+	e4:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
+	e4:SetCode(EVENT_DAMAGE_STEP_END)
+	e4:SetCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)
+	e4:SetOperation(cid.atop)
+	c:RegisterEffect(e4)
+end
+function cid.atop(e)
+	local c=e:GetHandler()
+	if c:IsRelateToBattle() then Duel.Destroy(c,REASON_EFFECT) end
 end
 function cid.descon(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
@@ -46,8 +56,8 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.NegateAttack()
 	if c:IsRelateToEffect(e) and Duel.Destroy(c,REASON_EFFECT)~=0 then
 		local g=Duel.SelectMatchingCard(tp,Card.IsType,tp,0,LOCATION_ONFIELD,1,1,nil,TYPE_SPELL+TYPE_TRAP)
+		Duel.HintSelection(g)
 		if #g>0 then
-			Duel.HintSelection(g)
 			Duel.BreakEffect()
 			Duel.Destroy(g,REASON_EFFECT)
 		end
@@ -69,8 +79,5 @@ end
 function cid.op(e,tp,eg,ep,ev,re,r,rp)
 	if not e:GetHandler():IsRelateToEffect(e) and e:IsHasType(EFFECT_TYPE_FIELD) then return end
 	local tc=Duel.GetFirstTarget()
-	if tc:IsRelateToEffect(e) then
-		Duel.SendtoHand(tc,nil,REASON_EFFECT)
-		Duel.ConfirmCards(1-tp,tc)
-	end
+	if tc:IsRelateToEffect(e) then Duel.SendtoHand(tc,nil,REASON_EFFECT) end
 end

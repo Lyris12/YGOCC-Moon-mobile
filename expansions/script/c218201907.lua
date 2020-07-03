@@ -1,16 +1,8 @@
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
 --created by Hawknad777, coded by Lyris
---Bright Star Blue Hyper Giant
+local cid,id=GetID()
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
-	aux.AddFusionProcCodeFun(c,id,cid.mfilter,2,true,true)
+	aux.AddFusionProcCodeFun(c,id-3,cid.mfilter,2,true,true)
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE)
 	e2:SetCode(EFFECT_UPDATE_ATTACK)

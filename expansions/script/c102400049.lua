@@ -43,8 +43,7 @@ function cid.sptg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
 		and Duel.IsExistingTarget(cid.filter,tp,LOCATION_REMOVED,0,1,nil,e,tp) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectTarget(tp,cid.filter,tp,LOCATION_REMOVED,0,1,1,nil,e,tp)
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,Duel.SelectTarget(tp,cid.filter,tp,LOCATION_REMOVED,0,1,1,nil,e,tp),1,0,0)
 end
 function cid.spop(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()
@@ -61,8 +60,6 @@ function cid.activate(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.GetMatchingGroupCount(aux.AND(Card.IsSetCard,Card.IsFaceup),tp,LOCATION_MZONE,0,1,nil,0x5cd)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
 	local sg=Duel.SelectMatchingCard(tp,nil,tp,0,LOCATION_MZONE,1,#g,nil)
-	if #sg>0 then
-		Duel.HintSelection(sg)
-		Duel.Destroy(sg,REASON_EFFECT)
-	end
+	Duel.HintSelection(sg)
+	Duel.Destroy(sg,REASON_EFFECT)
 end

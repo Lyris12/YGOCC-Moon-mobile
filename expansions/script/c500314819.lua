@@ -3,7 +3,17 @@ local cid,id=GetID()
 function cid.initial_effect(c)
    aux.AddOrigEvoluteType(c)
 	c:EnableReviveLimit()
- aux.AddEvoluteProc(c,nil,8,cid.filter1,cid.filter1)
+ aux.AddEvoluteProc(c,nil,8,aux.FilterBoolFunction(Card.IsSetCard,0xc50),2,2)
+ --summon success
+	local e0=Effect.CreateEffect(c)
+	e0:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
+	e0:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e0:SetCondition(cid.sumcon)
+	e0:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	   if chk==0 then return true end
+	Duel.Hint(HINT_MUSIC,0,aux.Stringid(500314819,6))
+ 
+	c:RegisterEffect(e0)
  local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_QUICK_O)
 	e1:SetCode(EVENT_CHAINING)
@@ -48,9 +58,7 @@ function cid.initial_effect(c)
 	c:RegisterEffect(e5)
 end
 
-function cid.filter1(c,ec,tp)
-	return  c:IsSetCard(0xc50)
-end
+
 function cid.filter2(c,ec,tp)
 	return c:IsRace(RACE_FAIRY) or c:IsAttribute(ATTRIBUTE_LIGHT)
 end
@@ -114,4 +122,7 @@ end
 function cid.chcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return e:GetHandler():IsCanRemoveEC(tp,5,REASON_COST) end
 	e:GetHandler():RemoveEC(tp,5,REASON_COST)
+end
+function cid.sumcon(e,tp,eg,ep,ev,re,r,rp)
+	return e:GetHandler():IsSummonType(SUMMON_TYPE_EVOLUTE)
 end

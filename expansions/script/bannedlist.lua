@@ -1,115 +1,145 @@
 if not banned_list_table then banned_list_table={} end
 local string=require'string'
 local ls=[[
-#[2020.1 YGOCC+2019.10 TCG]
+#[2020.5 YGOCC+2020.4 TCG]
 
-!2020.1 YGOCC
+!2020.5.16 YGOCC
 #Forbidden YGOCC
-	--							MAIN DECK MONSTERS
-33700750 0 -- Anifriend
-33700181 0 -- Anifriend
-33700072 0 -- Anifriend
-33700093 0 -- Anifriend
-33700186 0 -- Anifriend
-33700079 0 -- Anifriend
-33700058 0 -- Anifriend
-33700747 0 -- Anifriend
-33700745 0 -- Anifriend
-	--							EXTRA DECK MONSTERS
-33700083 0 -- Anifriend
-33700085 0 -- Anifriend
-33700082 0 -- Anifriend
-91672800 0 -- Percival, Paladawn Light
-28915253 0 -- Shadowflame Calvary (New, was semi-limited)
+--							MAIN DECK MONSTERS
+33700093 0 -- Anifriends Aardwolf
+33700072 0 -- Anifriends Beaver and Prairie
+33700747 0 -- Anifriends Black-Backed Jackal
+33700745 0 -- Anifriends Forest Owlet
+33700186 0 -- Anifriends Kyushu Owl
+33700750 0 -- Anifriends Reindeer
+33700079 0 -- Anifriends Small-clawed Otter
+33700751 0 -- Anifriends Tanuki
+57460651 0 -- Burn Point Alchemist
+31157205 0 -- Mezka Melodia
 195208400 0 -- Spectre Magician & Dark Light
-
-	--							SPELLS CARDS
-	--							TRAPS CARDS
-
-#Limited YGOCC
-171000121 1 --Amethyst-Winged Kuriboh				MAIN DECK MONSTERS
-160005445 1 -- Paintress Di Vica
-11000533 1 -- Shya Shadowlord
-16000233 1 -- Paintress Gorgia
-33700054 1 -- Anifriend Red Fox
-33700304 1 -- GearGal Veno 
-33700065 1 -- Anifriend 
-17029601 1 -- Psychether Dreamer 
-79854524 1 -- Woodland Wing 
-33700746 1 -- Anifriends Sky Impulse 
-33700744 1 -- Anifriends Gentoo
-53313934 1 -- Mysterious Luster 
-500311592 1 -- Power Portrait's Cursed Portait Trap 
-	--							EXTRA DECK MONSTERS
-#16000045 3 -- ESPergear Knight : Gladiator 
-33700311 1 -- NEXTGal G
-80347321 1 -- Metalfoes Mercuryrider
-210424272 1 -- Moon Burst: The Bad Dream
-19772604 1 -- Flaric Ebona (new, was banned)
-	--							SPELL CARDS
-23251031 0 -- Pharaohnic Papyrus of Patience
-#23251004 3 -- Moon Over the Desert 
-33700316 1 -- GearGal Abort
-63553459 1 -- Nethergear Unit
-#84607229 3 -- Spiritualist Calling (new, unlimited)
-160004532 1 -- The Miscomposition of Power Portrait
-#28915261 3 -- Shadows Ablaze (new, unlimited)
-	--							TRAP CARDS
-
-#Semi-limited YGOCC
-	--							MAIN DECK MONSTERS				
-53313907 2 -- Mysterious Starquid
-32904921 2 -- Aeonbreaker's Bow (new, was limited)
-32904923 2 -- Aeonbreaker's Sword (new, was limited)
-#84607234 3 -- Spiritualist Thalia (new, was limited)
-	--							EXTRA DECK MONSTERS
---
-	--							SPELL CARDS
-53313927 2 -- Mysterious Dimension
-210424266 2 -- Battle in the Storm
-
-	--							TRAP CARDS
-
---NEW
-63553469 0  -- Atom marshal
-19772590 0  -- Advocate of Justice - Ivoric
-500316971 0 -- Buttercup of Fiber VINE
-16000969 0  -- Cybersian Judgeman
-56642464 0  -- Holy Noble Knight Crusader, Artorgius
-75977701 0  -- Infected knight of Ivory
-32904930 0  -- Jaden the Aeonbreaker’s Alchemist
-16000231 0  -- Leaf Private of Fiber VINE
-80347321 0  -- Metalfoes Mercuryrider
-79854546 0  -- Numbing Winter jewel
-56642463 0  -- Noble Knight Mordred
-16000130 0  -- Oak Gardna of Fiber Vine
-23251031 0  -- Pharaohnic Papyrus of patience
-17029608 0  -- Psychether priestess, Joan
-37564902 0  -- Sayuri - GRAZE
-16599458 0  -- Telum of the Angel Organization, Zagar
-20181405 0  -- Terradication Geryonarsenal
-19772596 0  -- The Advocate of Justice’s Summoning 
+16599458 0 -- Telum of the Angel Organization, Zagar
+28916163 0 -- V-Idol Meiko
+--							RITUAL
+37564909 0 -- Sayuri - Scarlet Moon
 500316972 0 -- Twin-Venuses Fiber VINE Dragon
-63553466 0  -- Universe marshal
-79854547 0  -- Verdant illusion
+--							PENDULUM
+19772590 0 -- Advocate of Justice - Ivoric
+--							PANDEMONIUM
+20181405 0 -- Terradication Geryonarsenal
+--
+--							EXTRA DECK MONSTERS
+--							FUSION
+33700083 0 -- Anifriends Suzaku of the South
+63553466 0 -- Universe marshal
+--							SYNCHRO
+102400004 0 -- Accel Burst Dragon
+33700085 0 -- Anifriends Byakko of the West
+56642464 0 -- Holy Noble Knight Crusader, Artorgius
+202114501 0 -- Sireknight
+--							XYZ
+63553469 0 -- Atom marshal
+500314234 0 -- Hime, Ultimate Queen of Magnificient VINE
+--							LINK
+33700082 0 -- Anifriends Seiryu of the East
+75977701 0 -- Infected knight of Ivory
+32904930 0 -- Jaden the Aeonbreaker’s Alchemist
+80347321 0 -- Metalfoes Mercuryrider
+56642463 0 -- Noble Knight Mordred
+79854547 0 -- Verdant Illusion
+160000786 0 -- Yuzu, Guardian of Magnificent VINE
+--							EVOLUTE
+500316971 0 -- Buttercup of Fiber VINE
+16000969 0 -- Cybersian Judgeman
+16000130 0 -- Oak Gardna of Fiber Vine
+--
+--							SPELLS CARDS
+19772596 0 -- The Advocate of Justice’s Summoning
+195208413 0 -- False Reality Distortion
+79854546 0 -- Numbing Winter jewel
+10130500 0 -- Pendulum Advance
+23251031 0 -- Pharaohnic Papyrus of Patience
+17029608 0 -- Psychether priestess, Joan
+28915253 0 -- Shadowflame Calvary
 500311692 0 -- VINE Sunflower of Greed
-160000786 0 -- Yuzu, guardian of magnificent VINE
-32904931 1  -- Serene, the Aeonbreaker's Sword
-32904936 1  -- Arisa, the Aeonbreaker's Defender
-102400102 1 -- Aeonbreaker Fusion
-102400133 1 -- Blitzkrieg Meklight - Dawn
-50031786 1  -- Blitzkrieg Sky
-50031699 1  -- Lana, whiptail girl of Magnificient VINE
-15747847 1  -- Mana, Cactunner of Fiber VINE
-63553468 1  -- Mythos Valor
-32904923 1  -- Proxima Marshall
-16000128 1  -- Serpenterfly of Fiber VINE
-20181413 1  -- Terradication living fortress
-19772610 1  -- The Advocate of Justice’s Door
-15747835 2  -- Mythos paradox
-#23251004 3 -- Moon Over the Desert
-#84607234 3 -- Spiritualist Thalia
-
+99998878 0 -- Voidictator Rune - Greater Gating Art
+--
+--							TRAPS CARDS
+--
+#Limited YGOCC
+--							MAIN DECK MONSTERS
+171000121 1 -- Amethyst-Winged Kuriboh
+33700744 1 -- Anifriends "Ikkaku"
+33700181 1 -- Anifriends Caracal
+33700054 1 -- Anifriends Ezo Red Fox
+33700065 1 -- Anifriends PPP Gentoo
+77585595 1 -- Forgalgia Emperor Jinzo
+33700304 1 -- GearGal Veno
+50031699 1 -- Mana, Sharpshooter of Fiber VINE
+32904923 1 -- Serene the Aeonbreaker's Sword
+11000533 1 -- Shya Shadowlord
+221594305 1 -- Voidictator Servant - Knight of Corvus
+221594304 1 -- Voidictator Servant - Rune Artist
+99998880 1 -- Voidictator Servant - Shield of Corvus
+79854524 1 -- Woodland Wing
+--							RITUAL
+--							PENDULUM
+33700746 1 -- Anifriends Sky Impulse
+102400114 1 -- Blitzkrieg Dragon - Steel
+102400102 1 -- Bitzkrieg Meklight - Dawn
+160005445 1 -- Paintress Da Vinca
+16000233 1 -- Paintress Gorgia
+17029601 1 -- Psychether Dreamer, Iman
+--							PANDEMONIUM
+53313934 1 -- Mysterious Luster Dragon
+--
+--							EXTRA DECK MONSTERS
+--							FUSION
+32904936 1 -- Arisa, the Aeonbreaker's Defender
+--							SYNCHRO
+63553468 1 -- Proxima Marshall
+--							XYZ
+19772604 1 -- The Grand Witch of the Advocate of Justice - Flaric Ebona
+--							LINK
+50031786 1 -- Lana, Whiptail Girl of Magnificent VINE
+210424272 1 -- Moon Burst: The Bad Dream
+33700311 1 -- NEXTGal G
+--							EVOLUTE
+--							BIGBANG
+48022718 1 -- Space-Time Wizard
+--
+--							SPELL CARDS
+19772610 1 -- The Advocate of Justice's Door
+32904931 1 -- Aeonbreaker Fusion
+102400133 1 -- Blitzkrieg Sky
+33700316 1 -- GearGal Abort
+33700058 1 -- Miracle of the Sandstar
+160004532 1 -- The Miscomposition of Power Portrait
+15747847 1 -- Mythos Valor
+63553459 1 -- Nethergear Unit
+37564903 1 -- Sayuri - ALICE
+37564902 1 -- Sayuri - GRAZE
+96212378 1 -- Spiral Drill Formation
+20181413 1 -- Terradication Living Fortress
+99998875 1 -- Voidictator Rune - Lesser Gating Art
+221594311 1 -- Voidictator Rune - Zanyris's Realm
+--
+--							TRAP CARDS
+500311592 1 -- Power Portrait's Cursed Portait Trap
+--
+#Semi-limited YGOCC
+--							MAIN DECK MONSTERS
+16000128 2 -- Ivy Butterfly of Fiber VINE
+32904921 2 -- Laura the Aeonbreaker's Bow
+--
+--							EXTRA DECK MONSTERS
+--
+--							SPELL CARDS
+53313927 2 -- Mysterious Dimension
+15747835 2 -- Mythos paradox
+210424266 2 -- Battle in the Storm
+--
+--							TRAP CARDS
+--
 #FORBIDDEN TCG					===Forbidden===
 76794549 0 --Astrograph Sorcerer
 09929398 0 --Blackwing - Gofu the Vague Shadow
@@ -168,7 +198,6 @@ local ls=[[
 18326736 0 --Tellarknight Ptolemaeus
 81122844 0 --Wind-Up Carrier Zenmaity
 85115440 0 --Zoodiac Broadbull
-48905153 0 --Zoodiac Drident
 07394770 0 --Brilliant Fusion
 69243953 0 --Butterfly Dagger - Elma
 57953380 0 --Card of Safe Return
@@ -206,6 +235,11 @@ local ls=[[
 64697231 0 --Trap Dustshoot
 80604091 0 --Ultimate Offering
 05851097 0 --Vanity's Emptiness
+9047460 0 --Blackwing - Steam the Cloak
+5560911 0 --Destrudo the Lost Dragon's Frisson
+67441435 0 --Glow-Up Bulb
+83190280 0 --Lunalight Tiger
+91258852 0 --SPYRAL Master Plan
 #LIMITED TCG						====Limited===
 07902349 1 --Left Arm of the Forbidden One
 44519536 1 --Left Leg of the Forbidden One
@@ -267,7 +301,6 @@ local ls=[[
 33782437 1 --One Day of Peace
 02295440 1 --One for One
 22842126 1 --Pantheism of the Monarchs
-67169062 1 --Pot of Avarice
 12580477 1 --Raigeki
 58577036 1 --Reasoning
 32807846 1 --Reinforcement of the Army
@@ -292,265 +325,20 @@ local ls=[[
 82732705 1 --Skill Drain
 35125879 1 --True King's Return
 17078030 1 --Wall of Revealing Light
+43694650 1 --Danger!? Jackalope?
+99745551 1 --Danger!? Tsuchinoko?
+1561110 1 --ABC-Dragon Buster
+90953320 1 --T.G. Hyper Librarian
+52687916 1 --Trishula, Dragon of the Ice Barrier
+90809975 1 --Toadally Awesome
+48905153 1 --Zoodiac Drident
+1845204 1 --Instant Fusion
+37520316 1 --Mind Control
+46060017 1 --Zoodiac Barrage
 #SEMI LIMITED TCG					===Semi Limited===
-43694650 2 --Danger!? Jackalope?
-99745551 2 --Danger!? Tsuchinoko?
-78868119 2 --Deep Sea Diva
-28297833 2 --Necroface
 10802915 2 --Tour Guide From the Underworld
-37520316 2 --Mind Control
-
-!2019.7 YGOCC
-#Forbidden YGOCC
-	--							MAIN DECK MONSTERS
-33700750 0 -- Anifriend
-33700181 0 -- Anifriend
-33700072 0 -- Anifriend
-33700093 0 -- Anifriend
-33700186 0 -- Anifriend
-33700079 0 -- Anifriend
-33700058 0 -- Anifriend
-33700747 0 -- Anifriend
-33700745 0 -- Anifriend
-	--							EXTRA DECK MONSTERS
-33700083 0 -- Anifriend
-33700085 0 -- Anifriend
-33700082 0 -- Anifriend
-91672800 0 -- Percival, Paladawn Light
-160009988 0 -- Paintress Angelona (New, was unlimited)
-28915253 0 -- Shadowflame Calvary (New, was semi-limited)
-
-	--							SPELLS CARDS
-	--							TRAPS CARDS
-
-#Limited YGOCC
-171000121 1 --Amethyst-Winged Kuriboh				MAIN DECK MONSTERS
-160005445 1 -- Paintress Di Vica
-11000533 1 -- Shya Shadowlord
-16000233 1 -- Paintress Gorgia
-33700054 1 -- Anifriend Red Fox
-33700304 1 -- GearGal Veno 
-33700065 1 -- Anifriend 
-17029601 1 -- Psychether Dreamer 
-79854524 1 -- Woodland Wing 
-33700746 1 -- Anifriends Sky Impulse 
-33700744 1 -- Anifriends Gentoo
-53313934 1 -- Mysterious Luster 
-160001123 1 -- Paintress Baconia (New, was unlimited)
-500311592 1 -- Power Portrait's Cursed Portait Trap 
-	--							EXTRA DECK MONSTERS
-#16000045 3 -- ESPergear Knight : Gladiator 
-500314216 1 -- Supa-Paintress Primp Turkia
-33700311 1 -- NEXTGal G
-80347321 1 -- Metalfoes Mercuryrider
-210424272 1 -- Moon Burst: The Bad Dream
-19772604 1 -- Flaric Ebona (new, was banned)
-	--							SPELL CARDS
-23251031 1 -- Pharaohnic Papyrus of Patience
-33700316 1 -- GearGal Abort
-63553459 1 -- Nethergear Unit
-#84607229 3 -- Spiritualist Calling (new, unlimited)
-160004532 1 -- The Miscomposition of Power Portrait
-#28915261 3 -- Shadows Ablaze (new, unlimited)
-	--							TRAP CARDS
-
-#Semi-limited YGOCC
-	--							MAIN DECK MONSTERS				
-53313907 2 -- Mysterious Starquid
-32904921 2 -- Aeonbreaker's Bow (new, was limited)
-32904923 2 -- Aeonbreaker's Sword (new, was limited)
-	--							EXTRA DECK MONSTERS
---
-	--							SPELL CARDS
-53313927 2 -- Mysterious Dimension
-210424266 2 -- Battle in the Storm
-
-	--							TRAP CARDS
-
-#FORBIDDEN TCG					===Forbidden===
-59537380 0 --Guardragon Agarpain
-03679218 0 --Knightmare Mermaid
-55623480 0 --妖精伝姫－シラユキ
-75732622 0 --トーチ・ゴーレム
-22593417 0 --トポロジック・ガンブラー・ドラゴン
-10389142 0 --No.42 スターシップ・ギャラクシー・トマホーク
-63504681 0 --No.86 H－C ロンゴミアント
-54447022 0 --ソウル・チャージ
-05043010 0 --ファイアウォール・ドラゴン
-05592689 0 --サクリファイス・ロータス
-39064822 0 --トロイメア・ゴブリン
-04423206 0 --M.X－セイバー インヴォーカー
-76794549 0 --アストログラフ・マジシャン
-20663556 0 --イレカエル
-44910027 0 --ヴィクトリー・ドラゴン
-25862681 0 --エンシェント・フェアリー・ドラゴン
-53804307 0 --焔征竜－ブラスター
-07563579 0 --Emヒグルミ
-40318957 0 --EMドクロバット・ジョーカー
-17330916 0 --EMモンキーボード
-79106360 0 --カオスポッド
-90411554 0 --巌征竜－レドックス
-08903700 0 --儀式魔人リリーサー
-17412721 0 --旧神ノーデン
-65536818 0 --源竜星－ボウテンコウ
-49684352 0 --虹彩の魔術師
-34124316 0 --サイバーポッド
-88071625 0 --The tyrant NEPTUNE
-61665245 0 --サモン・ソーサレス
-48905153 0 --十二獣ドランシア
-85115440 0 --十二獣ブルホーン
-21593977 0 --処刑人－マキュラ
-30539496 0 --真竜皇リトスアジムD
-21377582 0 --真竜剣皇マスターP
-81122844 0 --発条空母ゼンマイティ
-23434538 0 --増殖するG
-15341821 0 --ダンディライオン
-18326736 0 --星守の騎士 プトレマイオス
-33184167 0 --同族感染ウィルス
-54719828 0 --No.16 色の支配者ショック·ルーラー
-58820923 0 --No.95 ギャラクシーアイズ・ダークマター・ドラゴン
-43387895 0 --覇王眷竜スターヴ・ヴェノム
-26400609 0 --瀑征竜－タイダル
-78706415 0 --ファイバーポッド
-93369354 0 --フィッシュボーグ－ガンナー
-23558733 0 --フェニキシアン・クラスター・アマリリス
-09929398 0 --BF－朧影のゴウフウ
-31178212 0 --マジェスペクター・ユニコーン
-34206604 0 --魔導サイエンティスト
-96782886 0 --メンタルマスター
-03078576 0 --八汰烏
-34086406 0 --ラヴァルバル·チェイン
-57421866 0 --レベル・スティーラー
-41482598 0 --悪夢の蜃気楼
-44763025 0 --いたずら好きな双子悪魔
-19613556 0 --大嵐
-17375316 0 --押収
-35059553 0 --カイザーコロシアム
-74191942 0 --苦渋の選択
-42829885 0 --強引な番兵
-45986603 0 --強奪
-55144522 0 --強欲な壺
-04031928 0 --心変わり
-23557835 0 --次元融合
-57953380 0 --生還の宝札
-60682203 0 --大寒波
-67616300 0 --チキンレース
-67169062 0 --貪欲な壺
-69243953 0 --蝶の短剣－エルマ
-79571449 0 --天使の施し
-11110587 0 --隣の芝刈り
-42703248 0 --ハリケーン
-18144506 0 --ハーピィの羽根帚
-70828912 0 --早すぎた埋葬
-34906152 0 --マスドライバー
-46448938 0 --魔導書の神判
-46411259 0 --突然変異
-85602018 0 --遺言状
-94220427 0 --RUM－アージェント・カオス・フォース
-03298689 0 --RUM－幻影騎士団ラウンチ
-27174286 0 --異次元からの帰還
-93016201 0 --王宮の弾圧
-05851097 0 --虚無空間
-57585212 0 --自爆スイッチ
-03280747 0 --第六感
-64697231 0 --ダスト·シュート
-35316708 0 --刻の封印
-80604091 0 --血の代償
-28566710 0 --ラストバトル！
-51858306 0 --Eclipse Wyvern
-26692769 0 --Bardiche
-#LIMITED TCG						====Limited===
-42790071 1 --Multifaker
-61901281 1 --Collapserpent
-99234526 1 --Wyverbuster
-26889158 1 --Salad Gazelle
-52155219 1 --Salad Circle
-24010609 1 --SS Multirole
-35371948 1 --Trickstar Light Stage
-89208725 1 --Metaverse
-98338152 1 --Sky Striker Mecha Widow Anchor
-89399912 1 --嵐征竜－テンペスト
-00581014 1 --ダイガスタ・エメラル
-69015963 1 --デビル·フランケン
-14536035 1 --ダーク・グレファー
-07394770 1 --ブリリアント・フュージョン
-75500286 1 --封印の黄金櫃
-71650854 1 --半魔導帯域
-73915051 1 --スケープ・ゴート
-71344451 1 --一撃必殺！居合いドロー
-28985331 1 --終末の騎士
-33508719 1 --メタモルポット
-24094258 1 --ヘビーメタルフォーゼ・エレクトラム
-74586817 1 --PSYフレームロード・Ω
-08949584 1 --ヒーローアライブ
-72892473 1 --手札抹殺
-52340444 1 --閃刀機－ホーネットビット
-64034255 1 --A·ジェネクス·バードマン
-45222299 1 --イビリチュア·ガストクラーケ
-11877465 1 --イビリチュア·マインドオーガス
-99177923 1 --インフェルニティ·デーモン
-27552504 1 --永遠の淑女 ベアトリーチェ
-12958919 1 --幻銃士
-39512984 1 --ジェムナイトマスター・ダイヤ
-78872731 1 --十二獣モルモラット
-78868119 1 --深海のディーヴァ
-58984738 1 --真竜拳士ダイナマイトK
-04474060 1 --SPYRAL GEAR－ドローン
-78080961 1 --SPYRAL－ジーニアス
-81275020 1 --SRベイゴマックス
-48063985 1 --聖霊獣騎 カンナホーク
-63288573 1 --閃刀姫－カガリ
-16226786 1 --深淵の暗殺者
-18239909 1 --爆竜剣士イグニスターP
-57143342 1 --彼岸の悪鬼 ガトルホッグ
-20758643 1 --彼岸の悪鬼 グラバースニッチ
-70583986 1 --氷結界の虎王ドゥローレン
-33396948 1 --封印されしエクゾディア
-07902349 1 --封印されし者の左腕
-70903634 1 --封印されし者の右腕
-44519536 1 --封印されし者の左足
-08124921 1 --封印されし者の右足
-10802915 1 --魔界発現世行きデスガイド
-89463537 1 --ユニコールの影霊衣
-88264978 1 --レッドアイズ·ダークネスメタルドラゴン
-16188701 1 --レディ・デバッガー
-33782437 1 --一時休戦
-66957584 1 --インフェルニティガン
-81439173 1 --おろかな埋葬
-67723438 1 --緊急テレポート
-45305419 1 --継承の印
-12580477 1 --サンダー·ボルト
-95308449 1 --終焉のカウントダウン
-35125879 1 --真竜皇の復活
-54631665 1 --SPYRAL RESORT
-32807846 1 --増援
-14087893 1 --月の書
-81674782 1 --次元の裂け目
-83764718 1 --死者蘇生
-91623717 1 --連鎖爆撃
-70368879 1 --成金ゴブリン
-22842126 1 --汎神の帝王
-73468603 1 --盆回し
-15854426 1 --霞の谷の神風
-58577036 1 --名推理
-14733538 1 --竜呼相打つ
-27970830 1 --六武の門
-02295440 1 --ワン·フォー·ワン
-61740673 1 --王宮の勅命
-84749824 1 --神の警告
-82732705 1 --スキルドレイン
-73599290 1 --ソウルドレイン
-17078030 1 --光の護封壁
-30241314 1 --マクロコスモス
-32723153 1 --マジカル·エクスプロージョン
-73628505 1 --テラ・フォーミング
-#SEMI LIMITED TCG					===Semi Limited===
-65192027 2 --ダーク·アームド·ドラゴン
-70711847 2 --Danger Nessie
-43694650 2 --Danger Jackalope
-99745551 2 --Danger Noodle
-68819554 2 --Emダメージ・ジャグラー
-28297833 2 --ネクロフェイス
+9411399 2 --Destiny HERO - Malicious
+98338152 2 --Sky Striker Mecha - Widow Anchor
 ]]
 for id in ls:sub(ls:find("!"),ls:find("!",ls:find("!")+1) and ls:find("!",ls:find("!")+1)-1 or -1):gmatch("([0-9]+) 0") do
 	banned_list_table[tonumber(id)]=true

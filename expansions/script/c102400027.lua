@@ -5,7 +5,7 @@ cid.spt_other_space=id+69
 function cid.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddOrigSpatialType(c,false,true)
-	aux.AddSpatialProc(c,cid.mcheck,4,300,nil,cid.mfilter,1,1,aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_WATER),1,1)
+	aux.AddSpatialProc(c,cid.mcheck,4,cid.mfilter,1,1,aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_WATER),1)
 	local ae3=Effect.CreateEffect(c)
 	ae3:SetCategory(CATEGORY_REMOVE)
 	ae3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
@@ -46,8 +46,5 @@ function cid.target(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-	local g=Duel.SelectMatchingCard(tp,cid.filter2,tp,LOCATION_DECK,0,1,e:GetLabel(),nil)
-	if g:GetCount()>0 then
-		Duel.Remove(g,POS_FACEUP,REASON_EFFECT)
-	end
+	Duel.Remove(Duel.SelectMatchingCard(tp,cid.filter2,tp,LOCATION_DECK,0,1,e:GetLabel(),nil),POS_FACEUP,REASON_EFFECT)
 end

@@ -4,7 +4,8 @@
 EFFECT_CANNOT_BE_TIMELEAP_MATERIAL	=825
 EFFECT_MUST_BE_TIMELEAP_MATERIAL	=826
 EFFECT_FUTURE						=827
-EFFECT_EXTRA_TIMELEAP_MATERIAL	=828
+EFFECT_EXTRA_TIMELEAP_MATERIAL		=828
+EFFECT_EXTRA_TIMELEAP_SUMMON		=829
 TYPE_TIMELEAP						=0x10000000000
 TYPE_CUSTOM							=TYPE_CUSTOM|TYPE_TIMELEAP
 CTYPE_TIMELEAP						=0x100
@@ -74,7 +75,7 @@ Card.GetOriginalLevel=function(c)
 	return get_orig_level(c)
 end
 Card.IsXyzLevel=function(c,xyz,lv)
-	if Auxiliary.Timeleaps[c] and not Auxiliary.Timeleaps[c]() then return 0 end
+	if Auxiliary.Timeleaps[c] and not Auxiliary.Timeleaps[c]() then return false end
 	return is_xyz_level(c,xyz,lv)
 end
 Card.GetPreviousLevelOnField=function(c)
@@ -94,7 +95,6 @@ Card.IsLevelBelow=function(c,lv)
 	return is_level_below(c,lv)
 end
 Card.IsLevelAbove=function(c,lv)
-	if Auxiliary.Timeleaps[c] and not Auxiliary.Timeleaps[c]() then return false end
 	if Auxiliary.Timeleaps[c] and not Auxiliary.Timeleaps[c]() then return false end
 	return is_level_above(c,lv)
 end
@@ -166,6 +166,12 @@ function Auxiliary.AddTimeleapProc(c,futureval,sumcon,filter,customop,...)
 	e2:SetCode(EFFECT_FUTURE)
 	e2:SetValue(Auxiliary.FutureVal(futureval))
 	c:RegisterEffect(e2)
+	local e3=Effect.CreateEffect(c)
+	e3:SetType(EFFECT_TYPE_SINGLE)
+	e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_IGNORE_IMMUNE)
+	e3:SetCode(EFFECT_CANNOT_BE_XYZ_MATERIAL)
+	e3:SetValue(1)
+	c:RegisterEffect(e3)
 end
 function Auxiliary.TimeleapCondition(sumcon,filter,...)
 	local funs={...}
@@ -173,6 +179,13 @@ function Auxiliary.TimeleapCondition(sumcon,filter,...)
 				if c==nil then return true end
 				if (c:IsType(TYPE_PENDULUM) or c:IsType(TYPE_PANDEMONIUM)) and c:IsFaceup() then return false end
 				local tp=c:GetControler()
+				local eset={Duel.IsPlayerAffectedByEffect(tp,EFFECT_EXTRA_TIMELEAP_SUMMON)}
+				local exsumcheck=false
+				for _,te in ipairs(eset) do
+					if not te:GetValue() or type(te:GetValue())=="number" or te:GetValue()(e,c) then
+						exsumcheck=true
+					end
+				end
 				local mg=Duel.GetMatchingGroup(Card.IsCanBeTimeleapMaterial,tp,LOCATION_MZONE,0,nil,c)
 				local mg2=Duel.GetMatchingGroup(Auxiliary.TimeleapExtraFilter,tp,0xff,0xff,nil,f,c,tp,table.unpack(funs))
 				if mg2:GetCount()>0 then mg:Merge(mg2) end
@@ -180,6 +193,7 @@ function Auxiliary.TimeleapCondition(sumcon,filter,...)
 				if fg:IsExists(aux.MustMaterialCounterFilter,1,nil,mg) then return false end
 				Duel.SetSelectedCard(fg)
 				return (not sumcon or sumcon(e,c))
+					and (Duel.GetFlagEffect(tp,828)<=0 or exsumcheck)
 					and mg:IsExists(Auxiliary.TimeleapMaterialFilter,1,nil,filter,e,tp,Group.CreateGroup(),mg,c,0,table.unpack(funs))
 			end
 end
@@ -206,7 +220,7 @@ function Auxiliary.TimeleapMaterialFilter(c,filter,e,tp,sg,mg,bc,ct,...)
 	sg:AddCard(c)
 	ct=ct+1
 	local funs,max,chk={...},1
-	if (not filter or filter(c,e,mg)) then
+	if (not filter or filter(c,e,mg)) and c:GetLevel()==bc:GetFuture()-1 then
 		chk=true
 	end
 	if #funs>0 then
@@ -270,6 +284,8 @@ function Auxiliary.TimeleapTarget(filter,...)
 				local mg=Duel.GetMatchingGroup(Card.IsCanBeTimeleapMaterial,tp,LOCATION_MZONE,0,nil,c)
 				local mg2=Duel.GetMatchingGroup(Auxiliary.TimeleapExtraFilter,tp,0xff,0xff,nil,f,c,tp,table.unpack(funs))
 				if mg2:GetCount()>0 then mg:Merge(mg2) end
+				local eset={Duel.IsPlayerAffectedByEffect(tp,EFFECT_EXTRA_TIMELEAP_SUMMON)}
+				local exsumcheck
 				local bg=Group.CreateGroup()
 				local ce={Duel.IsPlayerAffectedByEffect(tp,EFFECT_MUST_BE_TIMELEAP_MATERIAL)}
 				for _,te in ipairs(ce) do
@@ -283,6 +299,21 @@ function Auxiliary.TimeleapTarget(filter,...)
 				local sg=Group.CreateGroup()
 				sg:Merge(bg)
 				local finish=false
+				local options={}
+				if #eset>0 then
+					local cond=1
+					if Duel.GetFlagEffect(tp,828)<=0 then
+						table.insert(options,aux.Stringid(433005,15))
+						cond=0
+					end
+					for _,te in ipairs(eset) do
+						table.insert(options,te:GetDescription())
+					end
+					local op=Duel.SelectOption(tp,table.unpack(options))+cond
+					if op>0 then
+						exsumcheck=eset[op]
+					end
+				end
 				while not (sg:GetCount()>=max) do
 					finish=Auxiliary.TimeleapCheckGoal(tp,sg,c,#sg,table.unpack(funs))
 					local cg=mg:Filter(Auxiliary.TimeleapMaterialFilter,sg,filter,e,tp,sg,mg,c,#sg,table.unpack(funs))
@@ -303,6 +334,11 @@ function Auxiliary.TimeleapTarget(filter,...)
 					end
 				end
 				if finish then
+					if exsumcheck~=nil then
+						Duel.RegisterFlagEffect(tp,829,RESET_PHASE+PHASE_END,0,1)
+						Duel.Hint(HINT_CARD,0,exsumcheck:GetOwner():GetOriginalCode())
+						exsumcheck:Reset()
+					end
 					sg:KeepAlive()
 					e:SetLabelObject(sg)
 					return true
@@ -315,12 +351,26 @@ function Auxiliary.TimeleapOperation(customop)
 				c:SetMaterial(g)
 				if not customop then
 					Duel.Remove(g,POS_FACEUP,REASON_MATERIAL+0x10000000000)
+					if Duel.GetFlagEffect(tp,829)<=0 then
+						Duel.RegisterFlagEffect(tp,828,RESET_PHASE+PHASE_END,0,1)
+					else
+						Duel.ResetFlagEffect(tp,829)
+					end
 				else
 					customop(e,tp,eg,ep,ev,re,r,rp,c,g)
 				end
 				g:DeleteGroup()
 			end
 end
+
+function Auxiliary.TimeleapHOPT(tp)
+	if Duel.GetFlagEffect(tp,829)<=0 then
+		Duel.RegisterFlagEffect(tp,828,RESET_PHASE+PHASE_END,0,1)
+	else
+		Duel.ResetFlagEffect(tp,829)
+	end
+end
+
 function Card.GetFuture(c)
 	if not Auxiliary.Timeleaps[c] then return 0 end
 	local te=c:IsHasEffect(EFFECT_FUTURE)

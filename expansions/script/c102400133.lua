@@ -56,28 +56,23 @@ function cid.op(e,tp,eg,ep,ev,re,r,rp)
 	if g:GetCount()>0 and Duel.Destroy(g,REASON_EFFECT)~=0 then
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
 		local g=Duel.SelectMatchingCard(tp,cid.filter2,tp,LOCATION_DECK,0,1,1,nil)
-		if g:GetCount()>0 then
-			Duel.SendtoHand(g,nil,REASON_EFFECT)
-			Duel.ConfirmCards(1-tp,g)
-		end
+		Duel.SendtoHand(g,nil,REASON_EFFECT)
+		Duel.ConfirmCards(1-tp,g)
 	end
 end
-function cid.repfilter(c,e)
-	return c:IsFaceup() and c:IsSetCard(0x7c4) and c:IsType(TYPE_MONSTER)
-		and c:IsDestructable(e) and not c:IsReason(REASON_REPLACE)
+function cid.repfilter(c)
+	return (c:IsFaceup() or not c:IsOnField()) and c:IsSetCard(0x7c4) and c:IsType(TYPE_MONSTER) and not c:IsReason(REASON_REPLACE)
 end
 function cid.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return eg:IsExists(cid.repfilter,1,nil,e) end
-	if Duel.IsExistingMatchingCard(aux.AND(cid.filter1,aux.FilterBoolFunction(Card.IsDestructable,e)),tp,LOCATION_DECK,0,1,nil) then
-		return true
-	else return false end
+	if chk==0 then return eg:IsExists(cid.repfilter,1,nil) and not (re and re:GetHandler():IsCode(id)) end
+	return Duel.IsExistingMatchingCard(aux.AND(cid.filter1,aux.FilterBoolFunction(Card.IsDestructable,e),aux.NOT(Card.IsStatus)),tp,LOCATION_DECK,0,1,nil,STATUS_DESTROY_CONFIRMED)
 end
 function cid.repval(e,c)
-	return cid.repfilter(c,e)
+	return cid.repfilter(c)
 end
 function cid.repop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_CARD,0,id)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-	local g=Duel.SelectMatchingCard(tp,aux.AND(cid.filter1,aux.FilterBoolFunction(Card.IsDestructable,e)),tp,LOCATION_DECK,0,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,aux.AND(cid.filter1,aux.FilterBoolFunction(Card.IsDestructable,e),aux.NOT(Card.IsStatus)),tp,LOCATION_DECK,0,1,1,nil,STATUS_DESTROY_CONFIRMED)
 	Duel.Destroy(g,REASON_EFFECT+REASON_REPLACE)
 end

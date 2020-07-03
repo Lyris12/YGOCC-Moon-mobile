@@ -8,6 +8,7 @@ function c400015.initial_effect(c)
 	e1:SetCode(EVENT_FREE_CHAIN)
 	e1:SetCountLimit(1,400015+EFFECT_COUNT_CODE_OATH)
 	e1:SetLabel(0)
+	e1:SetCondition(c400015.condition)
 	e1:SetTarget(c400015.target)
 	e1:SetOperation(c400015.activate)
 	c:RegisterEffect(e1)
@@ -33,16 +34,18 @@ end
 function c400015.prop(e,tp,eg,ep,ev,re,r,rp)
 	local rc=re:GetHandler()
 	local ct=e:GetLabelObject():GetLabel()
-	if Duel.GetTurnPlayer()==1-tp and re:IsHasType(EFFECT_TYPE_ACTIVATE) and rc:IsType(TYPE_QUICKPLAY) and rc:IsSetCard(0x146) then
+	if Duel.GetTurnPlayer()==1-tp and re:IsHasType(EFFECT_TYPE_ACTIVATE) and rc:IsType(TYPE_QUICKPLAY) and rc:IsSetCard(0x246) then
 		ct=ct+1
 		e:GetLabelObject():SetLabel(ct)
 	end
 end
 
-
+function c400015.condition(e,tp,eg,ep,ev,re,r,rp)
+	return Duel.GetTurnPlayer()~=tp
+end
 function c400015.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	local ct=e:GetLabel()
-	if chk==0 then return Duel.GetTurnPlayer()~=tp and ct>0 and Duel.IsPlayerCanDraw(tp,ct) end
+	if chk==0 then return ct>0 and Duel.IsPlayerCanDraw(tp,ct) end
 	Duel.SetTargetPlayer(tp)
 	Duel.SetTargetParam(ct)
 	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,ct)

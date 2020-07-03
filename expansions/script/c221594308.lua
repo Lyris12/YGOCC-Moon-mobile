@@ -11,7 +11,7 @@ function cid.initial_effect(c)
 	e1:SetTargetRange(1,0)
 	e1:SetTarget(cid.sumlimit)
 	c:RegisterEffect(e1)
-	c:SetUniqueOnField(1,0,aux.FilterBoolFunction(Card.IsSetCard,0x2c97))
+	c:SetUniqueOnField(1,0,aux.FilterBoolFunction(Card.IsSetCard,0x6c97))
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_FIELD)
 	e2:SetCode(EFFECT_DISABLE)
@@ -52,18 +52,18 @@ function cid.disable(e,c)
 	return (c:IsType(TYPE_EFFECT) or bit.band(c:GetOriginalType(),TYPE_EFFECT)==TYPE_EFFECT) and c:IsType(TYPE_SYNCHRO)
 end
 function cid.tgfilter(c)
-	return c:IsFaceup() and c:IsSetCard(0xc97)
+	return c:IsFaceup() and c:IsSetCard(0x3c97)
 end
 function cid.tgcon(e)
-	return Duel.IsExistingMatchingCard(cid.tgfilter,e:GetHandlerPlayer(),LOCATION_MZONE,0,1,e:GetHandler())
+	return Duel.IsExistingMatchingCard(cid.tgfilter,e:GetHandlerPlayer(),LOCATION_MZONE,0,1,nil)
 end
 function cid.efilter(e,re)
 	return e:GetOwnerPlayer()~=re:GetOwnerPlayer()
 end
 function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsAbleToDeckAsCost,tp,LOCATION_REMOVED,0,1,nil) end
+	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsAbleToDeckOrExtraAsCost,tp,LOCATION_REMOVED,0,1,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
-	Duel.SendtoDeck(Duel.SelectMatchingCard(tp,Card.IsAbleToDeckAsCost,tp,LOCATION_REMOVED,0,1,1,nil),nil,2,REASON_COST)
+	Duel.SendtoDeck(Duel.SelectMatchingCard(tp,Card.IsAbleToDeckOrExtraAsCost,tp,LOCATION_REMOVED,0,1,1,nil),nil,2,REASON_COST)
 end
 function cid.drtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsPlayerCanDraw(tp,1) end

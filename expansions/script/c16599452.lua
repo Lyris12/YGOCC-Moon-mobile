@@ -22,8 +22,9 @@ function c16599452.initial_effect(c)
 	--become tuner
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e2:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
+	e2:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DELAY)
 	e2:SetCode(EVENT_REMOVE)
+	e2:SetCountLimit(1,17599452)
 	e2:SetCondition(c16599452.tunercon)
 	e2:SetTarget(c16599452.tunertg)
 	e2:SetOperation(c16599452.tunerop)
@@ -38,6 +39,7 @@ function c16599452.spfilter(c,lv,e,tp)
 end
 function c16599452.aclimit(e,re,tp)
 	return re:IsActiveType(TYPE_MONSTER) and re:GetHandler():IsSetCard(0x1559) and re:GetHandler():GetLevel()==e:GetHandler():GetLevel() and not re:GetHandler():IsType(TYPE_SYNCHRO)
+		and not re:GetHandler():IsCode(16599452)
 end
 function c16599452.tunerfilter(c)
 	return c:IsFaceup() and not c:IsType(TYPE_TUNER) and c:GetLevel()>1

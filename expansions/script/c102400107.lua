@@ -46,8 +46,8 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.NegateAttack()
 	if c:IsRelateToEffect(e) and Duel.Destroy(c,REASON_EFFECT)~=0 then
 		local g=Duel.SelectMatchingCard(tp,nil,tp,0,LOCATION_MZONE,1,1,nil)
+		Duel.HintSelection(g)
 		if #g>0 then
-			Duel.HintSelection(g)
 			Duel.BreakEffect()
 			Duel.Destroy(g,REASON_EFFECT)
 		end
@@ -63,14 +63,10 @@ function cid.tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsControler(tp) and chkc:IsLocation(LOCATION_GRAVE) and cid.filter(chkc) end
 	if chk==0 then return Duel.IsExistingTarget(cid.filter,tp,LOCATION_GRAVE,0,1,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-	local g=Duel.SelectTarget(tp,cid.filter,tp,LOCATION_GRAVE,0,1,1,nil)
-	Duel.SetOperationInfo(0,CATEGORY_TOHAND,g,1,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_TOHAND,Duel.SelectTarget(tp,cid.filter,tp,LOCATION_GRAVE,0,1,1,nil),1,0,0)
 end
 function cid.op(e,tp,eg,ep,ev,re,r,rp)
 	if not e:GetHandler():IsRelateToEffect(e) and e:IsHasType(EFFECT_TYPE_FIELD) then return end
 	local tc=Duel.GetFirstTarget()
-	if tc:IsRelateToEffect(e) then
-		Duel.SendtoHand(tc,nil,REASON_EFFECT)
-		Duel.ConfirmCards(1-tp,tc)
-	end
+	if tc:IsRelateToEffect(e) then Duel.SendtoHand(tc,nil,REASON_EFFECT) end
 end

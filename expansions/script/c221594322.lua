@@ -11,7 +11,8 @@ function cid.initial_effect(c)
 	e1:SetOperation(cid.rmop)
 	c:RegisterEffect(e1)
 	local e2=Effect.CreateEffect(c)
-	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e2:SetCode(EVENT_REMOVE)
 	e2:SetProperty(EFFECT_FLAG_DELAY)
 	e2:SetCountLimit(1,id+100)
 	e2:SetCost(cid.cost)
@@ -20,13 +21,14 @@ function cid.initial_effect(c)
 	c:RegisterEffect(e2)
 end
 function cid.filter(c)
-	return c:IsFaceup() and c:IsSetCard(0x2c97,0x4c97) and c:IsAbleToRemove()
+	return c:IsFaceup() and c:IsSetCard(0x6c97,0x9c97) and c:IsAbleToRemove()
 end
 function cid.rmtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and cid.filter(chkc) end
 	if chk==0 then return Duel.IsPlayerCanRemove(tp) and Duel.GetFieldGroupCount(tp,0,LOCATION_EXTRA)>0
 		and Duel.IsExistingTarget(cid.filter,tp,LOCATION_MZONE,0,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_REMOVE,nil,1,1-tp,LOCATION_EXTRA)
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+	Duel.SetOperationInfo(0,CATEGORY_REMOVE,Duel.SelectTarget(tp,cid.filter,tp,LOCATION_MZONE,0,1,1,nil),1,0,0)
 end
 function cid.rmop(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()

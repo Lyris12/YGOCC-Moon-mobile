@@ -20,7 +20,7 @@ function cid.initial_effect(c)
 	e1:SetTargetRange(1,0)
 	e1:SetTarget(cid.sumlimit)
 	c:RegisterEffect(e1)
-	c:SetUniqueOnField(1,0,aux.FilterBoolFunction(Card.IsSetCard,0x4c97))
+	c:SetUniqueOnField(1,0,aux.FilterBoolFunction(Card.IsSetCard,0x9c97))
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)
 	e1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
@@ -61,8 +61,11 @@ end
 function cid.sumlimit(e,c,sump,sumtype,sumpos,targetp,se)
 	return c:IsLocation(LOCATION_EXTRA) and not c:IsSetCard(0xc97)
 end
+function cid.tgfilter(c)
+	return c:IsFaceup() and c:IsSetCard(0x3c97)
+end
 function cid.tgcon(e)
-	return Duel.IsExistingMatchingCard(cid.tgfilter,e:GetHandlerPlayer(),LOCATION_MZONE,0,1,e:GetHandler())
+	return Duel.IsExistingMatchingCard(cid.tgfilter,e:GetHandlerPlayer(),LOCATION_MZONE,0,1,nil)
 end
 function cid.efilter(e,re)
 	return e:GetOwnerPlayer()~=re:GetOwnerPlayer()
@@ -82,16 +85,13 @@ function cid.discon(e,tp,eg,ep,ev,re,r,rp)
 	local ex5,tg5,tc5=Duel.GetOperationInfo(ev,CATEGORY_TOEXTRA)
 	local ex6,tg6,tc6=Duel.GetOperationInfo(ev,CATEGORY_TOGRAVE)
 	local ex7,tg7,tc7=Duel.GetOperationInfo(ev,CATEGORY_REMOVE)
-	return ((ex1 and tg1~=nil) or (ex2 and tg2~=nil) or (ex3 and tg3~=nil)
-			or (ex4 and tg4~=nil) or (ex5 and tg5~=nil) or (ex6 and tg6~=nil)
-			or (ex7 and tg7~=nil))
-		and (tc1+tg1:FilterCount(cid.cfilter,nil,tp)-tg1:GetCount()>0
-			or tc2+tg2:FilterCount(cid.cfilter,nil,tp)-tg2:GetCount()>0
-			or tc3+tg3:FilterCount(cid.cfilter,nil,tp)-tg3:GetCount()>0
-			or tc4+tg4:FilterCount(cid.cfilter,nil,tp)-tg4:GetCount()>0
-			or tc5+tg5:FilterCount(cid.cfilter,nil,tp)-tg5:GetCount()>0
-			or tc6+tg6:FilterCount(cid.cfilter,nil,tp)-tg6:GetCount()>0
-			or tc7+tg7:FilterCount(cid.cfilter,nil,tp)-tg7:GetCount()>0)
+	return (ex1 and tg1~=nil and tc1+tg1:FilterCount(cid.cfilter,nil,tp)-tg1:GetCount()>0)
+			or (ex2 and tg2~=nil and tc2+tg2:FilterCount(cid.cfilter,nil,tp)-tg2:GetCount()>0)
+			or (ex3 and tg3~=nil and tc3+tg3:FilterCount(cid.cfilter,nil,tp)-tg3:GetCount()>0)
+			or (ex4 and tg4~=nil and tc4+tg4:FilterCount(cid.cfilter,nil,tp)-tg4:GetCount()>0)
+			or (ex5 and tg5~=nil and tc5+tg5:FilterCount(cid.cfilter,nil,tp)-tg5:GetCount()>0)
+			or (ex6 and tg6~=nil and tc6+tg6:FilterCount(cid.cfilter,nil,tp)-tg6:GetCount()>0)
+			or (ex7 and tg7~=nil and tc7+tg7:FilterCount(cid.cfilter,nil,tp)-tg7:GetCount()>0)
 end
 function cid.distg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chk==0 then return not re:GetHandler():IsDisabled() end

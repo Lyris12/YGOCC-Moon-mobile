@@ -1,19 +1,8 @@
---Drago Armageddon Occhi dell'Alba
---Created by Jake, Script by XGlitchy30
---Script by XGlitchy30
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
+--created by Jake, coded by Glitchy
+local cid,id=GetID()
 function cid.initial_effect(c)
-	--xyz summon
 	aux.AddXyzProcedure(c,aux.FilterBoolFunction(Card.IsRace,RACE_DRAGON),6,3,cid.ovfilter,aux.Stringid(id,0))
 	c:EnableReviveLimit()
-	--destroy
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_DESTROY+CATEGORY_HANDES)
 	e1:SetType(EFFECT_TYPE_QUICK_O)
@@ -25,14 +14,12 @@ function cid.initial_effect(c)
 	e1:SetOperation(cid.operation)
 	c:RegisterEffect(e1)
 end
---filters
 function cid.ovfilter(c)
 	return c:IsFaceup() and c:IsSetCard(0x613) and c:IsType(TYPE_XYZ)
 end
 function cid.filter(c)
 	return c:IsType(TYPE_SPELL+TYPE_TRAP)
 end
---destroy
 function cid.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return e:GetHandler():CheckRemoveOverlayCard(tp,1,REASON_COST) end
 	e:GetHandler():RemoveOverlayCard(tp,1,1,REASON_COST)
@@ -53,9 +40,10 @@ function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 		Duel.BreakEffect()
 		local ct=math.floor(og:GetCount()/2)
 		local ct2=ct
-		if Duel.GetFieldGroupCount(tp,LOCATION_HAND,0)<ct then ct=Duel.GetFieldGroupCount(tp,LOCATION_HAND,0) end
-		if Duel.GetFieldGroupCount(1-tp,LOCATION_HAND,0)<ct2 then ct2=Duel.GetFieldGroupCount(1-tp,LOCATION_HAND,0) end
-		Duel.DiscardHand(tp,aux.TRUE,ct,ct,REASON_EFFECT+REASON_DISCARD,nil)
-		Duel.DiscardHand(1-tp,aux.TRUE,ct2,ct2,REASON_EFFECT+REASON_DISCARD,nil)
+		local ct3,ct4=Duel.GetMatchingGroupCount(Card.IsDiscardable,tp,LOCATION_HAND,0,nil,REASON_EFFECT),Duel.GetMatchingGroupCount(Card.IsDiscardable,1-tp,LOCATION_HAND,0,nil,REASON_EFFECT)
+		if ct3<ct then ct=ct3 end
+		if ct4<ct2 then ct2=ct4 end
+		Duel.DiscardHand(tp,Card.IsDiscardable,ct,ct,REASON_EFFECT+REASON_DISCARD,nil,REASON_EFFECT)
+		Duel.DiscardHand(1-tp,Card.IsDiscardable,ct2,ct2,REASON_EFFECT+REASON_DISCARD,nil,REASON_EFFECT)
 	end
 end

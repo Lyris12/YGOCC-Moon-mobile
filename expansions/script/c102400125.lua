@@ -68,10 +68,7 @@ function cid.desop(e,tp,eg,ep,ev,re,r,rp)
 		end
 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local g=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(cid.desfilter),tp,LOCATION_HAND+LOCATION_GRAVE,0,1,1,nil,e,tp)
-		if #g>0 then
-			Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
-		end
+		Duel.SpecialSummon(Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(cid.desfilter),tp,LOCATION_HAND+LOCATION_GRAVE,0,1,1,nil,e,tp),0,tp,tp,false,false,POS_FACEUP)
 	end
 end
 function cid.disop(e,tp,eg,ep,ev,re,r,rp)
@@ -108,10 +105,10 @@ end
 function cid.op(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS):Filter(Card.IsRelateToEffect,nil,e)
 	local ct=g:GetCount()
-	local tg=Duel.GetFieldGroup(tp,LOCATION_MZONE,LOCATION_MZONE,nil)
+	local tg=Duel.GetFieldGroup(tp,LOCATION_MZONE,LOCATION_MZONE)
 	if ct>0 and ct>=#tg then
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-		local rg=dg:Select(tp,ct,ct,g)
+		local rg=tg:Select(tp,ct,ct,g)
 		Duel.HintSelection(rg)
 		Duel.Destroy(rg,REASON_EFFECT)
 	end
