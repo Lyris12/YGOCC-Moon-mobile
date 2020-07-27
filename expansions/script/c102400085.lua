@@ -76,6 +76,7 @@ function cid.posop(e,tp,eg,ep,ev,re,r,rp)
 	if mg:GetCount()>=sg:GetCount() and Duel.SelectEffectYesNo(tp,e:GetHandler(),aux.Stringid(id,0)) then
 		Duel.BreakEffect()
 		for c in aux.Next(dg) do
+			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_XMATERIAL)
 			local tc=mg:Select(tp,1,1,ec)
 			Duel.Overlay(c,tc)
 			ec=tc

@@ -1,14 +1,7 @@
 --Ennigmatic World
 --Script by XGlitchy30
 --edited by Eaden
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
+local cid,id=GetID()
 function cid.initial_effect(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)
@@ -17,12 +10,13 @@ function cid.initial_effect(c)
 	c:RegisterEffect(e1)
 	--Extra Summon (Still needs the archetype lock)
 	local e2=Effect.CreateEffect(c)
-	e2:SetDescription(aux.Stringid(id,0))
+	e2:SetDescription(aux.Stringid(id,1))
 	e2:SetType(EFFECT_TYPE_FIELD)
 	e2:SetRange(LOCATION_SZONE)
 	e2:SetTargetRange(LOCATION_HAND+LOCATION_MZONE,0)
 	e2:SetCode(EFFECT_EXTRA_SUMMON_COUNT)
 	e2:SetTarget(aux.TargetBoolFunction(Card.IsSetCard,0xead))
+	e2:SetOperation(cid.operation)
 	c:RegisterEffect(e2)
 	--rankup
 	local e3=Effect.CreateEffect(c)
@@ -37,7 +31,7 @@ function cid.initial_effect(c)
 	c:RegisterEffect(e3)
 	--spsummon
 	local e4=Effect.CreateEffect(c)
-	e4:SetDescription(aux.Stringid(id,1))
+	e4:SetDescription(1152)
 	e4:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e4:SetType(EFFECT_TYPE_IGNITION)
 	e4:SetRange(LOCATION_FZONE)
@@ -57,7 +51,7 @@ function cid.filter1(c,e,tp)
 end
 function cid.filter2(c,e,tp,mc,rk)
 	if c:GetOriginalCode()==6165656 and mc:GetCode()~=48995978 then return false end
-	return (c:IsRank(rk+1) or c:IsRank(rk+2)) and c:IsType(TYPE_XYZ) and (c:IsSetCard(0xead)
+	return (c:IsRank(rk+1) or c:IsRank(rk+2)) and c:IsType(TYPE_XYZ) and c:IsSetCard(0xead)
 		and mc:IsCanBeXyzMaterial(c) and c:IsCanBeSpecialSummoned(e,SUMMON_TYPE_XYZ,tp,false,false)
 end
 function cid.spfilter(c,e,tp)

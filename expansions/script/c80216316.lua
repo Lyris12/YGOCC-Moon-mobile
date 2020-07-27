@@ -1,13 +1,6 @@
 --Ennigmatic Clairvoyance
 --Script by XGlitchy30
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
+local cid,id=GetID()
 function cid.initial_effect(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)
@@ -37,7 +30,7 @@ function cid.levelchk(c,rk,g)
 	return c:GetLevel()<=rk and (not g or not g:IsContains(c))
 end
 function cid.scfilter(c)
-	return (c:IsSetCard(0x1ead) and c:IsType(TYPE_MONSTER) and c:IsAbleToHand()
+	return c:IsSetCard(0x1ead) and c:IsType(TYPE_MONSTER) and c:IsAbleToHand()
 end 
 --Activate
 function cid.sctg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
