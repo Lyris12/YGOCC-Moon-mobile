@@ -180,6 +180,7 @@ function Auxiliary.TimeleapCondition(sumcon,filter,...)
 				if c==nil then return true end
 				if (c:IsType(TYPE_PENDULUM) or c:IsType(TYPE_PANDEMONIUM)) and c:IsFaceup() then return false end
 				local tp=c:GetControler()
+				
 				local eset={Duel.IsPlayerAffectedByEffect(tp,EFFECT_EXTRA_TIMELEAP_SUMMON)}
 				local exsumcheck=false
 				for _,te in ipairs(eset) do
@@ -187,6 +188,7 @@ function Auxiliary.TimeleapCondition(sumcon,filter,...)
 						exsumcheck=true
 					end
 				end
+				
 				local mg=Duel.GetMatchingGroup(Card.IsCanBeTimeleapMaterial,tp,LOCATION_MZONE,0,nil,c)
 				local mg2=Duel.GetMatchingGroup(Auxiliary.TimeleapExtraFilter,tp,0xff,0xff,nil,f,c,tp,table.unpack(funs))
 				if mg2:GetCount()>0 then mg:Merge(mg2) end
@@ -338,6 +340,7 @@ function Auxiliary.TimeleapTarget(filter,...)
 					if exsumcheck~=nil then
 						Duel.RegisterFlagEffect(tp,829,RESET_PHASE+PHASE_END,0,1)
 						Duel.Hint(HINT_CARD,0,exsumcheck:GetOwner():GetOriginalCode())
+						--exsumcheck:Reset()
 					end
 					sg:KeepAlive()
 					e:SetLabelObject(sg)
