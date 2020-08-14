@@ -18,7 +18,7 @@ function cid.initial_effect(c)
 	e2:SetCode(EVENT_FREE_CHAIN)
 	e2:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DAMAGE_STEP)
 	e2:SetRange(LOCATION_MZONE)
-	e2:SetCountLimit(1,id)
+	e2:SetCountLimit(1,id+100)
 	e2:SetTarget(cid.prtg)
 	e2:SetOperation(cid.prop)
 	e2:SetCost(cid.prcost)
@@ -29,7 +29,7 @@ function cid.initial_effect(c)
 	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
 	e3:SetProperty(EFFECT_FLAG_CARD_TARGET)
 	e3:SetCode(EVENT_TO_GRAVE)
-	e3:SetCountLimit(1+id)
+	e3:SetCountLimit(1+id+200)
 	e3:SetCondition(cid.plcon)
 	e3:SetTarget(cid.pltg)
 	e3:SetOperation(cid.plop)
@@ -38,15 +38,18 @@ end
 --1st Effect
 --filters cfilter
 function cid.cfilter(c)
-	return  c:IsSetCard(0xd7c)
+	return c:IsFacedown() or not c:IsSetCard(0xd7c)
 end
 function cid.cfilter2(c)
 	return c:IsSetCard(0xd7c) and c:IsFaceup()
 end
 --con sp
-function cid.spcon(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.IsExistingMatchingCard(cid.cfilter,tp,LOCATION_MZONE,0,1,nil)
-		or not Duel.IsExistingMatchingCard(cid.cfilter2,tp,LOCATION_SZONE,0,1,nil)
+function cid.spcon(e,c)
+	if c==nil then return true end
+	local tp=c:GetControler()
+	return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and (Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)>0
+		and not Duel.IsExistingMatchingCard(cid.cfilter,tp,LOCATION_MZONE,0,1,nil)
+		or not Duel.IsExistingMatchingCard(cid.cfilter2,tp,LOCATION_SZONE,0,1,nil))
 end
 --op sp 
 function cid.spop(e,tp,eg,ep,ev,re,r,rp)
@@ -135,10 +138,9 @@ function cid.spfilter(c,e,tp)
 	return c:IsSetCard(0xd7c) and c:IsCanBeSpecialSummoned(e,0,tp,false,false) 
 end
 --target pltg
-function cid.pltg(e,tp,eg,ep,ev,re,r,rp,chk)
+function cid.pltg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsControler(tp) and chkc:IsLocation(LOCATION_GRAVE) and cid.plfilter(chkc,e,tp) end
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
-		and Duel.IsExistingTarget(cid.plfilter,tp,LOCATION_MZONE,0,1,nil,e,tp) end
+	if chk==0 then return true end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TARGET)
 	local g=Duel.SelectTarget(tp,cid.plfilter,tp,LOCATION_MZONE,0,1,1,nil,e,tp)
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,0,LOCATION_DECK)

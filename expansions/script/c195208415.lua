@@ -6,13 +6,12 @@ function cid.initial_effect(c)
 	e1:SetCode(EFFECT_SPSUMMON_PROC)
 	e1:SetRange(LOCATION_HAND)
 	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE)
-	e1:SetCountLimit(1,id)
 	e1:SetCondition(cid.hspcon)
 	c:RegisterEffect(e1)
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_IGNITION)
 	e2:SetRange(LOCATION_MZONE)
-	e2:SetCountLimit(1,id+200)
+	e2:SetCountLimit(1,id)
 	e2:SetCategory(CATEGORY_SPECIAL_SUMMON+CATEGORY_TOKEN)
 	e2:SetCost(cid.cost)
 	e2:SetTarget(cid.target)
@@ -52,13 +51,13 @@ end
 end
 	function cid.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
-		and Duel.IsPlayerCanSpecialSummonMonster(tp,195208416,0x83e,0x5011,0,0,1,RACE_BEAST,ATTRIBUTE_EARTH) end
+		and Duel.IsPlayerCanSpecialSummonMonster(tp,id+1,0x83e,0x5011,0,0,1,RACE_BEAST,ATTRIBUTE_EARTH) end
 	Duel.SetOperationInfo(0,CATEGORY_TOKEN,nil,1,0,0)
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,0,0)
 end
 	function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0
-		or not Duel.IsPlayerCanSpecialSummonMonster(tp,c195208416,0x83e,0x5011,0,0,1,RACE_BEAST,ATTRIBUTE_EARTH) then return end
+		or not Duel.IsPlayerCanSpecialSummonMonster(tp,id+1,0x83e,0x5011,0,0,1,RACE_BEAST,ATTRIBUTE_EARTH) then return end
 	Duel.SpecialSummon(Duel.CreateToken(tp,id+1),0,tp,tp,false,false,POS_FACEUP)
 end
 	function cid.filter(c,tp)
