@@ -20,11 +20,11 @@ function cid.initial_effect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE)
 	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
 	e2:SetRange(LOCATION_MZONE)
-	e2:SetCode(EFFECT_SET_ATTACK)
+	e2:SetCode(EFFECT_UPDATE_ATTACK)
 	e2:SetValue(cid.value)
 	c:RegisterEffect(e2)
 	local e3=e2:Clone()
-	e3:SetCode(EFFECT_SET_DEFENSE)
+	e3:SetCode(EFFECT_UPDATE_DEFENSE)
 	c:RegisterEffect(e3)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_FIELD)
@@ -46,10 +46,10 @@ function cid.initial_effect(c)
 	c:RegisterEffect(e5)
 end
 	function cid.value(e,c)
-	return Duel.GetMatchingGroupCount(cid.atkfilter,c:GetControler(),LOCATION_REMOVED,0,nil,TYPE_MONSTER+TYPE_SPELL+TYPE_TRAP)*300
+	return Duel.GetMatchingGroupCount(cid.atkfilter,0,LOCATION_REMOVED,0,nil)*300
 end
 	function cid.atkfilter(c)
-	return c:IsFaceup() and c:IsSetCard(0x83e)
+	return c:IsSetCard(0x83e) and c:IsFaceup()
 end
 	function cid.cfilter(c)
 	return c:IsSetCard(0x83e) and c:IsAbleToRemoveAsCost()
@@ -61,8 +61,10 @@ end
 	return c:IsLocation(LOCATION_REMOVED) and c:IsFaceup() and c:IsType(TYPE_MONSTER) and c:IsSetCard(0x83e) and c:IsAbleToDeckAsCost()
 end
 	function cid.drcost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cid.cfilter2,tp,LOCATION_REMOVED,0,3,nil) end
+	if chk==0 then return Duel.IsExistingMatchingCard(cid.cfilter2,tp,LOCATION_REMOVED,0,3,e:GetHandler()) end   
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
+	local g=Duel.SelectMatchingCard(tp,cid.cfilter2,tp,LOCATION_REMOVED,0,3,3,e:GetHandler())
+	Duel.SendtoDeck(g,nil,2,REASON_COST)
 end
 	function cid.destg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return true end
