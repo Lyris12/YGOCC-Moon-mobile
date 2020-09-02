@@ -71,7 +71,7 @@ dofile("expansions/script/proc_perdition.lua") --Perditions
 dofile("expansions/script/proc_impure.lua") --Impures
 dofile("expansions/script/proc_runic.lua") --Runic
 dofile("expansions/script/proc_magick.lua") --Magick
-dofile("expansions/script/tables.lua")  --Special Tables
+dofile("expansions/script/tables.lua") --Special Tables
 
 Card.IsReason=function(c,rs)
 	local cusrs=rs>>32
