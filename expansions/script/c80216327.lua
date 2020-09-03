@@ -5,7 +5,7 @@ function cid.initial_effect(c)
 	aux.AddLinkProcedure(c,aux.FilterBoolFunction(Card.IsLinkType,TYPE_EFFECT),2,2,function(g) return g:IsExists(Card.IsLinkSetCard,1,nil,0xead) end)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
-	e1:SetCode(EVENT_XYZATTACH)
+	e1:SetCode(EVENT_CUSTOM+id)
 	e1:SetRange(LOCATION_MZONE)
 	e1:SetProperty(EFFECT_FLAG_DELAY)
 	e1:SetCategory(CATEGORY_DRAW+CATEGORY_TOGRAVE)
@@ -13,6 +13,14 @@ function cid.initial_effect(c)
 	e1:SetTarget(cid.target)
 	e1:SetOperation(cid.operation)
 	c:RegisterEffect(e1)
+	if not cid.global_check then
+		cid.global_check=true
+		local ge1=Effect.CreateEffect(c)
+		ge1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+		ge1:SetCode(EVENT_XYZATTACH)
+		ge1:SetOperation(cid.checkop)
+		Duel.RegisterEffect(ge1,0)
+	end
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e2:SetCode(EVENT_TO_GRAVE)
@@ -23,14 +31,26 @@ function cid.initial_effect(c)
 	e2:SetOperation(cid.lgop)
 	c:RegisterEffect(e2)
 end
-function cid.cfilter(c,xc)
+function cid.checkop(e,tp,eg,ep,ev,re,r,rp)
+	local chd=Duel.GetCurrentChain()
+	local eid=Duel.GetFlagEffectLabel(tp,id+1)
+	local i=Duel.GetChainInfo(chd,CHAININFO_CHAIN_ID)
+	if chd>0 and (not eid or eid~=i) then
+		local v=eg:FilterCount(cid.cfilter,nil)
+		local e1=Effect.CreateEffect(e:GetOwner())
+		e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+		e1:SetCode(EVENT_CHAIN_SOLVED)
+		e1:SetOperation(function(e,tp,efg,ep,ev,re,r,rp) Duel.RaiseEvent(eg,EVENT_CUSTOM+id,re,r,rp,ep,v) end)
+		Duel.RegisterEffect(e1,tp)
+		Duel.RegisterFlagEffect(tp,id+1,RESET_CHAIN,0,1,i)
+	end
+end
+function cid.cfilter(c)
 	return c:GetOverlayTarget():IsSetCard(0x2ead)
 end
 function cid.condition(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	local res=eg:IsExists(cid.cfilter,1,nil) and c:GetFlagEffect(id)==0
-	c:ResetFlagEffect(id)
-	return res
+	return ev>0 and Duel.GetFlagEffect(tp,id)==0
 end
 function cid.xfilter(c)
 	return c:IsFaceup() and c:IsSetCard(0xead) and c:IsType(TYPE_XYZ)
@@ -50,9 +70,9 @@ function cid.operation(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,p,HINTMSG_XMATERIAL)
 	local sg=g:Select(p,1,1,nil)
 	if not sg:GetFirst():IsAbleToGrave() or b2 and not Duel.SelectYesNo(tp,1191) then
+		Duel.RegisterFlagEffect(tp,id,RESET_CHAIN,0,1)
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_FACEUP)
 		Duel.Overlay(Duel.SelectMatchingCard(p,cid.xfilter,p,LOCATION_MZONE,0,1,1,nil):GetFirst(),sg)
-		e:GetHandler():RegisterFlagEffect(id,0,0,1)
 	else Duel.SendtoGrave(sg,REASON_EFFECT) end
 end
 function cid.filter(c,tp)
@@ -69,8 +89,8 @@ function cid.lgop(e,tp,eg,ep,ev,re,r,rp)
 	if not tc:IsRelateToEffect(e) then return end
 	local g=Duel.GetMatchingGroup(cid.xfilter,tp,LOCATION_MZONE,0,nil)
 	if #g>0 and (not tc:IsAbleToHand() or not Duel.SelectYesNo(tp,1152)) then
+		Duel.RegisterFlagEffect(tp,id,RESET_CHAIN,0,1)
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_FACEUP)
 		Duel.Overlay(g:Select(tp,1,1,nil):GetFirst(),Group.FromCards(tc))
-		e:GetHandler():RegisterFlagEffect(id,0,0,1)
 	else Duel.SendtoHand(tc,nil,REASON_EFFECT) end
 end
