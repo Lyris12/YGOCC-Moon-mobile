@@ -98,13 +98,13 @@ function cid.prop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.RegisterEffect(e1,tp)
 end
 function cid.aclimit1(e,re,tp)
-	return re:IsActiveType(TYPE_MONSTER) and aux.tgoval()
+	return re:IsActiveType(TYPE_MONSTER) and aux.tgoval(e,re,tp)
 end
 function cid.aclimit2(e,re,tp)
-	return re:IsHasType(EFFECT_TYPE_ACTIVATE) and re:IsActiveType(TYPE_SPELL) and aux.tgoval()
+	return re:IsHasType(EFFECT_TYPE_ACTIVATE) and re:IsActiveType(TYPE_SPELL) and aux.tgoval(e,re,tp)
 end
 function cid.aclimit3(e,re,tp)
-	return re:IsHasType(EFFECT_TYPE_ACTIVATE) and re:IsActiveType(TYPE_TRAP) and aux.tgoval()
+	return re:IsHasType(EFFECT_TYPE_ACTIVATE) and re:IsActiveType(TYPE_TRAP) and aux.tgoval(e,re,tp)
 end
 function cid.imtg(e,c)
 	return c:IsSetCard(0xd7c)
