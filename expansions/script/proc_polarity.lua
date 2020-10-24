@@ -54,7 +54,7 @@ Card.GetLevel=function(c)
 	if Auxiliary.Polarities[c] and not Auxiliary.Polarities[c]() then return 0 end
 	return get_level(c)
 end
-GetSynchroLevel=function(c,sc)
+Card.GetSynchroLevel=function(c,sc)
 	if Auxiliary.Polarities[c] and not Auxiliary.Polarities[c]() then return 0 end
 	return get_syn_level(c,sc)
 end
@@ -101,8 +101,18 @@ function Card.GetStability(c)
 		return te:GetValue()
 	end
 end
-function Card.IsStability(c,stability)
-	return c:GetStability()==stability
+function Card.IsStability(c,...)
+	for stability in pairs({...}) do
+		if c:Getstability()==stability then return true end
+	end
+	return false
+end
+function Card.IsStabilityAbove(c,stability)
+	return c:GetStability()>=stability
+end
+function Card.IsStabilityBelow(c,stability)
+	local stb=c:GetStability()
+	return stb>0 and stb<=stability
 end
 function Card.IsCanBePolarityMaterial(c,ec)
 	if c:GetLevel()<=0 and not c:IsStatus(STATUS_NO_LEVEL) then return false end

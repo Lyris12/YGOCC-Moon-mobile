@@ -338,6 +338,7 @@ function Auxiliary.TimeleapTarget(filter,...)
 					if exsumcheck~=nil then
 						Duel.RegisterFlagEffect(tp,829,RESET_PHASE+PHASE_END,0,1)
 						Duel.Hint(HINT_CARD,0,exsumcheck:GetOwner():GetOriginalCode())
+						exsumcheck:Reset()
 					end
 					sg:KeepAlive()
 					e:SetLabelObject(sg)
@@ -382,8 +383,18 @@ function Card.GetFuture(c)
 		return te:GetValue()
 	end
 end
-function Card.IsFuture(c,future)
-	return c:GetFuture()==future
+function Card.IsFuture(c,...)
+	for future in pairs({...}) do
+		if c:GetFuture()==future then return true end
+	end
+	return false
+end
+function Card.IsFutureAbove(c,future)
+	return c:GetFuture()>=future
+end
+function Card.IsFutureBelow(c,future)
+	local ft=c:GetFuture()
+	return ft>0 and ft<=future
 end
 function Auxiliary.FutureVal(future)
 	return  function(e,c)
