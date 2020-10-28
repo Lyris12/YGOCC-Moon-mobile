@@ -58,10 +58,7 @@ function cid.ctfilter(c)
 	return c:IsFaceup() and c:IsSetCard(0x2e7)
 end
 function cid.ctop(e,tp,eg,ep,ev,re,r,rp)
-	if eg:IsExists(cid.ctfilter,1,nil) and Duel.GetFlagEffect(tp,id)==0 then
-		e:GetHandler():AddCounter(0x2e7,1)
-		Duel.RegisterFlagEffect(tp,id,RESET_PHASE+PHASE_END,0,1)
-	end
+	if eg:IsExists(cid.ctfilter,1,nil) then e:GetHandler():AddCounter(0x2e7,1) end
 end
 function cid.atkval(e)
 	return e:GetHandler():GetCounter(0x2e7)*-100

@@ -193,9 +193,6 @@ end
 
 function Duel.GetHasteChance(player)
 	local haste=Duel.GetHaste(player)
-	local drhalf = 100
---	local chancecapperc = 50
---	local chancecap = chancecapperc * 0.01
 	return haste/100
 end
 
@@ -213,24 +210,21 @@ Card.IsRelateToEffect=function(c,e)
 end
 
 function Auxiliary.EnableHaste(c)
-	if not haste_global_check then
-		haste_global_check=true
-		local haste=Effect.CreateEffect(c)
-		haste:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		haste:SetCode(EVENT_CHAINING)
-		haste:SetRange(LOCATION_EXTRA+LOCATION_DECK+LOCATION_GRAVE+LOCATION_HAND+LOCATION_ONFIELD+LOCATION_REMOVED+LOCATION_PZONE+LOCATION_FZONE)
-		haste:SetCondition(Auxiliary.hastecondition)
-		haste:SetTarget(Auxiliary.hastetarget)
-		haste:SetOperation(Auxiliary.hasteactivate)
-		c:RegisterEffect(haste)
-		local haste2=Effect.CreateEffect(c)
-		haste2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		haste2:SetCode(EVENT_CHAINING)
-		haste2:SetRange(LOCATION_EXTRA+LOCATION_DECK+LOCATION_GRAVE+LOCATION_HAND+LOCATION_ONFIELD+LOCATION_REMOVED+LOCATION_PZONE+LOCATION_FZONE)
-		haste2:SetCondition(aux.haste2condition)
-		haste2:SetOperation(aux.haste2activate)
-		c:RegisterEffect(haste2)	
-	end
+	local haste=Effect.CreateEffect(c)
+	haste:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+	haste:SetCode(EVENT_CHAINING)
+	haste:SetRange(LOCATION_EXTRA+LOCATION_DECK+LOCATION_GRAVE+LOCATION_HAND+LOCATION_ONFIELD+LOCATION_REMOVED+LOCATION_PZONE+LOCATION_FZONE)
+	haste:SetCondition(Auxiliary.hastecondition)
+	haste:SetTarget(Auxiliary.hastetarget)
+	haste:SetOperation(Auxiliary.hasteactivate)
+	c:RegisterEffect(haste)
+	local haste2=Effect.CreateEffect(c)
+	haste2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+	haste2:SetCode(EVENT_CHAINING)
+	haste2:SetRange(LOCATION_EXTRA+LOCATION_DECK+LOCATION_GRAVE+LOCATION_HAND+LOCATION_ONFIELD+LOCATION_REMOVED+LOCATION_PZONE+LOCATION_FZONE)
+	haste2:SetCondition(aux.haste2condition)
+	haste2:SetOperation(aux.haste2activate)
+	c:RegisterEffect(haste2)	
 end
 
 function Auxiliary.hastecondition(e,tp,eg,ep,ev,re,r,rp)
