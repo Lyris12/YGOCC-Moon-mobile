@@ -52,24 +52,13 @@ function cid.activate(e,tp,eg,ep,ev,re,r,rp)
 		local token1=Duel.CreateToken(tp,21770262)
 		Duel.SpecialSummon(token1,0,tp,tp,false,false,POS_FACEUP)
 	end
-	local e1=Effect.CreateEffect(e:GetHandler())
-	e1:SetType(EFFECT_TYPE_FIELD)
-	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
-	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_OATH)
-	e1:SetTargetRange(1,0)
-	e1:SetTarget(cid.splimit)
-	e1:SetReset(RESET_PHASE+PHASE_END)
-	Duel.RegisterEffect(e1,tp)
-end
-function cid.splimit(e,c,sump,sumtype,sumpos,targetp,se)
-	return not c:IsSetCard(0x8108) and c:IsLocation(LOCATION_EXTRA)
 end
 --LP recover
 function cid.regop(e,tp,eg,ep,ev,re,r,rp)
 	e:GetHandler():RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD-RESET_TURN_SET+RESET_CHAIN,0,1)
 end
 function cid.lpcon(e,tp,eg,ep,ev,re,r,rp)
-	return re:IsActiveType(TYPE_MONSTER)
+	return re:IsActiveType(TYPE_MONSTER) and re:GetHandler():GetFlagEffect(1)>0
 end
 function cid.thop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
@@ -79,7 +68,7 @@ function cid.thop(e,tp,eg,ep,ev,re,r,rp)
 	e2:SetCode(EVENT_CHAINING)
 	e2:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
 	e2:SetReset(RESET_PHASE+PHASE_END,2)
-	e2:SetOperation(cid.regop)
+	e2:SetOperation(aux.chainreg)
 	Duel.RegisterEffect(e2,tp)
 	local e3=Effect.CreateEffect(c)
 	e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
