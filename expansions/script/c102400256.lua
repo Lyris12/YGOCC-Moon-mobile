@@ -4,9 +4,10 @@ local s,id=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_QUICK_O)
-	e1:SetCode(EVENT_PRE_DAMAGE_CALCULATE)
+	e1:SetCode(EVENT_FREE_CHAIN)
 	e1:SetRange(LOCATION_MZONE)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON+CATEGORY_DESTROY)
+	e1:SetHintTiming(TIMING_DAMAGE_STEP)
 	e1:SetCondition(s.spcon)
 	e1:SetTarget(s.sptg)
 	e1:SetOperation(s.spop)
@@ -23,22 +24,25 @@ function s.initial_effect(c)
 end
 function s.spcon(e,tp,eg,ep,ev,re,r,rp)
 	local a=Duel.GetAttacker()
+	if not a then return false end
 	if a:IsControler(1-tp) then a=Duel.GetAttackTarget() end
-	return a:IsRelateToBattle()
+	return a~=e:GetHandler() and a:IsRelateToBattle() and a:IsSetCard(0xa6c)
+		and Duel.GetCurrentPhase()==PHASE_DAMAGE and not Duel.IsDamageCalculated()
 end
 function s.filter(c,e,tp)
 	return c:IsSetCard(0xa6c) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+	local loc=LOCATION_HAND+(e:GetHandler():IsHasEffect(id+8) and LOCATION_DECK or 0)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
-		and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_HAND,0,1,nil,e,tp) end
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND)
+		and Duel.IsExistingMatchingCard(s.filter,tp,loc,0,1,nil,e,tp) end
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,loc)
 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,e:GetHandler(),1,0,0)
 end
 function s.spop(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	if Duel.SpecialSummon(Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_HAND,0,1,1,nil,e,tp),0,tp,tp,false,false,POS_FACEUP)>0 then
+	if Duel.SpecialSummon(Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_HAND+(e:GetHandler():IsHasEffect(id+8) and LOCATION_DECK or 0),0,1,1,nil,e,tp),0,tp,tp,false,false,POS_FACEUP)>0 then
 		Duel.BreakEffect()
 		Duel.Destroy(e:GetHandler(),REASON_EFFECT)
 	end

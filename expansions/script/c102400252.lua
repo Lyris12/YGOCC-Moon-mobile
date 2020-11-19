@@ -9,6 +9,7 @@ function s.initial_effect(c)
 	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP)
 	e1:SetCondition(s.con)
 	e1:SetCategory(CATEGORY_ATKCHANGE+CATEGORY_DESTROY)
+	e1:SetHintTiming(TIMING_DAMAGE_STEP)
 	e1:SetTarget(s.tg)
 	e1:SetOperation(s.op)
 	c:RegisterEffect(e1)
@@ -22,9 +23,9 @@ function s.initial_effect(c)
 end
 function s.con(e,tp)
 	local a=Duel.GetAttacker()
-	if not a or a==e:GetHandler() then return false end
+	if not a then return false end
 	if a:IsControler(1-tp) then a=Duel.GetAttackTarget() end
-	return a:IsSetCard(0xa6c) and a:IsRelateToBattle()
+	return a~=e:GetHandler() and a:IsSetCard(0xa6c) and a:IsRelateToBattle()
 		and Duel.GetCurrentPhase()==PHASE_DAMAGE and not Duel.IsDamageCalculated()
 end
 function s.tg(e,tp,eg,ep,ev,re,r,rp,chk)
