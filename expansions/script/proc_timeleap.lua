@@ -359,6 +359,7 @@ function Auxiliary.TimeleapTarget(filter,...)
 end
 function Auxiliary.TimeleapOperation(customop)
 	return  function(e,tp,eg,ep,ev,re,r,rp,c)
+				if Duel.SetSummonCancelable then Duel.SetSummonCancelable(true) end
 				local g=e:GetLabelObject()
 				c:SetMaterial(g)
 				if not customop then
