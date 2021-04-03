@@ -14,7 +14,7 @@ function s.initial_effect(c)
 	e6:SetType(EFFECT_TYPE_IGNITION)
 	e6:SetRange(LOCATION_GRAVE)
 	e6:SetCountLimit(1,id-1)
-	e6:SetCategory(CATEGORY_SPECIAL_SUMMON+CATEGORY_LVCHANGE)
+	e6:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e6:SetCost(s.cost)
 	e6:SetTarget(s.tg)
 	e6:SetOperation(s.op)
@@ -53,7 +53,8 @@ function s.initial_effect(c)
 end
 function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if chk==0 then return Duel.IsPlayerCanDiscardDeck(tp,3) and c:IsAbleToGrave() end
+	if chk==0 then return Duel.IsPlayerCanDiscardDeck(tp,3) and c:IsAbleToGrave() and c:GetFlagEffect(id+1000)==0 end
+	c:RegisterFlagEffect(id+1000,RESET_CHAIN,0,1)
 	Duel.SetOperationInfo(0,CATEGORY_TOGRAVE,c,1,0,0)
 end
 function s.operation(e,tp,eg,ep,ev,re,r,rp)
