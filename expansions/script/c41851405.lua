@@ -28,19 +28,19 @@ function s.initial_effect(c)
 	e3:SetCode(EVENT_LEAVE_FIELD)
 	e3:SetCountLimit(1,id)
 	e3:SetCategory(CATEGORY_DESTROY+CATEGORY_SEARCH+CATEGORY_TOHAND)
-	e3:SetCondition(function() return c:IsSummonType(SUMMON_TYPE_LINK) and c:IsPreviousPosition(POS_FACEUP) end)
+	e3:SetCondition(function() return c:IsSummonType(SUMMON_TYPE_RITUAL) and c:IsPreviousPosition(POS_FACEUP) end)
 	e3:SetTarget(s.tg)
 	e3:SetOperation(s.op)
 	c:RegisterEffect(e3)
 end
-function s.filter(c)
+function s.cpfilter(c)
 	return c:GetType()&0xa0==0xa0 and c:IsSetCard(0x106) and not c:IsCode(id)
 end
 function s.copytg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_GRAVE) and chkc:IsControler(tp) and s.filter(chkc) end
+	if chkc then return chkc:IsLocation(LOCATION_GRAVE) and chkc:IsControler(tp) and s.cpfilter(chkc) end
 	if chk==0 then return true end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TARGET)
-	Duel.SelectTarget(tp,s.filter,tp,LOCATION_GRAVE,0,1,1,nil)
+	Duel.SelectTarget(tp,s.cpfilter,tp,LOCATION_GRAVE,0,1,1,nil)
 end
 function s.copyop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
