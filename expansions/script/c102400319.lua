@@ -1,4 +1,5 @@
 --created & coded by Lyris, art found by BDSceptyr of DeviantArt
+--ブランク・ローズ・ドラゴン
 local s,id=GetID()
 function s.initial_effect(c)
 	c:EnableReviveLimit()
@@ -79,7 +80,7 @@ function s.tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 end
 function s.op(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()
-	if tc and tc:IsFaceup() or not tc:IsRelateToEffect(e) then Duel.ChangePosition(tc,POS_FACEDOWN_DEFENSE) end
+	if tc and tc:IsAttackPos() and tc:IsControler(1-tp) and tc:IsLocation(LOCATION_MZONE) and tc:IsRelateToEffect(e) then Duel.ChangePosition(tc,POS_FACEDOWN_DEFENSE) end
 	local c=e:GetHandler()
 	if not c:IsRelateToEffect(e) then return end
 	local e1=Effect.CreateEffect(c)

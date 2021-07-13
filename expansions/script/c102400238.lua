@@ -1,4 +1,4 @@
---created & coded by Lyris, art at ZeroChan
+--created & coded by Lyris, art on ZeroChan
 --ニュートリックス・カリー
 local s,id=GetID()
 function s.initial_effect(c)
@@ -22,9 +22,6 @@ function s.initial_effect(c)
 	local e3=e2:Clone()
 	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
 	c:RegisterEffect(e3)
-	local e4=e2:Clone()
-	e4:SetCode(EVENT_FLIP_SUMMON_SUCCESS)
-	c:RegisterEffect(e4)
 	local e0=Effect.CreateEffect(c)
 	e0:SetType(EFFECT_TYPE_FIELD)
 	e0:SetCode(EFFECT_SPSUMMON_PROC)

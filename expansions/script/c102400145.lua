@@ -1,4 +1,4 @@
---created & coded by Lyris, art at http://img.gawkerassets.com/img/tsjagjpg/original.jpg
+--created & coded by Lyris, art at https://gizmodo.com/720850?_escaped_fragment_=
 --襲雷のアーティレリ
 local s,id=GetID()
 function s.initial_effect(c)
@@ -54,7 +54,7 @@ function s.destg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 end
 function s.desop(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()
-	if tc:IsRelateToEffect(e) and Duel.Destroy(tc,REASON_EFFECT)~=0 then
+	if tc:IsRelateToEffect(e) and tc:IsControler(1-tp) and Duel.Destroy(tc,REASON_EFFECT)~=0 then
 		Duel.BreakEffect()
 		Duel.Damage(1-tp,500,REASON_EFFECT)
 	end
