@@ -1,6 +1,6 @@
 --created & coded by Lyris, art by ryanorosco of DeviantArt
 --剣主二サン
-local s,id=GetID()
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e0=Effect.CreateEffect(c)
 	e0:SetType(EFFECT_TYPE_SINGLE)
@@ -25,6 +25,7 @@ function s.initial_effect(c)
 	e2:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
 	e2:SetType(EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_SINGLE)
 	e2:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e2:SetCountLimit(1,id)
 	e2:SetProperty(EFFECT_FLAG_DELAY)
 	e2:SetTarget(s.tg2)
 	e2:SetOperation(s.op2)

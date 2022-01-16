@@ -1,6 +1,6 @@
 --created & coded by Lyris
 --機夜光襲雷竜－ビッグバン・エオン
-local s,id=GetID()
+local s,id,off=GetID()
 function s.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddFusionProcFunRep(c,s.ffilter,2,true)
@@ -10,8 +10,8 @@ function s.initial_effect(c)
 	e0:SetType(EFFECT_TYPE_QUICK_O)
 	e0:SetRange(LOCATION_MZONE)
 	e0:SetCode(EVENT_FREE_CHAIN)
+	e0:SetCountLimit(1)
 	e0:SetHintTiming(0,TIMINGS_CHECK_MONSTER+TIMING_ATTACK)
-	e0:SetCondition(s.descon)
 	e0:SetTarget(s.destg)
 	e0:SetOperation(s.desop)
 	c:RegisterEffect(e0)
@@ -46,9 +46,6 @@ end
 function s.fcheck(c,atk)
 	local dif=math.abs(c:GetAttack()-atk)
 	return dif>0 and dif<=400
-end
-function s.descon(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.IsAbleToEnterBP() or (Duel.GetCurrentPhase()>=PHASE_BATTLE_START and Duel.GetCurrentPhase()<=PHASE_BATTLE)
 end
 function s.desfilter(c,e,tp)
 	return c:IsLevelBelow(5) and c:IsSetCard(0x7c4) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
@@ -112,8 +109,11 @@ function s.distg(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.SetOperationInfo(0,CATEGORY_TODECK,eg,ct,tp,LOCATION_GRAVE)
 end
 function s.negop(e,tp,eg,ep,ev,re,r,rp)
+	local rc=re:GetHandler()
 	local g=Duel.GetMatchingGroup(s.filter,tp,LOCATION_GRAVE,0,nil)
-	if #g>0 and Duel.NegateActivation(ev) and re:GetHandler():IsRelateToEffect(re) then
+	if #g>0 and Duel.NegateActivation(ev) and rc:IsRelateToEffect(re) then
+		rc:CancelToGrave()
+		if not rc:IsAbleToDeck() then return end
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
 		local dg=g:Select(tp,1,1,nil)
 		Duel.SendtoDeck(eg+dg,nil,2,REASON_EFFECT)

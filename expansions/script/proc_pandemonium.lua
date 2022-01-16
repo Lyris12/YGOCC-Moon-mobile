@@ -465,6 +465,7 @@ function Auxiliary.PandOperation(e,tp,eg,ep,ev,re,r,rp,c,sg,og)
 			e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
 			e1:SetCode(EVENT_SPSUMMON)
 			e1:SetRange(LOCATION_SZONE)
+			e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE)
 			e1:SetCondition(function(e,tp,eg,ep,ev,re,r,rp) return eg:IsExists(Card.IsSummonType,1,nil,SUMMON_TYPE_SPECIAL+726) end)
 			e1:SetOperation(function(e,tp,eg,ep,ev,re,r,rp)
 								local c=e:GetHandler()
@@ -566,7 +567,11 @@ function Auxiliary.PandDisableFUInED(tc,tpe)
 			end
 end
 function Auxiliary.PandSSetCon(tc,player,...)
-	local params,loc1,loc2={...},0xff,0xff
+	local params,loc1,loc2,neglect_zone={...},0xff,0xff,false
+	if type(params[#params])=='boolean' then
+		neglect_zone=params[#params]
+		table.remove(params)
+	end
 	if type(params[#params])=='number' then
 		loc1=params[#params]
 		if #params-1>0 and type(params[#params-1])=='number' then
@@ -611,7 +616,7 @@ function Auxiliary.PandSSetCon(tc,player,...)
 							tsg=sg:GetNext()
 						end
 						if ct==#sg then check=false end
-					elseif tc and tg(te,tc) then
+					elseif tc and tg(te,tc,ttp) then
 						check=false
 					else
 						if not tc then
@@ -619,7 +624,7 @@ function Auxiliary.PandSSetCon(tc,player,...)
 						end
 					end
 				end
-				return Duel.GetLocationCount(ttp,LOCATION_SZONE)>0 and check
+				return (neglect_zone or Duel.GetLocationCount(ttp,LOCATION_SZONE)>0) and check
 			end
 end	
 function Auxiliary.PandSSetFilter(tc,...)
@@ -643,41 +648,61 @@ function Auxiliary.PandSSetFilter(tc,...)
 				return (not tc or tc(c,e,tp,eg,ep,ev,re,r,rp)) and Auxiliary.PandSSetCon(c,nil,table.unpack(eparams))(nil,e,tp,eg,ep,ev,re,r,rp)
 			end
 end
+function Auxiliary.GetOriginalPandemoniumType(c)
+	return c:GetFlagEffectLabel(1074)
+end
 function Auxiliary.PandSSet(tc,reason,tpe)
-	if not tpe then tpe=TYPE_EFFECT end
 	return  function(e,tp,eg,ep,ev,re,r,rp,c)
 				if pcall(Group.GetFirst,tc) then
+					local mixedset=false
+					local sg=Group.CreateGroup()
+					sg:KeepAlive()
 					local tg=tc:Clone()
 					for cc in aux.Next(tg) do
-						local hand_chk=true
-						if not cc:IsLocation(LOCATION_HAND) then
-							hand_chk=false
-							cc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
+						if cc:IsType(TYPE_PANDEMONIUM) or cc:GetFlagEffect(706)>0 then	
+							if not cc:IsLocation(LOCATION_HAND) then
+								cc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
+							end
+							local e1=Effect.CreateEffect(cc)
+							e1:SetType(EFFECT_TYPE_SINGLE)
+							e1:SetCode(EFFECT_MONSTER_SSET)
+							e1:SetValue(TYPE_TRAP+TYPE_CONTINUOUS)
+							e1:SetReset(RESET_EVENT+RESETS_STANDARD)
+							cc:RegisterEffect(e1,true)
+							if cc:IsLocation(LOCATION_SZONE) then
+								--if cc:IsCanTurnSet() then
+									Duel.ChangePosition(cc,POS_FACEDOWN_ATTACK)
+									Duel.RaiseEvent(cc,EVENT_SSET,e,reason,tp,tp,0)
+									cc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1)
+									e1:Reset()
+								--end
+							else								
+								sg:AddCard(cc)
+							end
+						elseif cc:IsType(TYPE_SPELL+TYPE_TRAP) and cc:GetFlagEffect(706)<=0 then
+							if not mixedset then mixedset=true end
+							sg:AddCard(cc)
 						end
-						local e1=Effect.CreateEffect(cc)
-						e1:SetType(EFFECT_TYPE_SINGLE)
-						e1:SetCode(EFFECT_MONSTER_SSET)
-						e1:SetValue(TYPE_TRAP+TYPE_CONTINUOUS)
-						e1:SetReset(RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD)
-						cc:RegisterEffect(e1,true)
-						if cc:IsLocation(LOCATION_SZONE) then
-							--if cc:IsCanTurnSet() then
-								Duel.ChangePosition(cc,POS_FACEDOWN_ATTACK)
-								Duel.RaiseEvent(cc,EVENT_SSET,e,reason,cc:GetControler(),cc:GetControler(),0)
+					end
+					if #sg>0 then
+						Duel.SSet(tp,sg,tp,false)
+						for cc in aux.Next(sg) do
+							local tpe=tpe or aux.GetOriginalPandemoniumType(cc)
+							if cc:IsType(TYPE_PANDEMONIUM) then
 								cc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1)
-							--end
-						else Duel.SSet(cc:GetControler(),cc,cc:GetControler(),false) cc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1) end
-						e1:Reset()
-						if hand_chk then
-							cc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
-						end
-						if not cc:IsLocation(LOCATION_SZONE) then
-							local edcheck=0
-							if cc:IsLocation(LOCATION_EXTRA) then edcheck=TYPE_PENDULUM end
-							cc:SetCardData(CARDDATA_TYPE,TYPE_MONSTER+tpe+edcheck)
+								if cc:IsPreviousLocation(LOCATION_HAND) then
+									cc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
+								end
+								if not cc:IsLocation(LOCATION_SZONE) then
+									local edcheck=0
+									if cc:IsLocation(LOCATION_EXTRA) then edcheck=TYPE_PENDULUM end
+									cc:SetCardData(CARDDATA_TYPE,TYPE_MONSTER+tpe+edcheck)
+								end
+							end
 						end
 					end
 				else
+					local tpe=tpe or aux.GetOriginalPandemoniumType(tc)
 					local hand_chk=true
 					if not tc:IsLocation(LOCATION_HAND) then
 						hand_chk=false
@@ -692,10 +717,13 @@ function Auxiliary.PandSSet(tc,reason,tpe)
 					if tc:IsLocation(LOCATION_SZONE) then
 						if tc:IsCanTurnSet() then
 							Duel.ChangePosition(tc,POS_FACEDOWN_ATTACK)
-							Duel.RaiseEvent(tc,EVENT_SSET,e,reason,tc:GetControler(),tc:GetControler(),0)
+							Duel.RaiseEvent(tc,EVENT_SSET,e,reason,tp,tp,0)
 							tc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1)
 						end
-					else Duel.SSet(tc:GetControler(),tc,tc:GetControler(),false) tc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1) end
+					else
+						Duel.SSet(tp,tc,tp,false)
+						tc:RegisterFlagEffect(706,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_SET_AVAILABLE,1)
+					end
 					e1:Reset()
 					if hand_chk then
 						tc:SetCardData(CARDDATA_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
@@ -715,7 +743,20 @@ end
 function Auxiliary.PandActTarget(forced,...)
 	local fx={...}
 	return  function(e,tp,eg,ep,ev,re,r,rp,chk)
-				if chk==0 then return true end
+				if chk==0 then
+					if not forced then
+						return true
+					else
+						if #fx==0 then return true end
+						for i,xe in ipairs(fx) do
+							local tg=xe:GetTarget()
+							if tg and tg(e,tp,eg,ep,ev,re,r,rp,0) then
+								return true
+							end
+						end
+						return false
+					end
+				end
 				local c=e:GetHandler()
 				c:RegisterFlagEffect(726,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE,1)
 				if #fx==0 then
@@ -826,8 +867,91 @@ function Auxiliary.PandAct(tc,...)
 				tc:RegisterFlagEffect(726,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CANNOT_DISABLE,1)
 			end
 end
-function Auxiliary.GetOriginalPandemoniumType(c)
-	return c:GetFlagEffectLabel(1074)
+
+function Card.IsPandemoniumActivatable(c,tp,fp,neglect_loc,neglect_cond,neglect_cost,neglect_targ,eg,ep,ev,re,r,rp)
+	if not fp then fp=tp end
+	local e=c:GetActivateEffect()
+	if not c:IsType(TYPE_PANDEMONIUM) then return false end
+	
+	c:AssumeProperty(ASSUME_TYPE,TYPE_TRAP+TYPE_CONTINUOUS)
+	if c:IsForbidden() or c:IsHasEffect(EFFECT_CANNOT_TRIGGER) then return false end
+	if not c:CheckUniqueOnField(fp) then return false end
+	
+	for _,pe in ipairs({Duel.IsPlayerAffectedByEffect(tp,EFFECT_CANNOT_ACTIVATE)}) do
+		local value=pe:GetValue()
+		if not value or type(value)=="number" then
+			return false
+		elseif type(value)=="function" and value(pe,e,tp) then
+			return false
+		end
+	end
+	if not e:CheckCountLimit(tp) or e:GetHandlerPlayer()~=tp then return false end
+	
+	local ph=Duel.GetCurrentPhase()
+	if ph==PHASE_DAMAGE then
+		if (e:GetCode()<EVENT_BATTLE_START or e:GetCode()>=EVENT_TOSS_DICE) and not e:IsHasProperty(EFFECT_FLAG_DAMAGE_STEP) then return false end
+	elseif ph==PHASE_DAMAGE_CAL then
+		if (e:GetCode()<EVENT_PRE_DAMAGE_CALCULATE or e:GetCode()>EVENT_PRE_BATTLE_DAMAGE) and not e:IsHasProperty(EFFECT_FLAG_DAMAGE_CAL) then return false end
+	end
+	
+	local zone=0xff
+	local zonechk=true
+	if e:IsHasProperty(EFFECT_FLAG_LIMIT_ZONE) then
+		local zfun=e:GetValue()
+		if type(zfun)=="function" then
+			zone=zfun(e,tp,eg,ep,ev,re,r,rp)
+		elseif type(zfun)=="number" then
+			zone=zfun
+		end
+		if c:IsLocation(LOCATION_SZONE) then
+			local z = (fp==self_reference_effect:GetHandlerPlayer()) and 0x1<<c:GetSequence() or 0x1<<(c:GetSequence()+16)
+			zonechk = zone&z>0
+		end
+	end
+	local ecode=0
+	if c:IsLocation(LOCATION_SZONE) then
+		if c:IsFaceup() or c:GetEquipTarget() or not zonechk then return false end
+		if c:IsStatus(STATUS_SET_TURN) then
+			ecode=EFFECT_TRAP_ACT_IN_SET_TURN
+		end
+	elseif c:IsLocation(LOCATION_HAND) and not neglect_loc then
+		ecode=EFFECT_TRAP_ACT_IN_HAND
+	end
+	if ecode>0 then
+		local available=false
+		for _,ce in ipairs{c:IsHasEffect(ecode)} do
+			if ce:CheckCountLimit(tp) and (not ce:GetCondition() or ce:GetCondition()(ce)) then
+				available=true
+				break
+			end
+		end
+		if not available then
+			return false
+		end
+	end
+	
+	for _,pe in ipairs({Duel.IsPlayerAffectedByEffect(tp,EFFECT_ACTIVATE_COST)}) do
+		local acpcost,acptg=pe:GetCost(),pe:GetTarget()
+		if not acptg or not acptg(pe,e,tp) then
+			return false
+		end
+		if not acpcost or not acpcost(pe,e,tp) then
+			return false
+		end
+	end
+	
+	local cond,cost,targ=e:GetCondition(),e:GetCost(),e:GetTarget()
+	if not neglect_cond and cond and not cond(e,tp,eg,ep,ev,re,r,rp) then
+		return false
+	end
+	if not neglect_cost and cost and not cost(e,tp,eg,ep,ev,re,r,rp,0) then
+		return false
+	end
+	if not neglect_targ and targ and not targ(e,tp,eg,ep,ev,re,r,rp,0) then
+		return false
+	end
+	
+	return true
 end
 
 ----------EFFECT_PANDEPEND_SCALE-------------

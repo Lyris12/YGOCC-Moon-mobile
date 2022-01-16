@@ -1,5 +1,6 @@
 --created & coded by Lyris, art from Cardfight!! Vanguard's "Dark Metal Bicorn"
-local s,id=GetID()
+--エニグマフォーマー・バイコーンダーク
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)

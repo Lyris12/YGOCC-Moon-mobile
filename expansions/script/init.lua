@@ -1,13 +1,21 @@
 --Not yet finalized values
 --Custom constants
+self_reference_effect				= nil
+
 EFFECT_DEFAULT_CALL					=31993443
 EFFECT_EXTRA_GEMINI					=86433590
 EFFECT_AVAILABLE_LMULTIPLE			=86433612
 EFFECT_MULTIPLE_LMATERIAL			=86433613
 EFFECT_RANDOM_TARGET				=39759371
-EFFECT_CANNOT_BANISH_FD_EFFECT		=856
-TYPE_CUSTOM							=0
+EFFECT_CANNOT_BANISH				=1500
+EFFECT_CANNOT_BANISH_AS_COST		=1501
+EFFECT_CANNOT_ADD_TO_HAND			=1502
+EFFECT_GRANT_LEVEL					=1503
+EFFECT_REMEMBER_GRANTED_LEVEL		=1504
+EFFECT_REMEMBER_XYZ_HOLDER			=1505
+EFFECT_INDESTRUCTABLE_COST			=1506
 
+TYPE_CUSTOM							=0
 CTYPE_CUSTOM						=0
 
 EVENT_XYZATTACH						=EVENT_CUSTOM+9966607
@@ -50,19 +58,15 @@ end
 function Card.IsCustomReason(c,rs)
 	return (c:GetReason()>>32)&rs>0
 end
-function GetID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local scard=_G[str]
-	local s_id=tonumber(string.sub(str,2))
-	return scard,s_id
-end
 --overwrite functions
-local is_type, card_remcounter, duel_remcounter, effect_set_target_range, effect_set_reset, add_xyz_proc, add_xyz_proc_nlv, duel_overlay, duel_set_lp, duel_select_target, duel_banish, card_check_remove_overlay_card, is_reason, duel_check_tribute, select_tribute,card_sethighlander, card_is_facedown = 
-	Card.IsType, Card.RemoveCounter, Duel.RemoveCounter, Effect.SetTargetRange, Effect.SetReset, Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget, Duel.Remove, Card.CheckRemoveOverlayCard, Card.IsReason, Duel.CheckTribute, Duel.SelectTribute, Card.SetUniqueOnField, Card.IsFacedown
+local is_type, card_remcounter, duel_remcounter, effect_set_target_range, effect_set_reset, add_xyz_proc, add_xyz_proc_nlv, duel_overlay, duel_set_lp, duel_select_target, duel_banish, card_check_remove_overlay_card, is_reason, duel_check_tribute, select_tribute,card_sethighlander,
+	card_is_facedown, card_is_able_to_remove, card_is_able_to_remove_as_cost, card_is_able_to_hand, card_is_can_be_ssed, card_get_level, card_get_previous_level, card_is_level, card_is_level_below, card_is_level_above, card_is_destructable = 
+	
+	Card.IsType, Card.RemoveCounter, Duel.RemoveCounter, Effect.SetTargetRange, Effect.SetReset, Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget, Duel.Remove, Card.CheckRemoveOverlayCard, Card.IsReason, Duel.CheckTribute, Duel.SelectTribute, Card.SetUniqueOnField,
+	Card.IsFacedown, Card.IsAbleToRemove, Card.IsAbleToRemoveAsCost, Card.IsAbleToHand, Card.IsCanBeSpecialSummoned, Card.GetLevel, Card.GetPreviousLevelOnField, Card.IsLevel, Card.IsLevelBelow, Card.IsLevelAbove, Card.IsDestructable
 
 dofile("expansions/script/proc_evolute.lua") --Evolutes
-dofile("expansions/script/proc_conjoint.lua") --Conjoints
+dofile("expansions/script/proc_conjoin.lua") --Conjoints
 dofile("expansions/script/proc_pandemonium.lua") --Pandemoniums
 dofile("expansions/script/proc_polarity.lua") --Polarities
 dofile("expansions/script/proc_spatial.lua") --Spatials
@@ -72,12 +76,12 @@ dofile("expansions/script/proc_deckmaster.lua") --Deck Masters
 dofile("expansions/script/proc_bigbang.lua") --Bigbangs
 dofile("expansions/script/proc_timeleap.lua") --Time Leaps
 dofile("expansions/script/proc_relay.lua") --Relays
-dofile("expansions/script/proc_harmony.lua") --Harmonies
-dofile("expansions/script/proc_accent.lua") --Accents
-dofile("expansions/script/proc_bypath.lua") --Bypaths
-dofile("expansions/script/proc_toxia.lua") --Toxias
-dofile("expansions/script/proc_annotee.lua") --Annotees
-dofile("expansions/script/proc_chroma.lua") --Chromas
+-- dofile("expansions/script/proc_harmony.lua") --Harmonies
+-- dofile("expansions/script/proc_accent.lua") --Accents
+-- dofile("expansions/script/proc_bypath.lua") --Bypaths
+-- dofile("expansions/script/proc_toxia.lua") --Toxias
+-- dofile("expansions/script/proc_annotee.lua") --Annotees
+-- dofile("expansions/script/proc_chroma.lua") --Chromas
 dofile("expansions/script/proc_perdition.lua") --Perditions
 dofile("expansions/script/proc_impure.lua") --Impures
 dofile("expansions/script/proc_runic.lua") --Runic
@@ -85,6 +89,7 @@ dofile("expansions/script/proc_magick.lua") --Magick
 dofile("expansions/script/proc_xros.lua") --Xroses
 dofile("expansions/script/muse_proc.lua") --"Muse"
 dofile("expansions/script/tables.lua") --Special Tables
+dofile("expansions/script/proc_evolve.lua") --Evolve
 
 Card.IsReason=function(c,rs)
 	local cusrs=rs>>32
@@ -113,6 +118,21 @@ Card.IsType=function(c,tpe,scard,sumtype,p)
 	if custpe<=0 then return false end
 	return c:IsCustomType(custpe,scard,sumtype,p)
 end
+Card.IsRitualType=function(c,typ)
+	return c:IsType(typ)
+end
+Card.IsFusionType=function(c,typ)
+	return c:IsType(typ)
+end
+Card.IsSynchroType=function(c,typ)
+	return c:IsType(typ)
+end
+Card.IsXyzType=function(c,typ)
+	return c:IsType(typ)
+end
+Card.IsLinkType=function(c,typ)
+	return c:IsType(typ)
+end
 Card.RemoveCounter=function(c,p,typ,ct,r)
 	local n=c:GetCounter(typ)
 	card_remcounter(c,p,typ,ct,r)
@@ -136,26 +156,6 @@ Duel.RemoveCounter=function(p,s,o,typ,ct,r,rp)
 		return n-Duel.GetCounter(p,0,o,typ)
 	end
 end
--- Card.RegisterEffect=function(c,e,forced)
-	-- if c:IsStatus(STATUS_INITIALIZING) and not e then return end
-	-- registereff(c,e,forced)
-	-- local m=_G["c"..c:GetOriginalCode()]
-	-- if not m then return false end
-	-- if not m.default_call_table then
-		-- m.default_call_table={}
-	-- end
-	-- local etable=m.default_call_table
-	-- table.insert(etable,e)
-	-- -- local prop=EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_SET_AVAILABLE
-	-- -- if e:IsHasProperty(EFFECT_FLAG_UNCOPYABLE) then prop=prop|EFFECT_FLAG_UNCOPYABLE end
-	-- -- local ex=Effect.CreateEffect(c)
-	-- -- ex:SetType(EFFECT_TYPE_SINGLE)
-	-- -- ex:SetProperty(prop)
-	-- -- ex:SetCode(EFFECT_DEFAULT_CALL)
-	-- -- ex:SetLabelObject(e)
-	-- -- ex:SetLabel(c:GetOriginalCode())
-	-- -- registereff(c,ex,forced)
--- end
 Auxiliary.kaiju_procs={}
 global_target_range_effect_table={}
 Effect.SetTargetRange=function(e,self,oppo)
@@ -198,6 +198,26 @@ Duel.Overlay=function(xyz,mat)
 	duel_overlay(xyz,mat)
 	if oct and xyz:GetOverlayCount()>oct then
 		Duel.RaiseEvent(mat,EVENT_XYZATTACH,nil,0,0,xyz:GetControler(),xyz:GetOverlayCount()-oct)
+	end
+	local mg=Group.CreateGroup()
+	if aux.GetValueType(mat)=="Card" then
+		mg:AddCard(mat)
+	else
+		mg:Merge(mat)
+	end
+	for mc in aux.Next(mg) do
+		if not mc:IsHasEffect(EFFECT_REMEMBER_XYZ_HOLDER) then
+			local e1=Effect.CreateEffect(mc)
+			e1:SetType(EFFECT_TYPE_SINGLE)
+			e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_SET_AVAILABLE+EFFECT_FLAG_UNCOPYABLE)
+			e1:SetCode(EFFECT_REMEMBER_XYZ_HOLDER)
+			e1:SetLabelObject(xyz)
+			mc:RegisterEffect(e1)
+		else
+			local ef={mc:IsHasEffect(EFFECT_REMEMBER_XYZ_HOLDER)}
+			local e1=ef[1]
+			e1:SetLabelObject(xyz)
+		end
 	end
 end
 Duel.SetLP=function(p,setlp,...)
@@ -271,21 +291,27 @@ Duel.SelectTarget=function(actp,func,self,loc1,loc2,cmin,cmax,exc,...)
 		return duel_select_target(actp,func,self,loc1,loc2,cmin,cmax,exc,table.unpack(extras))
 	end
 end
-Duel.Remove=function(cc,pos,r)
+Duel.Remove=function(cc,pos,r,...)
+	local x={...}
+	local checkp=#x>0 and x[1] or self_reference_effect:GetHandlerPlayer()
+	
 	local cc=Group.CreateGroup()+cc
 	local tg=cc:Clone()
 	for c in aux.Next(tg) do
-		if (not pos or pos&POS_FACEDOWN~=0) and r&REASON_EFFECT~=0 then
-			local ef={c:IsHasEffect(EFFECT_CANNOT_BANISH_FD_EFFECT)}
+		if c:IsHasEffect(EFFECT_CANNOT_BANISH) then
+			local ef={c:IsHasEffect(EFFECT_CANNOT_BANISH)}
 			for _,te1 in ipairs(ef) do
 				local cf=te1:GetValue()
 				local typ=aux.GetValueType(cf)
-				if typ=="function" then
-					if cf(te1,c:GetReasonEffect(),c:GetReasonPlayer()) then 
-						cc=cc-c 
+				if not cf and r&REASON_EFFECT>0 then
+					cc=cc-c
+				elseif (typ=="number" and cf==pos) and r&REASON_EFFECT>0 then
+					cc=cc-c
+				elseif typ=="function" then
+					local checkpos,func=cf()
+					if (not checkpos or checkpos==pos) and (not func or func(c,self_reference_effect,r,checkp)) then
+						return false
 					end
-				elseif cf>0 then 
-					cc=cc-c 
 				end
 			end
 		end
@@ -297,7 +323,7 @@ Duel.Remove=function(cc,pos,r)
 			end
 		end
 	end
-	return duel_banish(cc,pos,r)
+	return duel_banish(cc,pos,r,table.unpack(x))
 end
 Card.CheckRemoveOverlayCard=function(c,tp,ct,r)
 	if Duel.IsPlayerAffectedByEffect(tp,25149863) and bit.band(r,REASON_COST)~=0 then
@@ -360,7 +386,227 @@ Card.IsFacedown=function(c)
 		return card_is_facedown(c)
 	end
 end
+Card.IsAbleToRemove=function(c,...)
+	local x={...}
+	local checkp=#x>0 and x[1] or self_reference_effect:GetHandlerPlayer()
+	local checkpos=#x>1 and x[2] or POS_FACEUP
+	local checkr=#x>2 and x[3] or REASON_EFFECT
+	if c:IsHasEffect(EFFECT_CANNOT_BANISH) then
+		local ef={c:IsHasEffect(EFFECT_CANNOT_BANISH)}
+		for _,te1 in ipairs(ef) do
+			local cf=te1:GetValue()
+			local typ=aux.GetValueType(cf)
+			if not cf and checkr&REASON_EFFECT>0 then
+				return false
+			elseif (typ=="number" and cf==checkpos) and checkr&REASON_EFFECT>0 then
+				return false
+			elseif typ=="function" then
+				local checkpos2,func=cf()
+				if (not checkpos2 or checkpos2==checkpos) and (not func or func(c,self_reference_effect,checkr,checkp)) then
+					return false
+				end
+			end
+		end
+	end
+	return card_is_able_to_remove(c,table.unpack(x))
+end
+Card.IsAbleToRemoveAsCost=function(c,...)
+	local x={...}
+	local checkpos=#x>0 and x[1] or POS_FACEUP
+	local checkp=#x>1 and x[2] or self_reference_effect:GetHandlerPlayer()
+	
+	if c:IsHasEffect(EFFECT_CANNOT_BANISH_AS_COST) then
+		local ef={c:IsHasEffect(EFFECT_CANNOT_BANISH_AS_COST)}
+		for _,te1 in ipairs(ef) do
+			local cf=te1:GetValue()
+			local typ=aux.GetValueType(cf)
+			if not cf then
+				return false
+			elseif (typ=="number" and cf==checkpos) then
+				return false
+			elseif typ=="function" then
+				local checkpos2,func=cf()
+				if (not checkpos2 or checkpos2==checkpos) and (not func or func(c,self_reference_effect,REASON_COST,checkp)) then
+					return false
+				end
+			end
+		end
+	end
+	return card_is_able_to_remove_as_cost(c,table.unpack(x))
+end
+Card.IsAbleToHand=function(c,...)
+	local x={...}
+	local checkp=#x>0 and x[1] or self_reference_effect:GetHandlerPlayer()
+	local checkrp=#x>1 and x[2] or x[1]
+	if c:IsHasEffect(EFFECT_CANNOT_ADD_TO_HAND) then
+		local ef={c:IsHasEffect(EFFECT_CANNOT_ADD_TO_HAND)}
+		for _,te1 in ipairs(ef) do
+			local cf=te1:GetValue()
+			local typ=aux.GetValueType(cf)
+			if not cf then
+				return false
+			elseif (typ=="number" and cf==checkp) then
+				return false
+			elseif typ=="function" then
+				local checkp2,func=cf()
+				if (not checkp2 or checkp2==checkp) and (not func or func(c,self_reference_effect,REASON_EFFECT,checkrp)) then
+					return false
+				end
+			end
+		end
+	end
+	return card_is_able_to_hand(c,table.unpack(x))
+end
+Card.IsCanBeSpecialSummoned=function(c,e,sumtype,sump,nocheck,nolimit,...)
+	local x={...}
+	local pos0=#x>0 and x[1] or POS_FACEUP
+	local toplayer0=#x>1 and x[2] or sump
+	if c:IsLocation(LOCATION_REMOVED) and c:IsFacedown() then
+		if c:IsHasEffect(EFFECT_CANNOT_SPECIAL_SUMMON) then
+			return false
+		end
+		if Duel.IsPlayerAffectedByEffect(sump,EFFECT_CANNOT_SPECIAL_SUMMON) then
+			local ef={Duel.IsPlayerAffectedByEffect(sump,EFFECT_CANNOT_SPECIAL_SUMMON)}
+			for _,te1 in ipairs(ef) do
+				local cf,tg=te1:GetValue(),te1:GetTarget()
+				local typ1,typ2=aux.GetValueType(cf),aux.GetValueType(tg)
+				if not tg and not cf then
+					return false
+				elseif typ2=="number" or not tg and typ1=="number" then
+					return false
+				elseif typ2=="function" and tg(te1,c,sump,sumtype,pos0,toplayer0,e) or not tg and typ1=="function" and cf(te1,c,sump,sumtype,pos0,toplayer0,e) then
+					return false
+				end
+			end
+		end
+		return Duel.IsPlayerCanSpecialSummonMonster(sump,c:GetCode(),c:GLGetSetCard(),c:GetType(),c:GetAttack(),c:GetDefense(),c:GLGetLevel(),c:GetRace(),c:GetAttribute(),pos0,toplayer0,sumtype)
+	end
+	return card_is_can_be_ssed(c,e,sumtype,sump,nocheck,nolimit,table.unpack(x))
+end
 
+Card.GetLevel=function(c)
+	if card_get_level(c)==0 and c:IsHasEffect(EFFECT_GRANT_LEVEL) then
+		local ef={c:IsHasEffect(EFFECT_GRANT_LEVEL)}
+		local te1=ef[#ef]
+		local cf=te1:GetValue()
+		local typ=aux.GetValueType(cf)
+		if not cf then
+			return 0
+		elseif typ=="number" then
+			return cf
+		elseif typ=="function" then
+			return cf(self_reference_effect,c)
+		end
+	end
+	return card_get_level(c)
+end
+
+Card.GetPreviousLevelOnField=function(c)
+	if card_get_previous_level(c)==0 and c:IsHasEffect(EFFECT_REMEMBER_GRANTED_LEVEL) then
+		local ef={c:IsHasEffect(EFFECT_REMEMBER_GRANTED_LEVEL)}
+		local te1=ef[#ef]
+		local cf=te1:GetValue()
+		local typ=aux.GetValueType(cf)
+		if not cf then
+			return 0
+		elseif typ=="number" then
+			return cf
+		elseif typ=="function" then
+			return cf(self_reference_effect,c)
+		end
+	end
+	return card_get_previous_level(c)
+end
+
+Card.IsLevel=function(c,...)
+	local lvs={...}
+	local alternative_level = false
+	if c:IsHasEffect(EFFECT_GRANT_LEVEL) then
+		local ef={c:IsHasEffect(EFFECT_GRANT_LEVEL)}
+		local te1=ef[#ef]
+		local cf=te1:GetValue()
+		local typ=aux.GetValueType(cf)
+		local level
+		if not cf then
+			level = 0
+		elseif typ=="number" then
+			level = cf
+		elseif typ=="function" then
+			level = cf(self_reference_effect,c)
+		end
+		for i=1,#lvs do
+			if lvs[i]==level then
+				alternative_level = true
+				break
+			end
+		end
+	end
+	return card_is_level(c,table.unpack(lvs)) or alternative_level
+end
+
+Card.IsLevelBelow=function(c,lv)
+	local alternative_level = false
+	if c:IsHasEffect(EFFECT_GRANT_LEVEL) then
+		local ef={c:IsHasEffect(EFFECT_GRANT_LEVEL)}
+		local te1=ef[#ef]
+		local cf=te1:GetValue()
+		local typ=aux.GetValueType(cf)
+		local level
+		if not cf then
+			level = 0
+		elseif typ=="number" then
+			level = cf
+		elseif typ=="function" then
+			level = cf(self_reference_effect,c)
+		end
+		if level<=lv then
+			alternative_level = true
+		end
+	end
+	return card_is_level_below(c,lv) or alternative_level
+end
+
+Card.IsLevelAbove=function(c,lv)
+	local alternative_level = false
+	if c:IsHasEffect(EFFECT_GRANT_LEVEL) then
+		local ef={c:IsHasEffect(EFFECT_GRANT_LEVEL)}
+		local te1=ef[#ef]
+		local cf=te1:GetValue()
+		local typ=aux.GetValueType(cf)
+		local level
+		if not cf then
+			level = 0
+		elseif typ=="number" then
+			level = cf
+		elseif typ=="function" then
+			level = cf(self_reference_effect,c)
+		end
+		if level>=lv then
+			alternative_level = true
+		end
+	end
+	return card_is_level_above(c,lv) or alternative_level
+end
+
+Card.IsDestructable=function(c,...)
+	local x={...}
+	local e=x[1]
+	local r=x[2]
+	local tp=x[3]
+	if r and r&REASON_COST>0 then
+		for _,ce in ipairs({c:IsHasEffect(EFFECT_INDESTRUCTABLE_COST)}) do
+			local val=ce:GetValue()
+			if val and type(val)=="number" then
+				return false
+			elseif type(val)=="function" and val(ce,e,tp) then
+				return false
+			end
+		end
+		return true
+	else
+		return card_is_destructable(c,table.unpack(x))
+	end
+end
 
 --Custom Functions
 function Auxiliary.TribCheckRecursive(c,tp,mg,sg,sc,ct,min,max,p,zone)
@@ -510,7 +756,8 @@ table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_FUSION_MATERIAL)
 table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_SYNCHRO_MATERIAL)
 table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_XYZ_MATERIAL)
 table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_LINK_MATERIAL)
-function Auxiliary.CannotBeEDMaterial(c,f,range,isrule,reset)
+function Auxiliary.CannotBeEDMaterial(c,f,range,isrule,reset,owner)
+	if not owner then owner=c end
 	local property = 0
 	if (isrule == nil or isrule == true) then
 		property = property+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE
@@ -519,7 +766,7 @@ function Auxiliary.CannotBeEDMaterial(c,f,range,isrule,reset)
 		property = property+EFFECT_FLAG_SINGLE_RANGE
 	end
 	for _,val in ipairs(Auxiliary.CannotBeEDMatCodes) do
-		local restrict = Effect.CreateEffect(c)
+		local restrict = Effect.CreateEffect(owner)
 		restrict:SetType(EFFECT_TYPE_SINGLE)
 		restrict:SetCode(val)
 		if (property ~= 0) then
@@ -681,101 +928,6 @@ function Card.RemoveOverlayCard(c,p,minct,maxct,r)
 	end
 end
 
-----------------------------------------------------------------------------------------------------------------
---AUXS AND FUNCTIONS PORTED FROM EDOPRO (CAN BE EXPANDED FOR FACILITATING SCRIPT COMPATIBILITY BETWEEN THE SIMS)
-----------------------------------------------------------------------------------------------------------------
-function Auxiliary.FilterBoolFunctionEx(f,value)
-	return	function(target,scard,sumtype,tp)
-				return f(target,value,scard,sumtype,tp)
-			end
-end
-function Auxiliary.FilterBoolFunctionEx2(f,...)
-	local params={...}
-	return	function(target,scard,sumtype,tp)
-				return f(target,scard,sumtype,tp,table.unpack(params))
-			end
-end
-function Auxiliary.GlobalCheck(s,func)
-	if not s.global_check then
-		s.global_check=true
-		func()
-	end
-end
-function Auxiliary.SelectUnselectLoop(c,sg,mg,e,tp,minc,maxc,rescon)
-	local res
-	if #sg>=maxc then return false end
-	sg:AddCard(c)
-	if rescon then
-		local _,stop=rescon(sg,e,tp,mg)
-		if stop then 
-			sg:RemoveCard(c)
-			return false
-		end
-	end
-	if #sg<minc then
-		res=mg:IsExists(Auxiliary.SelectUnselectLoop,1,sg,sg,mg,e,tp,minc,maxc,rescon)
-	elseif #sg<maxc then
-		res=(not rescon or rescon(sg,e,tp,mg)) or mg:IsExists(Auxiliary.SelectUnselectLoop,1,sg,sg,mg,e,tp,minc,maxc,rescon)
-	else
-		res=(not rescon or rescon(sg,e,tp,mg))
-	end
-	sg:RemoveCard(c)
-	return res
-end
-function Auxiliary.SelectUnselectGroup(g,e,tp,minc,maxc,rescon,chk,seltp,hintmsg,finishcon,breakcon,cancelable)
-	local minc=minc or 1
-	local maxc=maxc or #g
-	if chk==0 then return g:IsExists(Auxiliary.SelectUnselectLoop,1,nil,Group.CreateGroup(),g,e,tp,minc,maxc,rescon) end
-	local hintmsg=hintmsg and hintmsg or 0
-	local sg=Group.CreateGroup()
-	while true do
-		local finishable = #sg>=minc and (not finishcon or finishcon(sg,e,tp,g))
-		local mg=g:Filter(Auxiliary.SelectUnselectLoop,sg,sg,g,e,tp,minc,maxc,rescon)
-		if (breakcon and breakcon(sg,e,tp,mg)) or #mg<=0 or #sg>=maxc then break end
-		Duel.Hint(HINT_SELECTMSG,seltp,hintmsg)
-		local tc=mg:SelectUnselect(sg,seltp,finishable,finishable or (cancelable and #sg==0),minc,maxc)
-		if not tc then break end
-		if sg:IsContains(tc) then
-			sg:RemoveCard(tc)
-		else
-			sg:AddCard(tc)
-		end
-	end
-	return sg
-end
---Checks whether the card is located at any of the sequences passed as arguments.
-function Card.IsSequence(c,...)
-	local arg={...}
-	local seq=c:GetSequence()
-	for _,v in ipairs(arg) do
-		if seq==v then return true end
-	end
-	return false
-end
---Used for checking the zone of a card (zone is the zone, tp is referencial player)
-function Auxiliary.IsZone(c,zone,tp)
-	local rzone = c:IsControler(tp) and (1 <<c:GetSequence()) or (1 << (16+c:GetSequence()))
-	if c:IsSequence(5,6) then
-		rzone = rzone | (c:IsControler(tp) and (1 << (16 + 11 - c:GetSequence())) or (1 << (11 - c:GetSequence())))
-	end
-	return (rzone & zone) > 0
-end
-function Card.IsInMainMZone(c,tp)
-	return c:IsLocation(LOCATION_MZONE) and c:GetSequence()<5 and (not tp or c:IsControler(tp))
-end
-function Card.IsInExtraMZone(c,tp)
-	return c:IsLocation(LOCATION_MZONE) and c:GetSequence()>4 and (not tp or c:IsControler(tp))
-end
-
-function Duel.IsMainPhase()
-	return Duel.GetCurrentPhase()==PHASE_MAIN1 or Duel.GetCurrentPhase()==PHASE_MAIN2
-end
-function Duel.GetTargetCards(e)
-	return Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS):Filter(Card.IsRelateToEffect,nil,e)
-end
-----------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------
-
 --Glitchy's custom auxs and functions
 if not glitchy_effect_table then glitchy_effect_table={} end
 if not glitchy_archetype_table then glitchy_archetype_table={} end
@@ -786,6 +938,8 @@ RACE_WINGEDBEAST=RACE_WINDBEAST
 EFFECT_TYPE_TRIGGER=EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_TRIGGER_F
 EFFECT_TYPE_QUICK=EFFECT_TYPE_QUICK_O+EFFECT_TYPE_QUICK_F
 EFFECT_TYPE_CHAIN_STARTER=EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_TRIGGER_F+EFFECT_TYPE_QUICK_O+EFFECT_TYPE_QUICK_F+EFFECT_TYPE_ACTIVATE+EFFECT_TYPE_IGNITION
+
+TYPE_ST = TYPE_SPELL+TYPE_TRAP
 
 --glitchy custom categories (apply with e:SetGlitchyCategory)
 GLCATEGORY_PLACE_SELF_AS_CONTINUOUS_TRAP=0x1
@@ -799,9 +953,11 @@ EFFECT_CANNOT_ACTIVATE_LMARKER=8000
 EFFECT_CANNOT_DEACTIVATE_LMARKER=8001
 EFFECT_PRE_LOCATION=8002
 EFFECT_NO_ARCHETYPE=8003
+
 EFFECT_BECOME_HOPT=99977755
 EFFECT_SYNCHRO_MATERIAL_EXTRA=26134837
 EFFECT_SYNCHRO_MATERIAL_MULTIPLE=26134838
+EFFECT_REVERSE_WHEN_IF=48928491
 
 --glitchy's custom events
 EVENT_ACTIVATE_LINK_MARKER=9000
@@ -815,6 +971,20 @@ RESETS_STANDARD_DISABLE=RESETS_STANDARD|RESET_DISABLE
 
 --Duel Effects without player target range
 DUEL_EFFECT_NOP={EFFECT_DISABLE_FIELD}
+
+function Group.Includes(g1,g2)
+	if #g1==0 or #g1<#g2 then return false end
+	local check=true
+	if #g2>0 then
+		for tc in aux.Next(g2) do
+			if not g1:IsContains(tc) then
+				check=false
+				break
+			end
+		end
+	end
+	return check
+end
 
 if not Auxiliary.GLSpecialInfos then Auxiliary.GLSpecialInfos={} end
 function Duel.SetGLOperationInfo(e,category,g,ct,p,loc,fromloc)
@@ -984,6 +1154,22 @@ function Effect.GLString(e,id,...)
 	-- else
 		e:SetDescription(aux.Stringid(e:GetOwner():GetOriginalCode(),id))
 	--end
+end
+
+function Duel.IsMainPhase(tp)
+	return (not tp or Duel.GetTurnPlayer()==tp) and (Duel.GetCurrentPhase()==PHASE_MAIN1 or Duel.GetCurrentPhase()==PHASE_MAIN2)
+end
+function Duel.IsBattlePhase(tp)
+	local ph=Duel.GetCurrentPhase()
+	return (not tp or Duel.GetTurnPlayer()==tp) and ph>=PHASE_BATTLE_START and ph<=PHASE_BATTLE
+end
+
+function Auxiliary.ActivateST(c)
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_ACTIVATE)
+	e1:SetCode(EVENT_FREE_CHAIN)
+	c:RegisterEffect(e1)
+	return e1
 end
 
 --Returns all the MMZ the arrows PRINTED on the card (c) point to, REGARDLESS of the card type (even if it is not an active Link Monster) or of the location it is in (MZONE/SZONE)
@@ -1491,14 +1677,53 @@ if not global_card_effect_table_global_check then
 	global_card_effect_table_global_check=true
 	global_card_effect_table={}
 	Card.register_global_card_effect_table = Card.RegisterEffect
-	function Card:RegisterEffect(e)
+	function Card:RegisterEffect(e,forced)
 		if not global_card_effect_table[self] then global_card_effect_table[self]={} end
 		table.insert(global_card_effect_table[self],e)
 		if e:GetCode()==EFFECT_DISABLE_FIELD and e:GetLabel()==0 and e:GetOperation() then
 			local op=e:GetOperation()
 			e:SetOperation(Auxiliary.SetOperationResultAsLabel(op))
 		end
-		self.register_global_card_effect_table(self,e)
+		local condition,cost,tg,op=e:GetCondition(),e:GetCost(),e:GetTarget(),e:GetOperation()
+		if cost and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
+			local newcost =	function(e,tp,eg,ep,ev,re,r,rp,chk)
+								self_reference_effect=e
+								if chk==0 then
+									return cost(e,tp,eg,ep,ev,re,r,rp,chk)
+								end
+								cost(e,tp,eg,ep,ev,re,r,rp,chk)
+							end
+			e:SetCost(newcost)
+		end
+		if tg and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
+			if e:GetCode()==EFFECT_DESTROY_REPLACE or e:GetCode()==EFFECT_SEND_REPLACE then
+				local newtg =	function(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+									self_reference_effect=e
+									if chk==0 then
+										return tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+									end
+									return tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+								end
+				e:SetTarget(newtg)
+			else
+				local newtg =	function(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+									self_reference_effect=e
+									if chk==0 then
+										return tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+									end
+									tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+								end
+				e:SetTarget(newtg)
+			end
+		end
+		if op and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
+			local newop =	function(e,tp,eg,ep,ev,re,r,rp)
+								self_reference_effect=e
+								op(e,tp,eg,ep,ev,re,r,rp)
+							end
+			e:SetOperation(newop)
+		end
+		return self.register_global_card_effect_table(self,e,forced)
 	end
 end
 
@@ -1516,6 +1741,220 @@ if not global_duel_effect_table_global_check then
 									if e:GetCode()==DUEL_EFFECT_NOP[i] then e:SetProperty(e:GetProperty()|EFFECT_FLAG_PLAYER_TARGET) e:SetTargetRange(1,0) end
 								end
 							end
+							local condition,cost,tg,op=e:GetCondition(),e:GetCost(),e:GetTarget(),e:GetOperation()
+							if cost and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
+								local newcost =	function(e,tp,eg,ep,ev,re,r,rp,chk)
+													self_reference_effect=e
+													if chk==0 then
+														return cost(e,tp,eg,ep,ev,re,r,rp,chk)
+													end
+													cost(e,tp,eg,ep,ev,re,r,rp,chk)
+												end
+								e:SetCost(newcost)
+							end
+							if tg and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
+								if e:GetCode()==EFFECT_DESTROY_REPLACE or e:GetCode()==EFFECT_SEND_REPLACE then
+									local newtg =	function(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+														self_reference_effect=e
+														if chk==0 then
+															return tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+														end
+														return tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+													end
+									e:SetTarget(newtg)
+								else
+									local newtg =	function(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+														self_reference_effect=e
+														if chk==0 then
+															return tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+														end
+														tg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+													end
+									e:SetTarget(newtg)
+								end
+							end
+							if op and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
+								local newop =	function(e,tp,eg,ep,ev,re,r,rp)
+													self_reference_effect=e
+													op(e,tp,eg,ep,ev,re,r,rp)
+												end
+								e:SetOperation(newop)
+							end
 							return Duel.register_global_duel_effect_table(e,tp)
 	end
 end
+
+
+----------------------------------------------------------------------------------------------------------------
+--AUXS AND FUNCTIONS PORTED FROM EDOPRO (CAN BE EXPANDED FOR FACILITATING SCRIPT COMPATIBILITY BETWEEN THE SIMS)
+----------------------------------------------------------------------------------------------------------------
+function Auxiliary.FilterBoolFunctionEx(f,value)
+	return	function(target,scard,sumtype,tp)
+				return f(target,value,scard,sumtype,tp)
+			end
+end
+function Auxiliary.FilterBoolFunctionEx2(f,...)
+	local params={...}
+	return	function(target,scard,sumtype,tp)
+				return f(target,scard,sumtype,tp,table.unpack(params))
+			end
+end
+function Auxiliary.GlobalCheck(s,func)
+	if not s.global_check then
+		s.global_check=true
+		func()
+	end
+end
+function Auxiliary.SelectUnselectLoop(c,sg,mg,e,tp,minc,maxc,rescon)
+	local res
+	if #sg>=maxc then return false end
+	sg:AddCard(c)
+	if rescon then
+		local _,stop=rescon(sg,e,tp,mg)
+		if stop then 
+			sg:RemoveCard(c)
+			return false
+		end
+	end
+	if #sg<minc then
+		res=mg:IsExists(Auxiliary.SelectUnselectLoop,1,sg,sg,mg,e,tp,minc,maxc,rescon)
+	elseif #sg<maxc then
+		res=(not rescon or rescon(sg,e,tp,mg)) or mg:IsExists(Auxiliary.SelectUnselectLoop,1,sg,sg,mg,e,tp,minc,maxc,rescon)
+	else
+		res=(not rescon or rescon(sg,e,tp,mg))
+	end
+	sg:RemoveCard(c)
+	return res
+end
+function Auxiliary.SelectUnselectGroup(g,e,tp,minc,maxc,rescon,chk,seltp,hintmsg,finishcon,breakcon,cancelable)
+	local minc=minc or 1
+	local maxc=maxc or #g
+	if chk==0 then return g:IsExists(Auxiliary.SelectUnselectLoop,1,nil,Group.CreateGroup(),g,e,tp,minc,maxc,rescon) end
+	local hintmsg=hintmsg and hintmsg or 0
+	local sg=Group.CreateGroup()
+	while true do
+		local finishable = #sg>=minc and (not finishcon or finishcon(sg,e,tp,g))
+		local mg=g:Filter(Auxiliary.SelectUnselectLoop,sg,sg,g,e,tp,minc,maxc,rescon)
+		if (breakcon and breakcon(sg,e,tp,mg)) or #mg<=0 or #sg>=maxc then break end
+		Duel.Hint(HINT_SELECTMSG,seltp,hintmsg)
+		local tc=mg:SelectUnselect(sg,seltp,finishable,finishable or (cancelable and #sg==0),minc,maxc)
+		if not tc then break end
+		if sg:IsContains(tc) then
+			sg:RemoveCard(tc)
+		else
+			sg:AddCard(tc)
+		end
+	end
+	return sg
+end
+--Checks whether the card is located at any of the sequences passed as arguments.
+function Card.IsSequence(c,...)
+	local arg={...}
+	local seq=c:GetSequence()
+	for _,v in ipairs(arg) do
+		if seq==v then return true end
+	end
+	return false
+end
+--Used for checking the zone of a card (zone is the zone, tp is referencial player)
+function Auxiliary.IsZone(c,zone,tp)
+	local rzone = c:IsControler(tp) and (1 <<c:GetSequence()) or (1 << (16+c:GetSequence()))
+	if c:IsSequence(5,6) then
+		rzone = rzone | (c:IsControler(tp) and (1 << (16 + 11 - c:GetSequence())) or (1 << (11 - c:GetSequence())))
+	end
+	return (rzone & zone) > 0
+end
+function Card.IsInMainMZone(c,tp)
+	return c:IsLocation(LOCATION_MZONE) and c:GetSequence()<5 and (not tp or c:IsControler(tp))
+end
+function Card.IsInExtraMZone(c,tp)
+	return c:IsLocation(LOCATION_MZONE) and c:GetSequence()>4 and (not tp or c:IsControler(tp))
+end
+
+function Duel.GetTargetCards(e)
+	return Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS):Filter(Card.IsRelateToEffect,nil,e)
+end
+
+function Auxiliary.ReleaseCostFilter(c,f,...)
+	return c:IsFaceup() and c:IsReleasable() and c:IsHasEffect(59160188) 
+		and (not f or f(c,table.unpack({...})))
+end
+function Auxiliary.ReleaseCheckSingleUse(sg,tp,exg)
+	return #sg-#(sg-exg)<=1
+end
+function Auxiliary.ReleaseCheckMMZ(sg,tp)
+	return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		or sg:IsExists(aux.FilterBoolFunction(Card.IsInMainMZone,tp),1,nil)
+end
+function Auxiliary.ReleaseCheckTarget(sg,tp,exg,dg)
+	return dg:IsExists(aux.TRUE,1,sg)
+end
+function Auxiliary.RelCheckRecursive(c,tp,sg,mg,exg,mustg,ct,minc,specialchk,...)
+	sg:AddCard(c)
+	ct=ct+1
+	local res=Auxiliary.RelCheckGoal(tp,sg,exg,mustg,ct,minc,specialchk,table.unpack({...})) 
+		or (ct<minc and mg:IsExists(Auxiliary.RelCheckRecursive,1,sg,tp,sg,mg,exg,mustg,ct,minc,specialchk,table.unpack({...})))
+	sg:RemoveCard(c)
+	ct=ct-1
+	return res
+end		
+function Auxiliary.RelCheckGoal(tp,sg,exg,mustg,ct,minc,specialchk,...)
+	return ct>=minc and (not specialchk or specialchk(sg,tp,exg,table.unpack({...}))) and sg:Includes(mustg)
+end
+function Duel.CheckReleaseGroupCost(tp,f,ct,use_hand,specialchk,ex,...)
+	local params={...}
+	if not ex then ex=Group.CreateGroup() end
+	if not specialchk then specialchk=Auxiliary.ReleaseCheckSingleUse else specialchk=Auxiliary.AND(specialchk,Auxiliary.ReleaseCheckSingleUse) end
+	local g=Duel.GetReleaseGroup(tp,use_hand)
+	if f then
+		g=g:Filter(f,ex,table.unpack(params))
+	else
+		g=g-ex
+	end
+	local exg=Duel.GetMatchingGroup(Auxiliary.ReleaseCostFilter,tp,0,LOCATION_MZONE,g+ex,f,table.unpack(params))
+	local mustg=g:Filter(function(c,tp)return c:IsHasEffect(EFFECT_EXTRA_RELEASE) and c:IsControler(1-tp)end,nil,tp)
+	local mg=g+exg
+	local sg=Group.CreateGroup()
+	return mg:Includes(mustg) and mg:IsExists(Auxiliary.RelCheckRecursive,1,nil,tp,sg,mg,exg,mustg,0,ct,specialchk,table.unpack({...}))
+end
+function Duel.SelectReleaseGroupCost(tp,f,minc,maxc,use_hand,specialchk,ex,...)
+	local params={...}
+	if not ex then ex=Group.CreateGroup() end
+	if not specialchk then specialchk=Auxiliary.ReleaseCheckSingleUse else specialchk=Auxiliary.AND(specialchk,Auxiliary.ReleaseCheckSingleUse) end
+	local g=Duel.GetReleaseGroup(tp,use_hand)
+	if f then
+		g=g:Filter(f,ex,table.unpack(params))
+	else
+		g=g-ex
+	end
+	local exg=Duel.GetMatchingGroup(Auxiliary.ReleaseCostFilter,tp,0,LOCATION_MZONE,g+ex,f,table.unpack(params))
+	local mg=g+exg
+	local mustg=g:Filter(function(c,tp)return c:IsHasEffect(EFFECT_EXTRA_RELEASE) and c:IsControler(1-tp)end,nil,tp)
+	local sg=Group.CreateGroup()
+	local cancel=false
+	sg:Merge(mustg)
+	while #sg<maxc do
+		local cg=mg:Filter(Auxiliary.RelCheckRecursive,sg,tp,sg,mg,exg,mustg,#sg,minc,specialchk,table.unpack({...}))
+		if #cg==0 then break end
+		cancel=#sg>=minc and #sg<=maxc and Auxiliary.RelCheckGoal(tp,sg,exg,mustg,#sg,minc,specialchk,table.unpack({...}))
+		local tc=Group.SelectUnselect(cg,sg,tp,cancel,cancel,1,1)
+		if not tc then break end
+		if #mustg==0 or not mustg:IsContains(tc) then
+			if not sg:IsContains(tc) then
+				sg=sg+tc
+			else
+				sg=sg-tc
+			end
+		end
+	end
+	if #sg==0 then return sg end
+	if #sg~=#(sg-exg) then
+		--LoD is reset for the rest of the turn
+		local fc=Duel.GetFieldCard(tp,LOCATION_SZONE,5)
+		Duel.Hint(HINT_CARD,0,fc:GetCode())
+		fc:RegisterFlagEffect(59160188,RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END,0,0)
+	end
+	return sg
+end
+----------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------

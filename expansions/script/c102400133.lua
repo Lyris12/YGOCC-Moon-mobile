@@ -1,6 +1,6 @@
 --created & coded by Lyris, art by 匈歌ハトリ on Pixiv
 --襲雷の空
-local s,id=GetID()
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
@@ -33,7 +33,8 @@ function s.initial_effect(c)
 	c:RegisterEffect(e4)
 end
 function s.hdval(e,re,dam,r,rp,rc)
-	if Duel.GetFieldGroupCount(e:GetHandlerPlayer(),LOCATION_MZONE,0)==0 and Duel.GetFieldGroupCount(e:GetHandlerPlayer(),0,LOCATION_MZONE)>0 then
+	local tp=e:GetHandlerPlayer()
+	if Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)==0 and Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)>0 then
 		return dam/2
 	else return dam end
 end
@@ -63,9 +64,12 @@ end
 function s.repfilter(c)
 	return (c:IsFaceup() or not c:IsOnField()) and c:IsSetCard(0x7c4) and c:IsType(TYPE_MONSTER) and not c:IsReason(REASON_REPLACE+REASON_MATERIAL)
 end
+function s.pfilter(c,e)
+	return c:IsFaceup() and c:IsType(TYPE_PENDULUM) and not c:IsStatus(STATUS_DESTROY_CONFIRMED) and c:IsDestructable(e)
+end
 function s.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return eg:IsExists(s.repfilter,1,nil) and not (re and re:GetHandler():IsCode(id)) end
-	return Duel.IsExistingMatchingCard(aux.AND(s.filter1,aux.FilterBoolFunction(Card.IsDestructable,e),aux.NOT(Card.IsStatus)),tp,LOCATION_DECK,0,1,nil,STATUS_DESTROY_CONFIRMED)
+	if chk==0 then return eg:IsExists(s.repfilter,1,nil) and Duel.IsExistingMatchingCard(aux.AND(s.filter1,s.pfilter),tp,LOCATION_EXTRA,0,1,nil,e) end
+	return Duel.SelectEffectYesNo(tp,e:GetHandler(),96)
 end
 function s.repval(e,c)
 	return s.repfilter(c)
@@ -73,6 +77,5 @@ end
 function s.repop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_CARD,0,id)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-	local g=Duel.SelectMatchingCard(tp,aux.AND(s.filter1,aux.FilterBoolFunction(Card.IsDestructable,e),aux.NOT(Card.IsStatus)),tp,LOCATION_DECK,0,1,1,nil,STATUS_DESTROY_CONFIRMED)
-	Duel.Destroy(g,REASON_EFFECT+REASON_REPLACE)
+	Duel.Destroy(Duel.SelectMatchingCard(tp,aux.AND(s.filter1,s.pfilter),tp,LOCATION_EXTRA,0,1,1,nil,e),REASON_EFFECT+REASON_REPLACE)
 end

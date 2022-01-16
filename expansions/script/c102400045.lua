@@ -1,5 +1,6 @@
 --created & coded by Lyris, art from Cardfight!! Vanguard's "Mirror Demon"
-local s,id=GetID()
+--エニグマフォーマー・ミラクマ
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_IGNITION)

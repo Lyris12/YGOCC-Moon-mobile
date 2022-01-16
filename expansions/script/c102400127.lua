@@ -1,6 +1,6 @@
 --created & coded by Lyris, art by FanDragonBrigitha of DeviantArt
 --襲雷竜－スパーク津波
-local s,id=GetID()
+local s,id,off=GetID()
 function s.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddFusionProcFunRep(c,aux.OR(aux.FilterBoolFunction(Card.IsFusionAttribute,ATTRIBUTE_LIGHT),aux.FilterBoolFunction(Card.IsFusionSetCard,0x7c4)),2,true)
@@ -36,13 +36,9 @@ function s.initial_effect(c)
 	e0:SetCode(EVENT_FREE_CHAIN)
 	e0:SetCountLimit(1)
 	e0:SetHintTiming(0,TIMINGS_CHECK_MONSTER+TIMING_ATTACK)
-	e0:SetCondition(s.descon)
 	e0:SetTarget(s.destg)
 	e0:SetOperation(s.desop)
 	c:RegisterEffect(e0)
-end
-function s.descon(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.IsAbleToEnterBP() or (Duel.GetCurrentPhase()>=PHASE_BATTLE_START and Duel.GetCurrentPhase()<=PHASE_BATTLE)
 end
 function s.desfilter(c,e,tp)
 	return c:IsLevelBelow(5) and c:IsSetCard(0x7c4) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)

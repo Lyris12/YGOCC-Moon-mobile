@@ -1,5 +1,6 @@
---created by Meed, coded by Lyris
-local s,id=GetID()
+--created by Walrus of Discord, coded by Lyris
+--カオス超越
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)

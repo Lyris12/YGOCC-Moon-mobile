@@ -1,9 +1,14 @@
 --created by Meedogh, coded by Lyris
 --Not yet finalized values
+
+bigbang_limit_mats_operation = nil
+bigbang_force_mats_operation = nil
+
 --Custom constants
 EFFECT_CANNOT_BE_BIGBANG_MATERIAL	=624
 EFFECT_MUST_BE_BIGBANG_MATERIAL		=625
 EFFECT_EXTRA_BIGBANG_MATERIAL		=626
+EFFECT_IGNORE_BIGBANG_SUMREQ		=627
 TYPE_BIGBANG						=0x8000000000
 TYPE_CUSTOM							=TYPE_CUSTOM|TYPE_BIGBANG
 CTYPE_BIGBANG						=0x80
@@ -125,14 +130,23 @@ function Auxiliary.AddBigbangProc(c,...)
 end
 function Auxiliary.BigbangCondition(...)
 	local funs={...}
-	return  function(e,c)
+	return  function(e,c,matg,mustg)
 				if c==nil then return true end
 				if (c:IsType(TYPE_PENDULUM) or c:IsType(TYPE_PANDEMONIUM)) and c:IsFaceup() then return false end
 				local tp=c:GetControler()
-				local mg=Duel.GetMatchingGroup(Card.IsCanBeBigbangMaterial,tp,LOCATION_MZONE,0,nil,c)-Duel.GetMatchingGroup(aux.NOT(Card.IsDestructable),tp,LOCATION_MZONE,0,nil,e)
-				local mg2=Duel.GetMatchingGroup(Auxiliary.BigbangExtraFilter,tp,0xff,0xff,nil,c,tp,table.unpack(funs))
+				local mg,mg2
+				if matg and aux.GetValueType(matg)=="Group" then
+					mg=matg:Filter(Card.IsCanBeBigbangMaterial,nil,c)  ---matg:Filter(aux.NOT(Card.IsDestructable),nil,e) THIS Card.IsDestructable CHECK MUST NOT BE PERFORMED SINCE BIGBANG MATERIALS ARE NOT DESTROYED BY AN EFFECT
+					mg2=matg:Filter(Auxiliary.BigbangExtraFilter,nil,c,tp,table.unpack(funs))			
+				else
+					mg=Duel.GetMatchingGroup(Card.IsCanBeBigbangMaterial,tp,LOCATION_MZONE,0,nil,c)
+					mg2=Duel.GetMatchingGroup(Auxiliary.BigbangExtraFilter,tp,0xff,0xff,nil,c,tp,table.unpack(funs))
+				end
 				if #mg2>0 then mg:Merge(mg2) end
 				local fg=aux.GetMustMaterialGroup(tp,EFFECT_MUST_BE_BIGBANG_MATERIAL)
+				if mustg and aux.GetValueType(mustg)=="Group" then
+					fg:Merge(mustg)
+				end
 				if fg:IsExists(aux.MustMaterialCounterFilter,1,nil,mg) then return false end
 				Duel.SetSelectedCard(fg)
 				return mg:IsExists(Auxiliary.BigbangRecursiveFilter,1,nil,tp,Group.CreateGroup(),mg,c,0,table.unpack(funs))
@@ -179,7 +193,7 @@ function Auxiliary.BigbangCheckGoal(tp,sg,bc,ct,...)
 		if not sg:IsExists(funs[i][1],funs[i][2],nil) then return false end
 		min=min+funs[i][2]
 	end
-	return ct>=min and Duel.GetLocationCountFromEx(tp,tp,sg,bc)>0 and sg:CheckWithSumGreater(Card.GetBigbangAttack,bc:GetAttack()) and sg:CheckWithSumGreater(Card.GetBigbangDefense,bc:GetDefense())
+	return ct>=min and Duel.GetLocationCountFromEx(tp,tp,sg,bc)>0 and (bc:IsHasEffect(EFFECT_IGNORE_BIGBANG_SUMREQ) or (sg:CheckWithSumGreater(Card.GetBigbangAttack,bc:GetAttack()) and sg:CheckWithSumGreater(Card.GetBigbangDefense,bc:GetDefense())))
 		and not sg:IsExists(Auxiliary.BigbangUncompatibilityFilter,1,nil,sg,bc,tp)
 end
 function Auxiliary.BigbangUncompatibilityFilter(c,sg,lc,tp)
@@ -199,7 +213,22 @@ function Auxiliary.BigbangTarget(...)
 	for i=1,#funs do min=min+funs[i][2] max=max+funs[i][3] end
 	if max>99 then max=99 end
 	return  function(e,tp,eg,ep,ev,re,r,rp,chk,c)
-				local mg=Duel.GetMatchingGroup(Card.IsCanBeBigbangMaterial,tp,LOCATION_MZONE,0,nil,c)-Duel.GetMatchingGroup(aux.NOT(Card.IsDestructable),tp,LOCATION_MZONE,0,nil,e)
+				if bigbang_limit_mats_operation and bigbang_limit_mats_operation.SetLabelObject then
+					Duel.RegisterEffect(bigbang_limit_mats_operation,tp)
+				end
+				if bigbang_force_mats_operation and bigbang_force_mats_operation.SetLabelObject then
+					local forcedmat=bigbang_force_mats_operation:GetLabelObject()
+					if forcedmat then
+						if aux.GetValueType(forcedmat)=="Card" then
+							forcedmat:RegisterEffect(bigbang_force_mats_operation)
+						elseif aux.GetValueType(forcedmat)=="Group" then
+							for tc in aux.Next(forcedmat) do
+								tc:RegisterEffect(bigbang_force_mats_operation)
+							end
+						end
+					end
+				end
+				local mg=Duel.GetMatchingGroup(Card.IsCanBeBigbangMaterial,tp,LOCATION_MZONE,0,nil,c)
 				local mg2=Duel.GetMatchingGroup(Auxiliary.BigbangExtraFilter,tp,0xff,0xff,nil,c,tp,table.unpack(funs))
 				if #mg2>0 then mg:Merge(mg2) end
 				local bg=Group.CreateGroup()
@@ -231,14 +260,40 @@ function Auxiliary.BigbangTarget(...)
 							sg:RemoveCard(tc)
 						end
 					elseif #bg>0 and #sg<=#bg then
+						if bigbang_limit_mats_operation and bigbang_limit_mats_operation.SetLabelObject then
+							bigbang_limit_mats_operation:Reset()
+							bigbang_limit_mats_operation=nil
+						end
+						if bigbang_force_mats_operation and bigbang_force_mats_operation.SetLabelObject then
+							bigbang_force_mats_operation:Reset()
+							bigbang_force_mats_operation=nil
+						end
 						return false
 					end
 				end
 				if finish then
 					sg:KeepAlive()
 					e:SetLabelObject(sg)
+					if bigbang_limit_mats_operation and bigbang_limit_mats_operation.SetLabelObject then
+						bigbang_limit_mats_operation:Reset()
+						bigbang_limit_mats_operation=nil
+					end
+					if bigbang_force_mats_operation and bigbang_force_mats_operation.SetLabelObject then
+						bigbang_force_mats_operation:Reset()
+						bigbang_force_mats_operation=nil
+					end
 					return true
-				else return false end
+				else
+					if bigbang_limit_mats_operation and bigbang_limit_mats_operation.SetLabelObject then
+						bigbang_limit_mats_operation:Reset()
+						bigbang_limit_mats_operation=nil
+					end
+					if bigbang_force_mats_operation and bigbang_force_mats_operation.SetLabelObject then
+						bigbang_force_mats_operation:Reset()
+						bigbang_force_mats_operation=nil
+					end
+					return false
+				end
 			end
 end
 function Auxiliary.BigbangOperation(e,tp,eg,ep,ev,re,r,rp,c,smat,mg)
@@ -258,6 +313,6 @@ function Auxiliary.BigbangOperation(e,tp,eg,ep,ev,re,r,rp,c,smat,mg)
 			end
 		end end
 	end
-	Duel.Destroy(dg,REASON_MATERIAL+REASON_BIGBANG)
+	Duel.Destroy(dg,REASON_RULE+REASON_MATERIAL+REASON_BIGBANG+REASON_REPLACE)
 	g:DeleteGroup()
 end

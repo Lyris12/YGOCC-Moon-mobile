@@ -1,6 +1,6 @@
 --created & coded by Lyris, art by Animekidky of DeviantArt
 --復剣主ティべリウス
-local s,id=GetID()
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e0=Effect.CreateEffect(c)
 	e0:SetType(EFFECT_TYPE_SINGLE)
@@ -16,6 +16,7 @@ function s.initial_effect(c)
 	local e3=Effect.CreateEffect(c)
 	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
 	e3:SetCode(EVENT_TO_GRAVE)
+	e3:SetCountLimit(1,id)
 	e3:SetCategory(CATEGORY_SEARCH+CATEGORY_TOHAND)
 	e3:SetTarget(s.target)
 	e3:SetOperation(s.operation)

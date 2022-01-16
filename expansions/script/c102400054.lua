@@ -1,5 +1,6 @@
 --created & coded by Lyris, art from Cardfight!! Vanguard's "Spiral Master"
-local s,id=GetID()
+--エニグマフォーマンス－スパイラル・マジック
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_TODECK+CATEGORY_DRAW)

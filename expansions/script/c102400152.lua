@@ -1,5 +1,6 @@
 --created & coded by Lyris, art from Cardfight!! Vanguard's "Girl Who Crossed the Gap"
-local s,id=GetID()
+--エニグマフォーマンス－ギャップ・クロス
+local s,id,off=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)

@@ -1,6 +1,6 @@
 --created & coded by Lyris, art by Idouyouichi on Pixiv
 --機夜光襲雷竜－ミッドナイト
-local s,id=GetID()
+local s,id,off=GetID()
 function s.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddFusionProcFun2(c,aux.FilterBoolFunction(Card.IsSetCard,0x7c4),aux.AND(aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_DARK),aux.FilterBoolFunction(Card.IsRace,RACE_DRAGON)),true)
@@ -34,13 +34,9 @@ function s.initial_effect(c)
 	e0:SetCode(EVENT_FREE_CHAIN)
 	e0:SetCountLimit(1)
 	e0:SetHintTiming(0,TIMINGS_CHECK_MONSTER+TIMING_ATTACK)
-	e0:SetCondition(s.descon)
 	e0:SetTarget(s.destg)
 	e0:SetOperation(s.desop)
 	c:RegisterEffect(e0)
-end
-function s.descon(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.IsAbleToEnterBP() or (Duel.GetCurrentPhase()>=PHASE_BATTLE_START and Duel.GetCurrentPhase()<=PHASE_BATTLE)
 end
 function s.desfilter(c,e,tp)
 	return c:IsLevelBelow(5) and c:IsSetCard(0x7c4) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)

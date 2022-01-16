@@ -1,13 +1,6 @@
 --Crisis Clawspirit - Lion's Dictatorship
 --Scripted by Yuno
-local function getID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-local id,cid=getID()
+local cid,id=GetID()
 function cid.initial_effect(c)
 	c:SetUniqueOnField(1, 0, cid.uniquefilter, LOCATION_SZONE)
 	--Activate and equip
@@ -28,6 +21,11 @@ function cid.initial_effect(c)
 	e2:SetValue(cid.eqlimit)
 	c:RegisterEffect(e2)
 	--Banish any monster destroyed by battle or effect
+	local e1x=Effect.CreateEffect(c)
+	e1x:SetType(EFFECT_TYPE_EQUIP)
+	e1x:SetCode(EFFECT_BATTLE_DESTROY_REDIRECT)
+	e1x:SetValue(LOCATION_REMOVED)
+	c:RegisterEffect(e1x)
 	local e3=Effect.CreateEffect(c)
     e3:SetType(EFFECT_TYPE_FIELD)
     e3:SetCode(EFFECT_TO_GRAVE_REDIRECT)
@@ -101,7 +99,7 @@ function cid.eqlimit(e, c)
 end
 --Banish any monster destroyed by battle or effect
 function cid.rmtg(e, c)
-	return c==e:GetHandler():GetEquipTarget():GetBattleTarget() or c:GetReasonEffect(e:GetHandler():GetEquipTarget())
+	return c:IsReason(REASON_DESTROY) and c:IsReason(REASON_EFFECT) and c:GetReasonEffect():GetHandler()==e:GetHandler():GetEquipTarget()
 end
 --Negate searches
 function cid.eftg(e, c)
