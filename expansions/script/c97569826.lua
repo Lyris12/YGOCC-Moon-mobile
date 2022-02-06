@@ -1,7 +1,7 @@
 --Silent Star Dragomir, the Skydian's Radiance
 function c97569826.initial_effect(c)
 	c:EnableReviveLimit()
-	aux.AddLinkProcedure(c,c97569826.mfilter,2,2)
+	aux.AddLinkProcedure(c,aux.FilterBoolFunction(Card.IsRace,RACE_WARRIOR),2,2,c97569826.lcheck)
 	--to hand
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(97569826,0))
@@ -27,8 +27,8 @@ function c97569826.initial_effect(c)
 	e3:SetOperation(c97569826.tgop)
 	c:RegisterEffect(e3)
 end
-function c97569826.mfilter(c)
-	return c:IsAttribute(ATTRIBUTE_LIGHT+ATTRIBUTE_DARK+ATTRIBUTE_EARTH) and c:IsRace(RACE_WARRIOR)
+function c97569826.lcheck(g,lc)
+	return g:IsExists(Card.IsSetCard,1,nil,0x528) or  g:IsExists(Card.IsSetCard,1,nil,0x223) or  g:IsExists(Card.IsSetCard,1,nil,0x2a7)	or  g:IsExists(Card.IsSetCard,1,nil,0xd0a1)
 end
 function c97569826.thcon(e,tp,eg,ep,ev,re,r,rp)
 	return e:GetHandler():IsSummonType(SUMMON_TYPE_LINK)
@@ -57,9 +57,7 @@ function c97569826.thop(e,tp,eg,ep,ev,re,r,rp)
 		sg1:Merge(sg2)
 		sg1:Merge(sg3)
 		Duel.ConfirmCards(1-tp,sg1)
-		Duel.ShuffleDeck(tp)
-		Duel.Hint(HINT_SELECTMSG,1-tp,HINTMSG_ATOHAND)
-		local cg=sg1:Select(1-tp,1,1,nil)
+		local cg=sg1:RandomSelect(1-tp,1)
 		local tc=cg:GetFirst()
 		Duel.SendtoHand(tc,nil,REASON_EFFECT)
 	end
