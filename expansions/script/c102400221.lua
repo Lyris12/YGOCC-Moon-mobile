@@ -1,6 +1,6 @@
 --created by LeonDuvall of Discord, coded by Lyris
---YC.Orgのレジストレーション
-local s,id,off=GetID()
+--YC.Org Registration
+local s,id,o=GetID()
 function s.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)

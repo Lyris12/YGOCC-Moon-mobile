@@ -1,6 +1,6 @@
 --created & coded by Lyris, art by pamansazz of DeviantArt
 --機光襲雷竜－ニューン
-local s,id,off=GetID()
+local s,id,o=GetID()
 function s.initial_effect(c)
 	c:EnableReviveLimit()
 	aux.AddFusionProcFun2(c,aux.FilterBoolFunction(Card.IsSetCard,0x7c4),aux.AND(aux.FilterBoolFunction(Card.IsAttribute,ATTRIBUTE_LIGHT),aux.FilterBoolFunction(Card.IsRace,RACE_DRAGON)),true)
@@ -83,6 +83,6 @@ function s.op(e,tp,eg,ep,ev,re,r,rp)
 	local tc=g:GetFirst()
 	Duel.DisableShuffleCheck()
 	if Duel.Destroy(g,REASON_EFFECT)~=0 then
-		if tc:IsType(TYPE_MONSTER) and tc:IsSetCard(0x7c4) then Duel.Draw(tp,1,REASON_EFFECT) end
+		if not (tc:IsType(TYPE_MONSTER) and tc:IsSetCard(0x7c4)) then Duel.Draw(tp,1,REASON_EFFECT) end
 	else Duel.ConfirmDecktop(tp,1) end
 end

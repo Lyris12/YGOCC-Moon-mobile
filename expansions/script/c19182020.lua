@@ -32,13 +32,14 @@ function s.repfilter(c,loc)
 end
 function s.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if chk==0 then return eg:IsExists(s.repfilter,1,c,LOCATION_MZONE) end
 	local g=eg:Filter(s.repfilter,c,LOCATION_MZONE)
+	if chk==0 then return #g>0 and Duel.GetLocationCount(tp,LOCATION_SZONE)>=#g end
 	for tc in aux.Next(g) do
 		if Duel.Equip(tp,tc,c,true,true) then
 			local e1=Effect.CreateEffect(c)
 			e1:SetType(EFFECT_TYPE_SINGLE)
 			e1:SetCode(EFFECT_EQUIP_LIMIT)
+			e1:SetProperty(EFFECT_FLAG_COPY_INHERIT+EFFECT_FLAG_OWNER_RELATE)
 			e1:SetReset(RESET_EVENT+RESETS_STANDARD)
 			e1:SetValue(s.eqlimit)
 			tc:RegisterEffect(e1)
@@ -56,15 +57,11 @@ end
 function s.eqlimit(e,c)
 	return c==e:GetOwner()
 end
-function s.cfilter(c,tc)
-	return c:GetEquipTarget()==tc and c:IsAbleToGraveAsCost()
-end
 function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if chk==0 then return Duel.IsExistingMatchingCard(s.costfilter,tp,LOCATION_SZONE,0,5,nil,c) end
+	if chk==0 then return c:GetEquipGroup():IsExists(Card.IsAbleToRemoveAsCost,5,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local g=Duel.SelectMatchingCard(tp,s.costfilter,tp,LOCATION_SZONE,0,5,5,nil,c)
-	Duel.SendtoGrave(g,REASON_COST)
+	Duel.Remove(c:GetEquipGroup():FilterSelect(tp,Card.IsAbleToRemoveAsCost,5,5,nil),POS_FACEUP,REASON_COST)
 end
 function s.tg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local h=Duel.GetFieldGroupCount(tp,LOCATION_HAND,LOCATION_HAND)
