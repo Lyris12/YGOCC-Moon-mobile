@@ -1,15 +1,3 @@
-Single, Field = {}, {}
-sng, fld = Single, Field
-
---New ACTIONS
-ACTION_DESTROY		=	1
-ACTION_BANISH		=	2
-ACTION_BANISH_FD	=	3
-ACTION_TOHAND		=	4
-ACTION_TOGRAVE		=	5
-ACTION_TODECK		=	6
-ACTION_TOEXTRA		=	7
-
 --New EFFECTS
 EFFECT_CANNOT_ACTIVATE_LMARKER=8000
 EFFECT_CANNOT_DEACTIVATE_LMARKER=8001
@@ -21,19 +9,38 @@ EFFECT_GLITCHY_EXTRA_MATERIAL_FLAG		= 8006
 EFFECT_GLITCHY_HACK_CODE 				= 8007
 EFFECT_NAME_DECLARED					= 8008
 EFFECT_GLITCHY_CANNOT_DISABLE			= 8009
+EFFECT_GLITCHY_FUSION_SUBSTITUTE 		= 8010
+EFFECT_GLITCHY_CANNOT_CHANGE_ATK		= 8011
+
+FLAG_UNCOUNTED_NORMAL_SUMMON			= 8000
+FLAG_UNCOUNTED_NORMAL_SET				= 8001
 
 EFFECT_BECOME_HOPT=99977755
 EFFECT_SYNCHRO_MATERIAL_EXTRA=26134837
 EFFECT_SYNCHRO_MATERIAL_MULTIPLE=26134838
 EFFECT_REVERSE_WHEN_IF=48928491
 
---constants aliases
-TYPE_ST			= TYPE_SPELL+TYPE_TRAP
 
-ARCHE_FUSION	= 0x46
+---------------------------------------------------------------------------------
+-------------------------------NORMAL SUMMON/SET---------------------------------
+local _Summon, _MSet = Duel.Summon, Duel.MSet
 
-RESET_TURN_SELF = RESET_SELF_TURN
-RESET_TURN_OPPO = RESET_OPPO_TURN
+Duel.Summon = function(tp,c,ign,e,mint,zone)
+	if not mint then mint=0 end
+	if not zone then zone=0x1f end
+	if ign then
+		c:RegisterFlagEffect(FLAG_UNCOUNTED_NORMAL_SUMMON,RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD,0,1)
+	end
+	return _Summon(tp,c,ign,e,mint,zone)
+end
+Duel.MSet = function(tp,c,ign,e,mint,zone)
+	if not mint then mint=0 end
+	if not zone then zone=0x1f end
+	if ign then
+		c:RegisterFlagEffect(FLAG_UNCOUNTED_NORMAL_SET,RESET_EVENT+RESETS_STANDARD-RESET_TOFIELD,EFFECT_FLAG_SET_AVAILABLE,1)
+	end
+	return _MSet(tp,c,ign,e,mint,zone)
+end
 
 -----------------------------------------------------------------------
 -------------------------------NEGATES---------------------------------
@@ -100,304 +107,23 @@ function Auxiliary.GlitchyCannotDisable(f)
 end
 
 -----------------------------------------------------------------------
--------------------------------SELECTION-------------------------------
-function Duel.IsExisting(target,f,loc1,loc2,min,...)
-	if type(target)~="boolean" then return false end
-	local func = (target==true) and Duel.IsExistingTarget or Duel.IsExistingMatchingCard
-	
-	return func(f,tp,loc1,loc2,min,nil,...)
-end
+-------------------------------TRIBUTE-------------------------------
+local _Release = Duel.Release
 
-function Duel.Select(target,hint,f,loc1,loc2,min,max,...)
-	if type(target)~="boolean" then return false end
-	local func = (target==true) and Duel.SelectTarget or Duel.SelectMatchingCard
-	local hint = hint or HINTMSG_TARGET
-	
-	Duel.Hint(HINT_SELECTMSG,tp,hint)
-	local g=func(tp,f,tp,loc1,loc2,min,max,nil,...)
-	return g
-end
-
-------------------------------------------------------------------------
-------------------------CARD OPERATION FUNCTIONS------------------------
-function Auxiliary.BanishFilter(f,r,actp,pos)
-	if not r or r==REASON_EFFECT then
-		return	function(c,...)
-					return (not f or f(c,...)) and c:IsAbleToRemove(actp,pos)
-				end
-	else
-		return	function(c,...)
-					return (not f or f(c,...)) and c:IsAbleToRemoveAsCost(pos)
-				end
+Duel.Release = function(g,r)
+	if aux.GetValueType(g)=="Card" then
+		g=Group.FromCards(g)
 	end
-end
-function Auxiliary.DiscardFilter(f,r)
-	return	function(c,...)
-				return (not f or f(c,...)) and c:IsDiscardable(r)
-			end
-end
-function Auxiliary.SearchFilter(f,r)
-	local check=(not r or r==REASON_EFFECT) and Card.IsAbleToHand or Card.IsAbleToHandAsCost
-	return	function(c,...)
-				return (not f or f(c,...)) and check(c)
-			end
-end
-function Auxiliary.SettingFilter(f)
-	return	function(c,...)
-				return (not f or f(c,...)) and c:IsSSetable()
-			end
-end
-function Auxiliary.SPSummonFilter(f,e,sumtype,sump,ign1,ign2,pos)
-	return	function(c,...)
-				return (not f or f(c,...)) and c:IsCanBeSpecialSummoned(e,sumtype,sump,ign1,ign2,pos)
-			end
-end
-
-function Auxiliary.ActionCategory(act)
-	local t={[1]=CATEGORY_DESTROY, [2]=CATEGORY_REMOVE, [3]=CATEGORY_REMOVE, [4]=CATEGORY_TOHAND, [5]=CATEGORY_TOGRAVE, [6]=CATEGORY_TODECK, [7]=CATEGORY_TOEXTRA}
-	return t[act]
-end
-
-function Duel.Search(g,tp)
-	local ct=Duel.SendtoHand(g,nil,REASON_EFFECT)
-	Duel.ConfirmCards(1-tp,g)
-	return ct
-end
-function Duel.Negate(tc,e,reset)
-	if not reset then reset=0 end
-	Duel.NegateRelatedChain(tc,RESET_TURN_SET)
-	local e1=Effect.CreateEffect(e:GetHandler())
-	e1:SetType(EFFECT_TYPE_SINGLE)
-	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-	e1:SetCode(EFFECT_DISABLE)
-	e1:SetReset(RESET_EVENT+RESETS_STANDARD+reset)
-	tc:RegisterEffect(e1)
-	local e2=Effect.CreateEffect(e:GetHandler())
-	e2:SetType(EFFECT_TYPE_SINGLE)
-	e2:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-	e2:SetCode(EFFECT_DISABLE_EFFECT)
-	e2:SetValue(RESET_TURN_SET)
-	e2:SetReset(RESET_EVENT+RESETS_STANDARD+reset)
-	tc:RegisterEffect(e2)
-	if tc:IsType(TYPE_TRAPMONSTER) then
-		local e3=Effect.CreateEffect(e:GetHandler())
-		e3:SetType(EFFECT_TYPE_SINGLE)
-		e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-		e3:SetCode(EFFECT_DISABLE_TRAPMONSTER)
-		e3:SetReset(RESET_EVENT+RESETS_STANDARD+reset)
-		tc:RegisterEffect(e3)
+	local ct1,ct2=0,0
+	local gx=g:Filter(Card.IsLocation,nil,LOCATION_EXTRA)
+	g:Sub(gx)
+	if #g>0 then
+		ct1=_Release(g,r)
 	end
-	return e1,e2
-end
-
---Special Summons
-function Auxiliary.SpecialSummonButBanish(c,e,tp,loc)
-	if not loc then loc=LOCATION_REMOVED end
-	if Duel.SpecialSummon(c,0,tp,tp,false,false,POS_FACEUP)>0 then
-		local e1=Effect.CreateEffect(e:GetHandler())
-		e1:SetType(EFFECT_TYPE_SINGLE)
-		e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-		e1:SetCode(EFFECT_LEAVE_FIELD_REDIRECT)
-		e1:SetValue(loc)
-		e1:SetReset(RESET_EVENT+RESETS_REDIRECT)
-		c:RegisterEffect(e1,true)
+	if #gx>0 then
+		ct2=Duel.SendtoGrave(gx,r|REASON_RELEASE)
 	end
-end
-
------------------------------------------------------------------------------
--------------------------------PASSIVE EFFECTS-------------------------------
-function Effect.Single(c,code,val,range,prop,m)
-	if not prop then prop=0 end
-	if range then prop=prop|EFFECT_FLAG_SINGLE_RANGE end
-	local etyp=(not m or m==0) and EFFECT_TYPE_SINGLE or (m==1) and EFFECT_TYPE_EQUIP or EFFECT_TYPE_XMATERIAL
-	
-	local e=Effect.CreateEffect(c)
-	e:SetType(EFFECT_TYPE_SINGLE)
-	e:SetCode(code)
-	e:SetValue(val)
-	if prop then
-		e:SetProperty(prop)
-	end
-	if range then
-		e:SetRange(range)
-	end
-	c:RegisterEffect(e)
-	return e
-end
-function Effect.Field(c,code,val,range,loc1,loc2,tg,prop)
-	if not prop then prop=0 end
-	
-	local e=Effect.CreateEffect(c)
-	e:SetType(EFFECT_TYPE_FIELD)
-	e:SetCode(code)
-	e:SetValue(val)
-	e:SetRange(range)
-	e:SetTargetRange(loc1,loc2)
-	if tg then
-		e:SetTarget(tg)
-	end
-	if prop then
-		e:SetProperty(prop)
-	end
-	c:RegisterEffect(e)
-	return e
-end
-function Effect.PlayerField(c,code,val,range,p1,p2,prop)
-	if p1 then p1=1 else p1=0 end
-	if p2 then p2=1 else p2=0 end
-	if prop&EFFECT_FLAG_PLAYER_TARGET==0 then prop=prop|EFFECT_FLAG_PLAYER_TARGET end
-
-	return Effect.Field(c,code,val,range,p1,p2,prop)
-end
-
---Update ATK/DEF of the card
-function Single.UpdateStats(c,m,atk,def)
-	local range=(not m or m==0) and LOCATION_MZONE or nil
-	local e1,e2
-	if atk then
-		e1=Effect.Single(c,EFFECT_UPDATE_ATTACK,atk,range,0,m)
-	end
-	if def then
-		e2=Effect.Single(c,EFFECT_UPDATE_DEFENSE,def,range,0,m)
-	end
-	return e1,e2
-end
-function Field.UpdateStats(c,range,loc1,loc2,tg,atk,def)
-	local e1,e2
-	if atk then
-		e1=Effect.Field(c,EFFECT_UPDATE_ATTACK,atk,range,loc1,loc2,tg)
-	end
-	if def then
-		e2=Effect.Field(c,EFFECT_UPDATE_DEFENSE,def,range,loc1,loc2,tg)
-	end
-	return e1,e2
-end
-
-----------------------------------------------------------------------------------
--------------------------------CARD REMOVAL EFFECTS-------------------------------
-function Effect.Trigger(e,forced,miss_timing,code)
-	local etyp=(forced) and EFFECT_TYPE_TRIGGER_F or EFFECT_TYPE_TRIGGER_O
-	e:SetType(EFFECT_TYPE_SINGLE+etyp)
-	if not miss_timing then
-		e:SetProperty(EFFECT_FLAG_DELAY)
-	end
-	e:SetCode(code)
-end
---CONDITION
-
---When this card is used as material for the (reason) Summon of (f)
-function Auxiliary.UsedAsMaterialCond(reason,f)
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				return (not reason or r&reason>0) and (not f or f(e:GetHandler():GetReasonCard(),e,tp))
-			end
-end
-function Effect.UsedAsMaterial(e,forced,miss_timing,reason,f)
-	e:Trigger(forced,miss_timing,EVENT_BE_MATERIAL)
-	e:SetCondition(aux.UsedAsMaterialCond(reason,f))
-end
-
---When this card is X Summoned
-function Auxiliary.FusionSummonedCond(e)
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_FUSION)
-end
-function Auxiliary.SynchroSummonedCond(e)
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_SYNCHRO)
-end
-function Auxiliary.XyzSummonedCond(e)
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_XYZ)
-end
-function Auxiliary.PendulumSummonedCond(e)
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_PENDULUM)
-end
-function Auxiliary.LinkSummonedCond(e)
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_LINK)
-end
-
-------------------------------------------
-------------------COSTS-------------------
-
---Discard a card(s) as cost
-function Auxiliary.DiscardCost(f,min,max,...)
-	local extras={...}
-	if not min then min=1 end
-	if not max then max=min end
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk)
-				if chk==0 then return Duel.IsExistingMatchingCard(aux.DiscardFilter(f,REASON_COST),tp,LOCATION_HAND,0,1,nil) end
-				Duel.DiscardHand(tp,aux.DiscardFilter(f,REASON_COST),1,1,REASON_COST+REASON_DISCARD)
-			end
-end
---Discards itself as cost
-function Auxiliary.DiscardSelfCost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsDiscardable() end
-	Duel.SendtoGrave(e:GetHandler(),REASON_COST+REASON_DISCARD)
-end
-
---Shuffles itself to ED as cost
-function Auxiliary.ToExtraSelfCost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsAbleToExtraAsCost() end
-	Duel.SendtoDeck(e:GetHandler(),nil,SEQ_DECKSHUFFLE,REASON_COST)
-end
-
---TARGETS
-function Auxiliary.SimpleTarget(f,loc1,loc2,min,info)
-	if not min then min=1 end
-	if not max then max=min end
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk)
-				if chk==0 then return Duel.IsExistingMatchingCard(f,tp,loc1,loc2,min,nil,e,tp) end
-				if info then
-					info()
-				end
-			end
-end
-function Auxiliary.SettingTarget(f,loc1,loc2,min)
-	return aux.SimpleTarget(aux.SettingFilter(f),loc1,loc2,min)
-end
-
---OPERATIONS
-function Auxiliary.SimpleOp(f,loc1,loc2,min,max,hint,action,fizzle)
-	if not min then min=1 end
-	if not max then max=min end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				if fizzle and not e:GetHandler():IsRelateToEffect(e) then return end
-				Duel.Hint(HINT_SELECTMSG,tp,hint)
-				local sg=Duel.SelectMatchingCard(tp,aux.SettingFilter(f),tp,loc1,loc2,min,max,nil,e,tp)
-				if #sg>0 then
-					return action(sg,e,tp)
-				end
-			end
-end
-function Auxiliary.SettingOp(f,loc1,loc2,min,max,fizzle)
-	return aux.SimpleOp(aux.SettingFilter(f),loc1,loc2,min,max,HINTMSG_SET,function(sg,e,tp) return Duel.SSet(tp,sg) end,fizzle)
-end
-
---RESTRICTIONS
---Scripts: You cannot Special Summon monsters the turn you use (activate, if act is TRUE) this effect, except (f) monsters.
-function Auxiliary.SPSummonRestr(act,f)
-	local prop=EFFECT_FLAG_PLAYER_TARGET
-	if act then prop=EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_OATH end
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk)
-				if chk==0 then return Duel.GetCustomActivityCount(e:GetHandler():GetOriginalCode(),tp,ACTIVITY_SPSUMMON)==0 end
-				local e1=Effect.CreateEffect(e:GetHandler())
-				e1:SetType(EFFECT_TYPE_FIELD)
-				e1:SetProperty(prop)
-				e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
-				e1:SetReset(RESET_PHASE+PHASE_END)
-				e1:SetTargetRange(1,0)
-				e1:SetTarget(aux.TargetBoolFunction(aux.NOT(f)))
-				Duel.RegisterEffect(e1,tp)
-			end
-end
-
---ACTION COUNTERS
---Counts the number of Special Summons executed during the turn, ignoring the cards that match the counterfilter
-function Card.SPSummonCounter(c,f)
-	return Duel.AddCustomActivityCounter(c:GetOriginalCode(),ACTIVITY_SPSUMMON,f)
-end
-
---FULL-PACKAGE EFFECTS
-function Effect.SetSpellTrap(e,f,loc1,loc2,min,max,fizzle)
-	e:SetTarget(aux.SettingTarget(f,loc1,loc2,min))
-	e:SetOperation(aux.SettingOp(f,loc1,loc2,min,max,fizzle))
+	return ct1+ct2
 end
 
 --Modified Functions: Names
@@ -525,8 +251,8 @@ function Auxiliary.ExtraMaterialMaxCheck(c,id)
 	return res
 end
 
-local _GetFusionMaterial, _CheckFusionMaterial, _SelectFusionMaterial, _FCheckMixGoal, _SendtoGrave, _Remove, _SendtoDeck, _Destroy, _SendtoHand =
-Duel.GetFusionMaterial, Card.CheckFusionMaterial, Duel.SelectFusionMaterial, Auxiliary.FCheckMixGoal, Duel.SendtoGrave, Duel.Remove, Duel.SendtoDeck, Duel.Destroy, Duel.SendtoHand
+local _GetFusionMaterial, _CheckFusionMaterial, _SelectFusionMaterial, _FConditionFilterMix, _FCheckMixGoal, _AddFusionProcMix, _AddFusionProcMixRep, _SendtoGrave, _Remove, _SendtoDeck, _Destroy, _SendtoHand =
+Duel.GetFusionMaterial, Card.CheckFusionMaterial, Duel.SelectFusionMaterial, Auxiliary.FConditionFilterMix, Auxiliary.FCheckMixGoal, Auxiliary.AddFusionProcMix, Auxiliary.AddFusionProcMixRep, Duel.SendtoGrave, Duel.Remove, Duel.SendtoDeck, Duel.Destroy, Duel.SendtoHand
 
 Duel.GetFusionMaterial = function(tp,...)
 	local x={...}
@@ -731,6 +457,16 @@ Duel.SelectFusionMaterial = function(tp,fc,matg,...)
 	end
 end
 
+Auxiliary.FConditionFilterMix = function(c,fc,sub,concat_fusion,...)
+	local fusion_type=concat_fusion and SUMMON_TYPE_SPECIAL or SUMMON_TYPE_FUSION
+	if not c:IsCanBeFusionMaterial(fc,fusion_type) then return false end
+	if c:IsHasEffect(EFFECT_GLITCHY_FUSION_SUBSTITUTE) then return true end
+	for i,f in ipairs({...}) do
+		if f(c,fc,sub) then return true end
+	end
+	return false
+end
+
 Auxiliary.FCheckMixGoal = function(sg,tp,fc,sub,chkfnf,...)
 	for _,e in ipairs({Duel.IsPlayerAffectedByEffect(tp,EFFECT_GLITCHY_EXTRA_FUSION_MATERIAL)}) do
 		local id=e:GetLabel()
@@ -743,6 +479,116 @@ Auxiliary.FCheckMixGoal = function(sg,tp,fc,sub,chkfnf,...)
 		end
 	end
 	return _FCheckMixGoal(sg,tp,fc,sub,chkfnf,...)
+end
+
+function Card.IsCanBeGlitchyFusionSubstitute(c,fc,sub,mg,sg)
+	if not c:IsHasEffect(EFFECT_GLITCHY_FUSION_SUBSTITUTE) then return false end
+	for _,ce in ipairs({c:IsHasEffect(EFFECT_GLITCHY_FUSION_SUBSTITUTE)}) do
+		local tg=ce:GetTarget()
+		if not tg or type(tg)=="function" and tg(ce,c,fc,sub,mg,sg) then
+			return true
+		end
+	end
+	return false
+end
+
+Auxiliary.AddFusionProcMix = function(c,sub,insf,...)
+	if c:IsStatus(STATUS_COPYING_EFFECT) then return end
+	local val={...}
+	local fun={}
+	local mat={}
+	for i=1,#val do
+		if type(val[i])=='function' then
+			fun[i]=function(c,fc,sub,mg,sg,chk) return val[i](c,fc,sub,mg,sg) and not c:IsHasEffect(6205579) or not chk and c:IsCanBeGlitchyFusionSubstitute(fc,sub,mg,sg) end
+		elseif type(val[i])=='table' then
+			fun[i]=function(c,fc,sub,mg,sg,chk)
+					if not chk and c:IsCanBeGlitchyFusionSubstitute(fc,sub,mg,sg) then return true end
+					for _,fcode in ipairs(val[i]) do
+						if type(fcode)=='function' then
+							if fcode(c,fc,sub,mg,sg) and not c:IsHasEffect(6205579) then return true end
+						else
+							if c:IsFusionCode(fcode) or (sub and c:CheckFusionSubstitute(fc)) then return true end
+						end
+					end
+					return false
+			end
+			for _,fcode in ipairs(val[i]) do
+				if type(fcode)~='function' then mat[fcode]=true end
+			end
+		else
+			fun[i]=function(c,fc,sub,_,_2,chk) return c:IsFusionCode(val[i]) or (sub and c:CheckFusionSubstitute(fc)) or not chk and c:IsCanBeGlitchyFusionSubstitute(fc,sub,mg,sg) end
+			mat[val[i]]=true
+		end
+	end
+	local mt=getmetatable(c)
+	if mt.material==nil then
+		mt.material=mat
+	end
+	if mt.material_count==nil then
+		mt.material_count={#fun,#fun}
+	end
+	if mt.material_funs==nil then
+		mt.material_funs=fun
+	end
+	for index,_ in pairs(mat) do
+		Auxiliary.AddCodeList(c,index)
+	end
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	e1:SetCode(EFFECT_FUSION_MATERIAL)
+	e1:SetCondition(Auxiliary.FConditionMix(insf,sub,table.unpack(fun)))
+	e1:SetOperation(Auxiliary.FOperationMix(insf,sub,table.unpack(fun)))
+	c:RegisterEffect(e1)
+end
+function Auxiliary.AddFusionProcMixRep(c,sub,insf,fun1,minc,maxc,...)
+	if c:IsStatus(STATUS_COPYING_EFFECT) then return end
+	local val={fun1,...}
+	local fun={}
+	local mat={}
+	for i=1,#val do
+		if type(val[i])=='function' then
+			fun[i]=function(c,fc,sub,mg,sg,chk) return val[i](c,fc,sub,mg,sg) and not c:IsHasEffect(6205579) or not chk and c:IsCanBeGlitchyFusionSubstitute(fc,sub,mg,sg) end
+		elseif type(val[i])=='table' then
+			fun[i]=function(c,fc,sub,mg,sg,chk)
+					if not chk and c:IsCanBeGlitchyFusionSubstitute(fc,sub,mg,sg) then return true end
+					for _,fcode in ipairs(val[i]) do
+						if type(fcode)=='function' then
+							if fcode(c,fc,sub,mg,sg) and not c:IsHasEffect(6205579) then return true end
+						else
+							if c:IsFusionCode(fcode) or (sub and c:CheckFusionSubstitute(fc)) then return true end
+						end
+					end
+					return false
+			end
+			for _,fcode in ipairs(val[i]) do
+				if type(fcode)~='function' then mat[fcode]=true end
+			end
+		else
+			fun[i]=function(c,fc,sub,_,_2,chk) return c:IsFusionCode(val[i]) or (sub and c:CheckFusionSubstitute(fc)) or not chk and c:IsCanBeGlitchyFusionSubstitute(fc,sub,mg,sg) end
+			mat[val[i]]=true
+		end
+	end
+	local mt=getmetatable(c)
+	if mt.material==nil then
+		mt.material=mat
+	end
+	if mt.material_count==nil then
+		mt.material_count={#fun+minc-1,#fun+maxc-1}
+	end
+	if mt.material_funs==nil then
+		mt.material_funs=fun
+	end
+	for index,_ in pairs(mat) do
+		Auxiliary.AddCodeList(c,index)
+	end
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	e1:SetCode(EFFECT_FUSION_MATERIAL)
+	e1:SetCondition(Auxiliary.FConditionMixRep(insf,sub,fun[1],minc,maxc,table.unpack(fun,2)))
+	e1:SetOperation(Auxiliary.FOperationMixRep(insf,sub,fun[1],minc,maxc,table.unpack(fun,2)))
+	c:RegisterEffect(e1)
 end
 
 Duel.SendtoGrave = function(tg,reason)
@@ -763,8 +609,9 @@ Duel.SendtoGrave = function(tg,reason)
 			local ce=tc:IsHasEffect(EFFECT_GLITCHY_EXTRA_FUSION_MATERIAL)
 			if ce and ce.GetLabel and ce:GetLabel()==ecount then
 				extra_g:AddCard(tc)
-				if not extra_op then
-					extra_op=ce:GetOperation()
+				local fusop=ce:GetOperation()
+				if not extra_op and fusop then
+					extra_op=fusop
 				end
 			end
 		end
@@ -773,7 +620,8 @@ Duel.SendtoGrave = function(tg,reason)
 			for tc in aux.Next(extra_g) do
 				tc:ResetFlagEffect(1006)
 			end
-			local extra_ct=extra_op(extra_g)
+			local op = extra_op and extra_op or _SendtoGrave
+			local extra_ct=op(extra_g,REASON_EFFECT+REASON_MATERIAL+REASON_FUSION)
 			ct2=ct2+extra_ct
 		end
 		ecount=ecount+1
@@ -1201,248 +1049,4 @@ Auxiliary.LCheckGoal = function(sg,tp,lc,gf,lmat)
 		end
 	end
 	return _LCheckGoal(sg,tp,lc,gf,lmat)
-end
-
-
-
-
---Other Auxs
---Functions that handle the operation of returning cards that were banished temporarily to their previous location
-function Auxiliary.ReturnCon(timep)
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local id=e:GetLabel()
-				return (not timep or Duel.GetTurnPlayer()==timep) and e:GetLabelObject():IsExists(function(c,cd) return c:GetFlagEffect(cd)>0 end,1,nil,id)
-			end
-end
-function Auxiliary.ReturnOp(timect)
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local id,turn,ct=e:GetLabel()
-				if ct~=turn then return e:SetLabel(id,turn,ct+1) end
-				local g=e:GetLabelObject()
-				local tg=g:Filter(function(c,cd) return c:GetFlagEffect(cd)>0 end,nil,id)
-				for tc in aux.Next(tg) do
-					if tc:IsPreviousLocation(LOCATION_ONFIELD) then
-						Duel.ReturnToField(tc)
-					elseif tc:IsPreviousLocation(LOCATION_GRAVE) then
-						Duel.SendtoGrave(tc,REASON_EFFECT+REASON_RETURN,tc:GetPreviousControler())
-					elseif tc:IsPreviousLocation(LOCATION_HAND) then
-						Duel.SendtoHand(tc,tc:GetPreviousControler(),REASON_EFFECT+REASON_RETURN)
-					elseif tc:IsPreviousLocation(LOCATION_DECK) or (tc:IsPreviousLocation(LOCATION_EXTRA) and tc:IsPreviousPosition(POS_FACEDOWN)) then
-						Duel.SendtoDeck(tc,tc:GetPreviousControler(),SEQ_DECKSHUFFLE,REASON_EFFECT+REASON_RETURN)
-					elseif tc:IsPreviousLocation(LOCATION_EXTRA) and tc:IsPreviousPosition(POS_FACEUP) then
-						Duel.SendtoExtraP(tc,tc:GetPreviousControler(),REASON_EFFECT+REASON_RETURN)
-					end
-				end
-				g:DeleteGroup()
-			end
-end
-
---DUEL FUNCTIONS
-function Duel.GetTargetParam()
-	return Duel.GetChainInfo(0,CHAININFO_TARGET_PARAM)
-end
-
---FILTER AUXS
-
---Checks if (c) is controlled by (p) in the location (loc)
-function Auxiliary.PLChk(c,p,loc)
-	if aux.GetValueType(c)=="Card" then
-		return (not p or c:IsControler(p)) and (not loc or c:IsLocation(loc))
-	elseif aux.GetValueType(c)=="Group" then
-		return c:IsExists(aux.PLChk,1,nil,p,loc)
-	else
-		return false
-	end
-end
-function Auxiliary.AfterShuffle(g)
-	for p=0,1 do
-		if g:IsExists(aux.PLChk,1,nil,p,LOCATION_DECK) then
-			Duel.ShuffleDeck(p)
-		end
-	end
-end
-
-
---CARD MOVEMENT FUNCTIONS
-
---Banishes a card
---[[ pos = The position the card will be banished in. ]]
-function Auxiliary.Banish(f,loc1,loc2,min,max,r,selp,actp,recp,pos,...)
-	local extras={...}
-	if not min then min=1 end
-	if not max then max=min end
-	if not r then r=REASON_EFFECT end
-	if not pos then pos=POS_FACEUP end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local selp=(not selp or selp==0) and tp or 1-tp
-				local actp=(not actp) and selp or (actp==0) and tp or 1-tp
-				local recp=(recp==1) and 1-tp or (recp==0) and tp or nil
-				Duel.Hint(HINT_SELECTMSG,selp,HINTMSG_REMOVE)
-				local g=Duel.SelectMatchingCard(selp,aux.BanishFilter(f,r,actp,pos),tp,loc1,loc2,min,max,nil,table.unpack(extras))
-				if #g>0 then
-					if loc1&(LOCATION_ONFIELD+LOCATION_GRAVE+LOCATION_REMOVED)>0 or loc2&(LOCATION_ONFIELD+LOCATION_GRAVE+LOCATION_REMOVED)>0 then
-						Duel.HintSelection(g)
-					end
-					local ct=Duel.Remove(g,pos,r,recp)
-					return ct,g:Filter(aux.PLChk,nil,recp,LOCATION_REMOVED)
-				end
-				return 0
-			end
-end
---Banishes a card temporarily and returns it in its previous location eventually
---[[
-timing = PHASE constant (the phase when the banishment ends)
-timep = Can be NIL, 0 or 1. If not NIL, then the banishment ends only on the phase of the specified player
-timect = Default value is 1. The banishment will end on the Nth phase (where N is ct)
-timenext = If TRUE, then the banishment will end on the "next" Nth phase
-id = The id for the flag that tracks the banished card
-]]
-function Auxiliary.BanishTemp(timing,timep,timect,timenext,id,f,loc1,loc2,min,max,r,selp,actp,recp,pos,...)
-	local extras={...}
-	if not timing then timing=PHASE_END end
-	if not timect then timect=1 end
-	if not min then min=1 end
-	if not max then max=min end
-	if not r then r=REASON_EFFECT end
-	if not pos then pos=POS_FACEUP end
-	r=r|REASON_TEMPORARY
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local timetp=(not timep) and 0 or (timep==tp) and 0x10000000 or 0x20000000
-				local selp=(not selp or selp==0) and tp or 1-tp
-				local actp=(not actp) and selp or (actp==0) and tp or 1-tp
-				local recp=(recp==1) and 1-tp or (recp==0) and tp or nil
-				Duel.Hint(HINT_SELECTMSG,selp,HINTMSG_REMOVE)
-				local g=Duel.SelectMatchingCard(selp,aux.BanishFilter(f,r,actp,pos),tp,loc1,loc2,min,max,nil,table.unpack(extras))
-				if #g>0 then
-					if loc1&(LOCATION_ONFIELD+LOCATION_GRAVE+LOCATION_REMOVED)>0 or loc2&(LOCATION_ONFIELD+LOCATION_GRAVE+LOCATION_REMOVED)>0 then
-						Duel.HintSelection(g)
-					end
-					local ct=Duel.Remove(g,pos,r,recp)
-					local sg=g:Filter(aux.PLChk,nil,recp,LOCATION_REMOVED)
-					if ct>0 and #sg>0 then
-						local c=e:GetHandler()
-						local tc=sg:GetFirst()
-						while tc do
-							tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD,0,1)
-							tc=sg:GetNext()
-						end
-						sg:KeepAlive()
-						local e1=Effect.CreateEffect(c)
-						e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-						e1:SetCode(EVENT_PHASE+timing)
-						e1:SetLabelObject(sg)
-						e1:SetCountLimit(1)
-						e1:SetCondition(aux.ReturnCon(timep,timect))
-						e1:SetOperation(aux.ReturnOp())
-						if timenext and (not timep or Duel.GetTurnPlayer()==timep) and Duel.GetCurrentPhase()==timing then
-							e1:SetLabel(id,timect+1,1)
-							e1:SetReset(RESET_PHASE+timing+timetp,timect+1)
-						else
-							e1:SetLabel(id,timect,1)
-							e1:SetReset(RESET_PHASE+timing+timetp,timect)
-						end
-						Duel.RegisterEffect(e1,tp)
-					end
-					return ct,g:Filter(aux.PLChk,nil,recp,LOCATION_REMOVED)
-				end
-				return 0
-			end
-end
-
---Searches a card(s): adds from the Deck to the hand, and ONLY FROM THE DECK
-function Auxiliary.Search(f,min,max,r,selp,recp,...)
-	local extras={...}
-	if not min then min=1 end
-	if not max then max=min end
-	if not r then r=REASON_EFFECT end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local selp=(not selp or selp==0) and tp or 1-tp
-				local recp=(recp==1) and 1-tp or (recp==0) and tp or nil
-				Duel.Hint(HINT_SELECTMSG,selp,HINTMSG_ATOHAND)
-				local g=Duel.SelectMatchingCard(selp,aux.SearchFilter(f,r),tp,LOCATION_DECK,0,min,max,nil,table.unpack(extras))
-				if #g>0 then
-					local ct=Duel.SendtoHand(g,recp,r)
-					if ct>0 and aux.PLChk(g,recp,LOCATION_HAND) then
-						Duel.ConfirmCards(1-selp,g:Filter(aux.PLChk,nil,recp,LOCATION_HAND))
-					end
-					return ct,g:Filter(aux.PLChk,nil,recp,LOCATION_HAND)
-				end
-				return 0
-			end
-end
-
---SPSUMMON
-function Auxiliary.SPSummonSelfTarget(check,pos)
-	if not check then
-		return	function(e,tp,eg,ep,ev,re,r,rp,chk)
-					if chk==0 then
-						return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and e:GetHandler():IsCanBeSpecialSummoned(e,0,tp,false,false,pos)
-					end
-					Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,e:GetHandler(),1,0,0)
-				end
-	else
-		return	function(e,tp,eg,ep,ev,re,r,rp,chk)
-					if chk==0 then
-						return e:GetHandler():IsCanBeSpecialSummoned(e,0,tp,false,false,pos)
-					end
-					Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,e:GetHandler(),1,0,0)
-				end
-	end
-end
-
---Special Summons a card(s)
---[[
-sumtype = The type of Special Summon that will be executed. Default value is 0 (for regular Special Summons)
-sump = The player that performs the Special Summon
-recp = The player that receives the Special Summoned card
-ign1 = If TRUE, the Special Summon ignores Summoning Conditions
-ign2 = If TRUE, the Special Summon ignores the Revive Limit (for example, you can SS a Synchro monster from the GY even if it was not properly Summoned from the ED previously)
-pos = The position the cards will be Special Summoned in.
-]]
-function Auxiliary.SPSummon(f,loc1,loc2,min,max,selp,sumtype,sump,recp,ign1,ign2,pos,...)
-	local extras={...}
-	if not min then min=1 end
-	if not max then max=min end
-	if not sumtype then sumtype=0 end
-	if not ign1 then ign1=false end
-	if not ign2 then ign2=false end
-	if not pos then pos=POS_FACEUP end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local selp=(not selp or selp==0) and tp or 1-tp
-				local sump=(not sump) and selp or (sump==0) and tp or 1-tp
-				local recp=(not recp) and sump or (recp==0) and tp or 1-tp
-				Duel.Hint(HINT_SELECTMSG,selp,HINTMSG_SPSUMMON)
-				local g=Duel.SelectMatchingCard(selp,aux.SPSummonFilter(f,e,sumtype,sump,ign1,ign2,pos),tp,loc1,loc2,min,max,nil,table.unpack(extras))
-				if #g>0 then
-					local ct=Duel.SpecialSummon(g,sumtype,sump,recp,ign1,ign2,pos)
-					return ct,g
-				end
-				return 0
-			end
-end
-function Auxiliary.SPSummonStep(f,loc1,loc2,min,max,selp,sumtype,sump,recp,ign1,ign2,pos,...)
-	local extras={...}
-	if not min then min=1 end
-	if not max then max=min end
-	if not sumtype then sumtype=0 end
-	if not ign1 then ign1=false end
-	if not ign2 then ign2=false end
-	if not pos then pos=POS_FACEUP end
-	return	function(e,tp,eg,ep,ev,re,r,rp)
-				local selp=(not selp or selp==0) and tp or 1-tp
-				local sump=(not sump) and selp or (sump==0) and tp or 1-tp
-				local recp=(not recp) and sump or (recp==0) and tp or 1-tp
-				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-				local g=Duel.SelectMatchingCard(selp,aux.SPSummonFilter(f,e,sumtype,sump,ign1,ign2,pos),tp,loc1,loc2,min,max,nil,table.unpack(extras))
-				if #g>0 then
-					local sg=Group.CreateGroup()
-					for tc in aux.Next(g) do
-						if Duel.SpecialSummonStep(tc,sumtype,sump,recp,ign1,ign2,pos) then
-							sg:AddCard(tc)
-						end
-					end
-					return #sg,sg
-				end
-				return 0
-			end
 end

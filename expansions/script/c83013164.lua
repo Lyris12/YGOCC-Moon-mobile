@@ -1,15 +1,8 @@
 --Seatector Cadet
 --Keddy was here~
-local function ID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-
-local id,cod=ID()
+local cod,id=GetID()
 function cod.initial_effect(c)
+	aux.EnableUnionAttribute(c,cod.eqlimit)
 	--Equip
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
@@ -29,33 +22,19 @@ function cod.initial_effect(c)
 	e2:SetTarget(cod.sptg)
 	e2:SetOperation(cod.spop)
 	c:RegisterEffect(e2)
-	--Destroy substitute
-	local e3=Effect.CreateEffect(c)
-	e3:SetType(EFFECT_TYPE_EQUIP)
-	e3:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-	e3:SetCode(EFFECT_DESTROY_SUBSTITUTE)
-	e3:SetValue(cod.repval)
-	c:RegisterEffect(e3)
 	--ATK up
 	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_EQUIP)
 	e4:SetCode(EFFECT_UPDATE_ATTACK)
 	e4:SetValue(500)
 	c:RegisterEffect(e4)
-	--Equip Limit
-	local e5=Effect.CreateEffect(c)
-	e5:SetType(EFFECT_TYPE_SINGLE)
-	e5:SetCode(EFFECT_EQUIP_LIMIT)
-	e5:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-	e5:SetValue(cod.eqlimit)
-	c:RegisterEffect(e5)
 	--Draw
 	local e6=Effect.CreateEffect(c)
 	e6:SetDescription(aux.Stringid(id,2))
 	e6:SetCategory(CATEGORY_DRAW)
 	e6:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e6:SetCode(EVENT_TO_GRAVE)
-	e6:SetProperty(EFFECT_FLAG_DELAY)
+	e6:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL+EFFECT_FLAG_PLAYER_TARGET)
 	e6:SetCountLimit(1,id)
 	e6:SetCondition(cod.drcon)
 	e6:SetTarget(cod.drtg)
@@ -118,12 +97,11 @@ end
 
 --Draw
 function cod.drcon(e,tp,eg,ep,ev,re,r,rp)
-	return (e:GetHandler():IsReason(REASON_COST) and re:GetHandler():IsSetCard(0x33f))
-		or (re:GetHandler():IsSetCard(0x33f) and bit.band(r,REASON_EFFECT)~=0)
-		and re:GetHandler():IsType(TYPE_MONSTER)
+	return e:GetHandler():IsReason(REASON_COST) and re:IsHasType(0x7e0) and re:IsActiveType(TYPE_MONSTER)
+		and re:GetHandler():IsSetCard(0x33F)
 end
 function cod.drtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return true end
+	if chk==0 then return Duel.IsPlayerCanDraw(tp,1) end
 	Duel.SetTargetPlayer(tp)
 	Duel.SetTargetParam(1)
 	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)

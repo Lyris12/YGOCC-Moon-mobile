@@ -11,7 +11,7 @@ function s.initial_effect(c)
 	c:RegisterEffect(e1)
 end
 function s.cfilter(c,e,tp)
-	return c:IsFaceup() and c:IsDestructable(e) and c:IsSetCard(0xcf11) and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_EXTRA,0,1,c,c,e,tp)
+	return c:IsFaceup() and c:IsDestructable() and c:IsSetCard(0xcf11) and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_EXTRA,0,1,c,c,e,tp)
 end
 function s.filter(c,mc,e,tp)
 	return c:IsType(TYPE_BIGBANG) and c:IsCanBeSpecialSummoned(e,SUMMON_TYPE_BIGBANG,tp,false,false)
@@ -30,5 +30,6 @@ function s.tg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function s.op(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	Duel.SpecialSummon(Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_EXTRA,0,1,1,nil,e:GetLabelObject(),e,tp),SUMMON_TYPE_BIGBANG,tp,tp,false,false,POS_FACEUP)
+	local tc=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_EXTRA,0,1,1,nil,e:GetLabelObject(),e,tp):GetFirst()
+	if tc and Duel.SpecialSummon(tc,SUMMON_TYPE_BIGBANG,tp,tp,false,false,POS_FACEUP)>0 then tc:CompleteProcedure() end
 end

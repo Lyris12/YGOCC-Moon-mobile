@@ -1,15 +1,8 @@
 --Seatector Mecha
 --Keddy was here~
-local function ID()
-	local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-	str=string.sub(str,1,string.len(str)-4)
-	local cod=_G[str]
-	local id=tonumber(string.sub(str,2))
-	return id,cod
-end
-
-local id,cod=ID()
+local cod,id=GetID()
 function cod.initial_effect(c)
+	aux.EnableUnionAttribute(c,cod.eqlimit)
 	--Equip
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
@@ -29,20 +22,6 @@ function cod.initial_effect(c)
 	e2:SetTarget(cod.sptg)
 	e2:SetOperation(cod.spop)
 	c:RegisterEffect(e2)
-	--Destroy substitute
-	local e3=Effect.CreateEffect(c)
-	e3:SetType(EFFECT_TYPE_EQUIP)
-	e3:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-	e3:SetCode(EFFECT_DESTROY_SUBSTITUTE)
-	e3:SetValue(cod.repval)
-	c:RegisterEffect(e3)
-	--Equip Limit
-	local e4=Effect.CreateEffect(c)
-	e4:SetType(EFFECT_TYPE_SINGLE)
-	e4:SetCode(EFFECT_EQUIP_LIMIT)
-	e4:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
-	e4:SetValue(cod.eqlimit)
-	c:RegisterEffect(e4)
 	--Untargetable
 	local e5=Effect.CreateEffect(c)
 	e5:SetType(EFFECT_TYPE_EQUIP)
@@ -54,10 +33,11 @@ function cod.initial_effect(c)
 	e6:SetDescription(aux.Stringid(85087012,1))
 	e6:SetCategory(CATEGORY_DESTROY)
 	e6:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e6:SetProperty(EFFECT_FLAG_DELAY)
+	e6:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
 	e6:SetCode(EVENT_TO_GRAVE)
 	e6:SetCountLimit(1,id)
 	e6:SetCondition(cod.descon)
+	e6:SetCost(cod.descost)
 	e6:SetTarget(cod.destg)
 	e6:SetOperation(cod.desop)
 	c:RegisterEffect(e6)
@@ -118,25 +98,23 @@ end
 
 --Desroy
 function cod.costfilter(c)
-	return c:IsSetCard(0x33F) and c:IsDiscardable()
+	return c:IsSetCard(0x33F) and c:IsMonster() and c:IsDiscardable()
 end
 function cod.descost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cod.costfilter,tp,LOCATION_HAND,0,1,nil) end
-	Duel.DiscardHand(tp,cod.costfilter,1,1,REASON_COST,nil)
+	Duel.DiscardHand(tp,cod.costfilter,1,1,REASON_COST+REASON_DISCARD)
 end
 function cod.descon(e,tp,eg,ep,ev,re,r,rp)
-	return (e:GetHandler():IsReason(REASON_COST) and re:GetHandler():IsSetCard(0x33f))
-		or (re:GetHandler():IsSetCard(0x33f) and bit.band(r,REASON_EFFECT)~=0)
-		and re:GetHandler():IsType(TYPE_MONSTER)
+	return e:GetHandler():IsReason(REASON_COST) and re:IsHasType(0x7e0) and re:IsActiveType(TYPE_MONSTER)
+		and re:GetHandler():IsSetCard(0x33F)
 end
-function cod.destg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_ONFIELD) and chkc:IsDestructable() end
-	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsDestructable,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_DESTROY,nil,1,0,0)
+function cod.destg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(aux.TRUE,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,nil) end
+	Duel.SetOperationInfo(0,CATEGORY_DESTROY,nil,1,PLAYER_ALL,LOCATION_ONFIELD)
 end
 function cod.desop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-	local g=Duel.SelectMatchingCard(tp,Card.IsDestructable,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,aux.TRUE,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,nil)
 	if g:GetCount()==0 then return end
-	Duel.SendtoGrave(g,REASON_EFFECT)
+	Duel.Destroy(g,REASON_EFFECT)
 end

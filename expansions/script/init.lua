@@ -156,40 +156,49 @@ function Card.GetRitualType(c)
 end
 
 dofile("expansions/script/glitchylib.lua") --Glitchy
+dofile("expansions/script/glitchylib_new.lua") --Glitchy's New Functions
+dofile("expansions/script/glitchylib_single.lua") --Glitchy's Single-Type Effects
+dofile("expansions/script/glitchylib_field.lua") --Glitchy's Field-Type Effects
+dofile("expansions/script/glitchylib_trigger.lua") --Glitchy's Trigger Effects
+dofile("expansions/script/glitchylib_global.lua") --Glitchy's Global Effects
+dofile("expansions/script/glitchylib_cond.lua") --Glitchy's Conditions
+dofile("expansions/script/glitchylib_cost.lua") --Glitchy's Costs
+dofile("expansions/script/glitchylib_tgop.lua") --Glitchy's Target+Operations
+
 dofile("expansions/script/proc_evolute.lua") --Evolutes
 dofile("expansions/script/proc_conjoin.lua") --Conjoints
 dofile("expansions/script/proc_pandemonium.lua") --Pandemoniums
 dofile("expansions/script/proc_polarity.lua") --Polarities
 dofile("expansions/script/proc_spatial.lua") --Spatials
-dofile("expansions/script/proc_corona.lua") --Coronas
 dofile("expansions/script/proc_skill.lua") --Skills
 dofile("expansions/script/proc_deckmaster.lua") --Deck Masters
 dofile("expansions/script/proc_bigbang.lua") --Bigbangs
 dofile("expansions/script/proc_timeleap.lua") --Time Leaps
 dofile("expansions/script/proc_relay.lua") --Relays
+dofile("expansions/script/proc_runic.lua") --Runic
+dofile("expansions/script/proc_magick.lua") --Magick
+dofile("expansions/script/proc_xros.lua") --Xroses
+dofile("expansions/script/proc_evolve.lua") --Evolves
+dofile("expansions/script/muse_proc.lua") --"Muse"
+dofile("expansions/script/tables.lua") --Special Tables
 -- dofile("expansions/script/proc_harmony.lua") --Harmonies
 -- dofile("expansions/script/proc_accent.lua") --Accents
 -- dofile("expansions/script/proc_bypath.lua") --Bypaths
 -- dofile("expansions/script/proc_toxia.lua") --Toxias
 -- dofile("expansions/script/proc_annotee.lua") --Annotees
 -- dofile("expansions/script/proc_chroma.lua") --Chromas
-dofile("expansions/script/proc_perdition.lua") --Perditions
-dofile("expansions/script/proc_impure.lua") --Impures
-dofile("expansions/script/proc_runic.lua") --Runic
-dofile("expansions/script/proc_magick.lua") --Magick
-dofile("expansions/script/proc_xros.lua") --Xroses
-dofile("expansions/script/muse_proc.lua") --"Muse"
-dofile("expansions/script/tables.lua") --Special Tables
-dofile("expansions/script/proc_evolve.lua") --Evolve
+-- dofile("expansions/script/proc_corona.lua") --Coronas
+-- dofile("expansions/script/proc_perdition.lua") --Perditions
+-- dofile("expansions/script/proc_impure.lua") --Impures
 
 --overwrite functions
 local is_type, card_remcounter, duel_remcounter, effect_set_target_range, effect_set_reset, add_xyz_proc, add_xyz_proc_nlv, duel_overlay, duel_set_lp, duel_select_target, duel_banish, card_check_remove_overlay_card, is_reason, duel_check_tribute, select_tribute,card_sethighlander,
 	card_is_facedown, card_is_able_to_remove, card_is_able_to_remove_as_cost, card_is_able_to_hand, card_is_can_be_ssed, card_get_level, card_get_previous_level, card_is_level, card_is_level_below, card_is_level_above, card_is_destructable, card_get_syn_level, card_get_rit_level, card_is_xyz_level,
-	duel_check_xyz_mat, duel_select_xyz_mat, duel_recover, duel_damage = 
+	duel_check_xyz_mat, duel_select_xyz_mat, duel_recover, duel_damage, effect_set_count_limit = 
 	
 	Card.IsType, Card.RemoveCounter, Duel.RemoveCounter, Effect.SetTargetRange, Effect.SetReset, Auxiliary.AddXyzProcedure, Auxiliary.AddXyzProcedureLevelFree, Duel.Overlay, Duel.SetLP, Duel.SelectTarget, Duel.Remove, Card.CheckRemoveOverlayCard, Card.IsReason, Duel.CheckTribute, Duel.SelectTribute, Card.SetUniqueOnField,
 	Card.IsFacedown, Card.IsAbleToRemove, Card.IsAbleToRemoveAsCost, Card.IsAbleToHand, Card.IsCanBeSpecialSummoned, Card.GetLevel, Card.GetPreviousLevelOnField, Card.IsLevel, Card.IsLevelBelow, Card.IsLevelAbove, Card.IsDestructable, Card.GetSynchroLevel, Card.GetRitualLevel, Card.IsXyzLevel,
-	Duel.CheckXyzMaterial, Duel.SelectXyzMaterial, Duel.Recover, Duel.Damage
+	Duel.CheckXyzMaterial, Duel.SelectXyzMaterial, Duel.Recover, Duel.Damage, Effect.SetCountLimit
 
 Card.IsReason=function(c,rs)
 	local cusrs=rs>>32
@@ -432,48 +441,52 @@ Card.CheckRemoveOverlayCard=function(c,tp,ct,r)
 	end
 	return card_check_remove_overlay_card(c,tp,ct,r)
 end
-Duel.CheckTribute=function(c,min,max,mg,p,zone)
-	if not max then max=min end
-	if not p then p=c:GetControler() end
-	if not zone then zone=0x1f001f end
-	local ef={Duel.IsPlayerAffectedByEffect(c:GetControler(),EFFECT_MUST_USE_MZONE)}
-	for _,e in ipairs(ef) do
-		local ev=e:GetValue()
-		if type(ev)=='function' then zone=zone&ev(e) else zone=zone&ev end
-	end
-	zone=zone&(0x1f<<16*p)
-	if zone>0x1f then zone=zone>>16 end
-	return duel_check_tribute(c,min,max,mg,p,zone)
-end
-Duel.SelectTribute=function(sp,c,min,max,mg,p)
-	if not p then p=c:GetControler() end
-	local zone=0x1f001f
-	local ef={Duel.IsPlayerAffectedByEffect(sp,EFFECT_MUST_USE_MZONE)}
-	for _,e in ipairs(ef) do
-		local ev=e:GetValue()
-		if type(ev)=='function' then zone=zone&ev(e) else zone=zone&ev end
-	end
-	zone=zone&(0x1f<<16*p)
-	if zone>0x1f then zone=zone>>16 end
-	local rg=mg~=nil and mg or Duel.GetTributeGroup(c)
-	local sg=Group.CreateGroup()
-	if rg:IsExists(Auxiliary.TribCheckRecursive,1,nil,sp,rg,sg,c,0,min,max,p,zone) then
-		local finish=false
-		while #sg<max do
-			finish=Auxiliary.TributeGoal(sp,sg,c,#sg,min,max,p,zone)
-			local cg=rg:Filter(Auxiliary.TribCheckRecursive,sg,sp,rg,sg,c,#sg,min,max,p,zone)
-			if #cg==0 then break end
-			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TRIBUTE)
-			local tc=cg:SelectUnselect(sg,sp,finish,false,min,max)
-			if not tc then break end
-			if not sg:IsContains(tc) then
-				sg:AddCard(tc)
-				if #sg>=max then finish=true end
-			else sg:RemoveCard(tc) end
-		end
-	end
-	return #sg>0 and sg or select_tribute(sp,c,min,max,rg,p)
-end
+
+--THESE 2 FUNCTIONS BELOW NEED TO BE REMOVED OR MODIFIED SINCE THEY PREVENT CERTAIN EFFECTS AND INTERACTIONS FROM FUNCTIONING ALTOGETHER
+--See: Dai Dance and EFFECT_SUMMON_PROC ; Ra Sphere Mode with Stormforth
+
+-- Duel.CheckTribute=function(c,min,max,mg,p,zone)
+	-- if not max then max=min end
+	-- if not p then p=c:GetControler() end
+	-- if not zone then zone=0x1f001f end
+	-- local ef={Duel.IsPlayerAffectedByEffect(c:GetControler(),EFFECT_MUST_USE_MZONE)}
+	-- for _,e in ipairs(ef) do
+		-- local ev=e:GetValue()
+		-- if type(ev)=='function' then zone=zone&ev(e) else zone=zone&ev end
+	-- end
+	-- zone=zone&(0x1f<<16*p)
+	-- if zone>0x1f then zone=zone>>16 end
+	-- return duel_check_tribute(c,min,max,mg,p,zone)
+-- end
+-- Duel.SelectTribute=function(sp,c,min,max,mg,p)
+	-- if not p then p=c:GetControler() end
+	-- local zone=0x1f001f
+	-- local ef={Duel.IsPlayerAffectedByEffect(sp,EFFECT_MUST_USE_MZONE)}
+	-- for _,e in ipairs(ef) do
+		-- local ev=e:GetValue()
+		-- if type(ev)=='function' then zone=zone&ev(e) else zone=zone&ev end
+	-- end
+	-- zone=zone&(0x1f<<16*p)
+	-- if zone>0x1f then zone=zone>>16 end
+	-- local rg=mg~=nil and mg or Duel.GetTributeGroup(c)
+	-- local sg=Group.CreateGroup()
+	-- if rg:IsExists(Auxiliary.TribCheckRecursive,1,nil,sp,rg,sg,c,0,min,max,p,zone) then
+		-- local finish=false
+		-- while #sg<max do
+			-- finish=Auxiliary.TributeGoal(sp,sg,c,#sg,min,max,p,zone)
+			-- local cg=rg:Filter(Auxiliary.TribCheckRecursive,sg,sp,rg,sg,c,#sg,min,max,p,zone)
+			-- if #cg==0 then break end
+			-- Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TRIBUTE)
+			-- local tc=cg:SelectUnselect(sg,sp,finish,false,min,max)
+			-- if not tc then break end
+			-- if not sg:IsContains(tc) then
+				-- sg:AddCard(tc)
+				-- if #sg>=max then finish=true end
+			-- else sg:RemoveCard(tc) end
+		-- end
+	-- end
+	-- return #sg>0 and sg or select_tribute(sp,c,min,max,rg,p)
+-- end
 Card.SetUniqueOnField=function(c,s,o,code,loc)
 	if not loc then loc=LOCATION_ONFIELD end
 	card_sethighlander(c,s,o,code,loc)
@@ -1085,6 +1098,18 @@ Duel.Damage = function(p,v,r,...)
 	end
 end
 
+Effect.SetCountLimit = function(e,ct,...)
+	local x={...}
+	if #x>0 and type(x[1])=="table" or #x>1 then
+		local id=type(x[1])=="table" and x[1][1] or x[1]
+		local mod=type(x[1])=="table" and x[1][2] or 0
+		local flag = #x>1 and x[2] or 0
+		return effect_set_count_limit(e,ct,id+mod*100+flag)
+	else
+		return effect_set_count_limit(e,ct,...)
+	end
+end
+
 --Custom Functions
 function Auxiliary.TribCheckRecursive(c,tp,mg,sg,sc,ct,min,max,p,zone)
 	sg:AddCard(c)
@@ -1234,9 +1259,9 @@ table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_FUSION_MATERIAL)
 table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_SYNCHRO_MATERIAL)
 table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_XYZ_MATERIAL)
 table.insert(Auxiliary.CannotBeEDMatCodes,EFFECT_CANNOT_BE_LINK_MATERIAL)
-function Auxiliary.CannotBeEDMaterial(c,f,range,isrule,reset,owner)
+function Auxiliary.CannotBeEDMaterial(c,f,range,isrule,reset,owner,prop)
 	if not owner then owner=c end
-	local property = 0
+	local property = type(prop)=="number" and prop or 0
 	if (isrule == nil or isrule == true) then
 		property = property+EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE
 	end
@@ -1418,31 +1443,12 @@ EFFECT_TYPE_TRIGGER=EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_TRIGGER_F
 EFFECT_TYPE_QUICK=EFFECT_TYPE_QUICK_O+EFFECT_TYPE_QUICK_F
 EFFECT_TYPE_CHAIN_STARTER=EFFECT_TYPE_TRIGGER_O+EFFECT_TYPE_TRIGGER_F+EFFECT_TYPE_QUICK_O+EFFECT_TYPE_QUICK_F+EFFECT_TYPE_ACTIVATE+EFFECT_TYPE_IGNITION
 
-TYPE_ST = TYPE_SPELL+TYPE_TRAP
-
---glitchy custom categories (apply with e:SetGlitchyCategory)
-GLCATEGORY_PLACE_SELF_AS_CONTINUOUS_TRAP=0x1
-GLCATEGORY_ED_DRAW=0x8000
-GLCATEGORY_ACTIVATE_LMARKER=0x10000
-GLCATEGORY_DEACTIVATE_LMARKER=0x20000
-GLCATEGORY_SYNCHRO_SUMMON=0x40000
-GLCATEGORY_SELF_DAMAGE_ONLY=0x80000
-
---glitchy's custom effects
-
-
 --glitchy's custom events
 EVENT_ACTIVATE_LINK_MARKER=9000
 EVENT_DEACTIVATE_LINK_MARKER=9001
 
---zone constants
-EXTRA_MONSTER_ZONE=0x60
-
 --resets
 RESETS_STANDARD_DISABLE=RESETS_STANDARD|RESET_DISABLE
-
---Duel Effects without player target range
-DUEL_EFFECT_NOP={EFFECT_DISABLE_FIELD}
 
 function Group.Includes(g1,g2)
 	if #g1==0 or #g1<#g2 then return false end
@@ -1458,29 +1464,6 @@ function Group.Includes(g1,g2)
 	return check
 end
 
-if not Auxiliary.GLSpecialInfos then Auxiliary.GLSpecialInfos={} end
-function Duel.SetGLOperationInfo(e,category,g,ct,p,loc,fromloc)
-	if not g then
-		Auxiliary.GLSpecialInfos[e]={category,nil,ct,p,loc,fromloc}
-	else
-		Auxiliary.GLSpecialInfos[e]={category,g,ct,0,0,fromloc}
-	end
-end
-function Auxiliary.GLSetSpecialInfo(e,category,g,ct,p,loc,fromloc)
-	Duel.SetGLOperationInfo(e,category,g,ct,p,loc,fromloc)
-end
-function Auxiliary.SetGLOperationInfo(e,category,g,ct,p,loc,fromloc)
-	Duel.SetGLOperationInfo(e,category,g,ct,p,loc,fromloc)
-end
-
-function Effect.GLSetCategory(e,category)
-	if not glitchy_effect_table[e] then glitchy_effect_table[e]={0} end
-	glitchy_effect_table[e][1]=glitchy_effect_table[e][1]|category
-end
-function Effect.SetGlitchyCategory(e,category)
-	Effect.GLSetCategory(e,category)
-end
-
 function Effect.GLGetTargetRange(e)
 	if not global_target_range_effect_table[e] then return 0,0 end
 	local s=global_target_range_effect_table[e][1]
@@ -1489,7 +1472,7 @@ function Effect.GLGetTargetRange(e)
 end
 
 function Effect.GLGetReset(e)
-	if not global_reset_effect_table[e] then return 0,0 end
+	if not global_reset_effect_table[e] then return 0,1 end
 	local reset=global_reset_effect_table[e][1]
 	local rct=global_reset_effect_table[e][2]
 	return reset,rct
@@ -1626,14 +1609,6 @@ function Effect.GLString(e,id,...)
 	-- else
 		e:SetDescription(aux.Stringid(e:GetOwner():GetOriginalCode(),id))
 	--end
-end
-
-function Duel.IsMainPhase(tp)
-	return (not tp or Duel.GetTurnPlayer()==tp) and (Duel.GetCurrentPhase()==PHASE_MAIN1 or Duel.GetCurrentPhase()==PHASE_MAIN2)
-end
-function Duel.IsBattlePhase(tp)
-	local ph=Duel.GetCurrentPhase()
-	return (not tp or Duel.GetTurnPlayer()==tp) and ph>=PHASE_BATTLE_START and ph<=PHASE_BATTLE
 end
 
 function Auxiliary.ActivateST(c)
@@ -2179,55 +2154,128 @@ if not global_card_effect_table_global_check then
 	function Card:RegisterEffect(e,forced)
 		if not global_card_effect_table[self] then global_card_effect_table[self]={} end
 		table.insert(global_card_effect_table[self],e)
-		local cid=self:GetOriginalCode()
+		-- local cid=self:GetOriginalCode()
 		
-		if #global_card_effect_table[self]==1 then
-			local mt=getmetatable(self)
-			if LISTED_NAMES[cid] and not self.checked_card_code_list then
-				if self.card_code_list==nil then
-					mt.card_code_list={}
-					for _,code in ipairs(LISTED_NAMES[cid]) do
-						if code==0 then
-							mt.card_code_list[cid]=true
-						else
-							mt.card_code_list[code]=true
-						end
+		-- if #global_card_effect_table[self]==1 then
+			-- local mt=getmetatable(self)
+			-- if LISTED_NAMES[cid] and not self.checked_card_code_list then
+				-- if self.card_code_list==nil then
+					-- mt.card_code_list={}
+					-- for _,code in ipairs(LISTED_NAMES[cid]) do
+						-- if code==0 then
+							-- mt.card_code_list[cid]=true
+						-- else
+							-- mt.card_code_list[code]=true
+						-- end
+					-- end
+				-- else
+					-- for _,code in ipairs(LISTED_NAMES[cid]) do
+						-- if code==0 then
+							-- self.card_code_list[cid]=true
+						-- else
+							-- self.card_code_list[code]=true
+						-- end
+					-- end
+				-- end
+				-- mt.checked_card_code_list=true
+			-- end
+		-- end
+		
+		if e:GetType()&(EFFECT_TYPE_ACTIONS)==0 then
+			local e = e:IsHasType(EFFECT_TYPE_GRANT) and e:GetLabelObject() or e
+			
+			if e:GetCode()==EFFECT_DISABLE or e:GetCode()==EFFECT_DISABLE_EFFECT or e:GetCode()==EFFECT_DISABLE_CHAIN or e:GetCode()==EFFECT_DISABLE_TRAPMONSTER then
+				if e:GetType()==EFFECT_TYPE_SINGLE then
+					local cond=e:GetCondition()
+					if not cond then
+						e:SetCondition(aux.GlitchyCannotDisableCon())
+					else
+						e:SetCondition(aux.GlitchyCannotDisableCon(con))
 					end
-				else
-					for _,code in ipairs(LISTED_NAMES[cid]) do
-						if code==0 then
-							self.card_code_list[cid]=true
-						else
-							self.card_code_list[code]=true
-						end
+				elseif e:GetType()==EFFECT_TYPE_FIELD then
+					local tg=e:GetTarget()
+					if not tg then
+						e:SetTarget(aux.GlitchyCannotDisable())
+					else
+						e:SetTarget(aux.GlitchyCannotDisable(tg))
 					end
 				end
-				mt.checked_card_code_list=true
+				
+			elseif e:GetCode()==EFFECT_EXTRA_SUMMON_COUNT or e:GetCode()==EFFECT_EXTRA_SET_COUNT then
+				local s,o=e:GLGetTargetRange()
+				if s~=0 and s&LOCATION_GRAVE==0 then
+					s=s|LOCATION_GRAVE
+				end
+				if o~=0 and o&LOCATION_GRAVE==0 then
+					o=o|LOCATION_GRAVE
+				end
+				e:SetTargetRange(s,o)
+			
+			elseif e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+				if e:IsHasType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_XMATERIAL) then
+					if e:IsHasType(EFFECT_TYPE_SINGLE) and self:IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK) then
+						for _,ce in ipairs({self:IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+							if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+								local val=ce:GetValue()
+								if not val or val(ce,e,REASON_EFFECT) then
+									e:Reset()
+									return false
+								end
+							end
+						end
+					end
+					local cond=e:GetCondition()
+					local newcond =	function(e,...)
+										if e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+											for _,ce in ipairs({e:GetHandler():IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+												if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+													local val=ce:GetValue()
+													if not val or val(ce,e,REASON_EFFECT) then
+														return false
+													end
+												end
+											end
+										end
+										return not cond or cond(e,...)
+									end
+					e:SetCondition(newcond)
+				elseif e:IsHasType(EFFECT_TYPE_EQUIP) then
+					local cond=e:GetCondition()
+					local newcond =	function(e,...)
+										if e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+											for _,ce in ipairs({e:GetHandler():GetEquipTarget():IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+												if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+													local val=ce:GetValue()
+													if not val or val(ce,e,REASON_EFFECT) then
+														return false
+													end
+												end
+											end
+										end
+										return not cond or cond(e,...)
+									end
+					e:SetCondition(newcond)
+				elseif e:IsHasType(EFFECT_TYPE_FIELD) then
+					local tg=e:GetTarget()
+					local newtarg =	function(e,c,...)
+										if e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+											for _,ce in ipairs({c:IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+												if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+													local val=ce:GetValue()
+													if not val or val(ce,e,REASON_EFFECT) then
+														return false
+													end
+												end
+											end
+										end
+										return not tg or tg(e,c,...)
+									end
+					e:SetTarget(newtarg)
+				end
 			end
 		end
 		
-		if e:GetCode()==EFFECT_DISABLE or e:GetCode()==EFFECT_DISABLE_EFFECT or e:GetCode()==EFFECT_DISABLE_CHAIN or e:GetCode()==EFFECT_DISABLE_TRAPMONSTER then
-			if e:GetType()==EFFECT_TYPE_SINGLE then
-				local cond=e:GetCondition()
-				if not cond then
-					e:SetCondition(aux.GlitchyCannotDisableCon())
-				else
-					e:SetCondition(aux.GlitchyCannotDisableCon(con))
-				end
-			elseif e:GetType()==EFFECT_TYPE_FIELD then
-				local tg=e:GetTarget()
-				if not tg then
-					e:SetTarget(aux.GlitchyCannotDisable())
-				else
-					e:SetTarget(aux.GlitchyCannotDisable(tg))
-				end
-			end
-		end
 		
-		if e:GetCode()==EFFECT_DISABLE_FIELD and e:GetLabel()==0 and e:GetOperation() then
-			local op=e:GetOperation()
-			e:SetOperation(Auxiliary.SetOperationResultAsLabel(op))
-		end
 		local condition,cost,tg,op,val=e:GetCondition(),e:GetCost(),e:GetTarget(),e:GetOperation(),e:GetValue()
 		if condition and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()==EFFECT_TYPE_XMATERIAL or e:GetType()==EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_FIELD or e:GetType()&EFFECT_TYPE_GRANT~=0)) then	
 			local newcon =	function(...)
@@ -2295,12 +2343,89 @@ if not global_duel_effect_table_global_check then
 	Duel.RegisterEffect = function(e,tp)
 							if not global_duel_effect_table[tp] then global_duel_effect_table[tp]={} end
 							table.insert(global_duel_effect_table[tp],e)
-							local s,o=e:GLGetTargetRange()
-							if not e:IsHasProperty(EFFECT_FLAG_PLAYER_TARGET) and s==0 and o==0 then
-								for i=1,#DUEL_EFFECT_NOP do
-									if e:GetCode()==DUEL_EFFECT_NOP[i] then e:SetProperty(e:GetProperty()|EFFECT_FLAG_PLAYER_TARGET) e:SetTargetRange(1,0) end
+							
+							local reset,rct=e:GLGetReset()
+							if reset then 
+								if not global_reset_duel_effect_table then
+									global_reset_duel_effect_table={}
+								end							
+								local r=Effect.GlobalEffect()
+								r:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+								r:SetCode(GLOBAL_EFFECT_RESET)
+								r:SetTargetRange(1,0)
+								r:SetLabelObject(e)
+								r:SetReset(reset,rct)
+								Duel.register_global_duel_effect_table(r,tp)
+								global_reset_duel_effect_table[e]=true								
+							end
+								
+							
+							if e:GetType()&(EFFECT_TYPE_ACTIONS)==0 then
+								local e = e:IsHasType(EFFECT_TYPE_GRANT) and e:GetLabelObject() or e
+									
+								if e:GetCode()==EFFECT_EXTRA_SUMMON_COUNT or e:GetCode()==EFFECT_EXTRA_SET_COUNT then
+									local s,o=e:GLGetTargetRange()
+									if s~=0 and s&LOCATION_GRAVE==0 then
+										s=s|LOCATION_GRAVE
+									end
+									if o~=0 and o&LOCATION_GRAVE==0 then
+										o=o|LOCATION_GRAVE
+									end
+								
+								elseif e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+									if e:IsHasType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_XMATERIAL) then
+										local cond=e:GetCondition()
+										local newcond =	function(e,...)
+															if e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+																for _,ce in ipairs({e:GetHandler():IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+																	if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+																		local val=ce:GetValue()
+																		if not val or val(ce,e,REASON_EFFECT) then
+																			return false
+																		end
+																	end
+																end
+															end
+															return not cond or cond(e,...)
+														end
+										e:SetCondition(newcond)
+									elseif e:IsHasType(EFFECT_TYPE_EQUIP) then
+										local cond=e:GetCondition()
+										local newcond =	function(e,...)
+															if e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+																for _,ce in ipairs({e:GetHandler():GetEquipTarget():IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+																	if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+																		local val=ce:GetValue()
+																		if not val or val(ce,e,REASON_EFFECT) then
+																			return false
+																		end
+																	end
+																end
+															end
+															return not cond or cond(e,...)
+														end
+										e:SetCondition(newcond)
+									elseif e:IsHasType(EFFECT_TYPE_FIELD) then
+										local tg=e:GetTarget()
+										local newtarg =	function(e,c,...)
+															if e:GetCode()==EFFECT_UPDATE_ATTACK or e:GetCode()==EFFECT_SET_ATTACK or e:GetCode()==EFFECT_SET_ATTACK_FINAL or e:GetCode()==EFFECT_SWAP_AD then
+																for _,ce in ipairs({c:IsHasEffect(EFFECT_GLITCHY_CANNOT_CHANGE_ATK)}) do
+																	if ce and aux.GetValueType(ce)=="Effect" and ce.GetLabel then
+																		local val=ce:GetValue()
+																		if not val or val(ce,e,REASON_EFFECT) then
+																			return false
+																		end
+																	end
+																end
+															end
+															return not tg or tg(e,c,...)
+														end
+										e:SetTarget(newtarg)
+									end
 								end
 							end
+							
+							
 							local condition,cost,tg,op,val=e:GetCondition(),e:GetCost(),e:GetTarget(),e:GetOperation(),e:GetValue()
 							if condition and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 								local newcon =	function(...)
@@ -2356,7 +2481,8 @@ if not global_duel_effect_table_global_check then
 									end
 								end
 							end
-							return Duel.register_global_duel_effect_table(e,tp)
+							
+							return Duel.register_global_duel_effect_table(e,tp)	
 	end
 end
 
@@ -2364,6 +2490,19 @@ end
 ----------------------------------------------------------------------------------------------------------------
 --AUXS AND FUNCTIONS PORTED FROM EDOPRO (CAN BE EXPANDED FOR FACILITATING SCRIPT COMPATIBILITY BETWEEN THE SIMS)
 ----------------------------------------------------------------------------------------------------------------
+function Card.HasLevel(c)
+	if c:IsType(TYPE_MONSTER) then
+		return ((c:GetType()&TYPE_LINK~=TYPE_LINK and c:GetType()&TYPE_TIMELEAP~=TYPE_TIMELEAP and c:GetType()&TYPE_XYZ~=TYPE_XYZ) or c:IsHasEffect(EFFECT_GRANT_LEVEL))
+			and not c:IsStatus(STATUS_NO_LEVEL)
+	elseif c:IsOriginalType(TYPE_MONSTER) then
+		return not (c:IsOriginalType(TYPE_XYZ+TYPE_LINK+TYPE_TIMELEAP) or c:IsStatus(STATUS_NO_LEVEL))
+	end
+	return false
+end
+function Card.CanAttack(c)
+	return c:IsAttackable()
+end
+
 function Auxiliary.FilterBoolFunctionEx(f,value)
 	return	function(target,scard,sumtype,tp)
 				return f(target,value,scard,sumtype,tp)
@@ -2422,6 +2561,106 @@ function Auxiliary.SelectUnselectGroup(g,e,tp,minc,maxc,rescon,chk,seltp,hintmsg
 		end
 	end
 	return sg
+end
+--[[
+Function to perform "Either add it to the hand or do X"
+-card: affected card or group of cards to be moved;
+-player: player performing the operation
+-check: condition for the secondary action, if not provided the default action is "Send it to the GY";
+oper: secondary action;
+str: string to be used in the secondary option
+]]
+function Auxiliary.ToHandOrElse(card,player,check,oper,str,...)
+	if card then
+		if not check then check=Card.IsAbleToGrave end
+		if not oper then oper=aux.thoeSend end
+		if not str then str=574 end
+		local b1,b2=true,true
+		if type(card)=="Group" then
+			for ctg in aux.Next(card) do
+				if not ctg:IsAbleToHand() then
+					b1=false
+				end
+				if not check(ctg,...) then
+					b2=false
+				end
+			end
+		else
+			b1=card:IsAbleToHand()
+			b2=check(card,...)
+		end
+		local opt
+		if b1 and b2 then
+			opt=Duel.SelectOption(player,573,str)
+		elseif b1 then
+			opt=Duel.SelectOption(player,573)
+		else
+			opt=Duel.SelectOption(player,str)+1
+		end
+		if opt==0 then
+			local res=Duel.SendtoHand(card,nil,REASON_EFFECT)
+			if res~=0 then Duel.ConfirmCards(1-player,card) end
+			return res
+		else
+			return oper(card,...)
+		end
+	end
+end
+function Auxiliary.thoeSend(card)
+	return Duel.SendtoGrave(card,REASON_EFFECT)
+end
+--register for "Equip to this card by its effect"
+function Auxiliary.EquipByEffectAndLimitRegister(c,e,tp,tc,code,mustbefaceup)
+	local up=false or mustbefaceup
+	if not Duel.Equip(tp,tc,c,up) then return false end
+	--Add Equip limit
+	if code then
+		tc:RegisterFlagEffect(code,RESET_EVENT+RESETS_STANDARD,0,0)
+	end
+	local te=e:GetLabelObject()
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetProperty(EFFECT_FLAG_OWNER_RELATE)
+	e1:SetCode(EFFECT_EQUIP_LIMIT)
+	e1:SetReset(RESET_EVENT+RESETS_STANDARD)
+	e1:SetValue(Auxiliary.EquipByEffectLimit)
+	e1:SetLabelObject(te)
+	tc:RegisterEffect(e1)
+	return true
+end
+--check for Eyes Restrict equip limit
+function Auxiliary.AddEREquipLimit(c,con,equipval,equipop,linkedeff,prop,resetflag,resetcount)
+	local finalprop=EFFECT_FLAG_CANNOT_DISABLE
+	if prop~=nil then
+		finalprop=finalprop|prop
+	end
+	local e1=Effect.CreateEffect(c)
+	if con then
+		e1:SetCondition(con)
+	end
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetProperty(finalprop,EFFECT_FLAG2_MAJESTIC_MUST_COPY)
+	e1:SetCode(89785779)
+	e1:SetLabelObject(linkedeff)
+	if resetflag and resetcount then
+		e1:SetReset(resetflag,resetcount)
+	elseif resetflag then
+		e1:SetReset(resetflag)
+	end
+	e1:SetValue(function(ec,c,tp) return equipval(ec,c,tp) end)
+	e1:SetOperation(function(c,e,tp,tc) equipop(c,e,tp,tc) end)
+	c:RegisterEffect(e1)
+	local e2=Effect.CreateEffect(c)
+	e2:SetType(EFFECT_TYPE_SINGLE)
+	e2:SetProperty(finalprop&~EFFECT_FLAG_CANNOT_DISABLE,EFFECT_FLAG2_MAJESTIC_MUST_COPY)
+	e2:SetCode(89785779+EFFECT_EQUIP_LIMIT)
+	if resetflag and resetcount then
+		e2:SetReset(resetflag,resetcount)
+	elseif resetflag then
+		e2:SetReset(resetflag)
+	end
+	c:RegisterEffect(e2)
+	linkedeff:SetLabelObject(e2)
 end
 --Checks whether the card is located at any of the sequences passed as arguments.
 function Card.IsSequence(c,...)
@@ -2532,5 +2771,164 @@ function Duel.SelectReleaseGroupCost(tp,f,minc,maxc,use_hand,specialchk,ex,...)
 	end
 	return sg
 end
+
+function Auxiliary.MZFilter(c,tp)
+	return c:IsLocation(LOCATION_MZONE) and c:GetSequence()<5 and c:IsControler(tp)
+end
+--check for Free Monster Zones
+function Auxiliary.ChkfMMZ(sumcount)
+	return	function(sg,e,tp,mg)
+				return sg:FilterCount(Auxiliary.MZFilter,nil,tp)+Duel.GetLocationCount(tp,LOCATION_MZONE)>=sumcount
+			end
+end
 ----------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------
+--EDOPRO IMPORT: UNION PROCEDURE
+--Procedure for Union monster equip/unequip
+--c: Union monster
+--f: Potential targets
+--oldequip: Uses old rules for number of monster equiped (A monster can only by equipped with 1 Union monster at a time.)
+--oldprotect: Uses old rules for destroy replacement (If the equipped monster would be destroyed, destroy this card instead.)
+function Auxiliary.AddUnionProcedure(c,f,oldequip,oldprotect,range,quick)
+	if oldprotect == nil then oldprotect = oldequip end
+	local range = range and range or LOCATION_MZONE
+	--equip
+	local e1=Effect.CreateEffect(c)
+	e1:SetDescription(1068)
+	e1:SetCategory(CATEGORY_EQUIP)
+	e1:SetProperty(EFFECT_FLAG_CARD_TARGET)
+	if quick then
+		e1:SetType(EFFECT_TYPE_QUICK_O)
+		e1:SetCode(EVENT_FREE_CHAIN)
+	else
+		e1:SetType(EFFECT_TYPE_IGNITION)
+	end
+	e1:SetRange(range)
+	e1:SetTarget(Auxiliary.UnionTarget(f,oldequip))
+	e1:SetOperation(Auxiliary.UnionOperation(f))
+	c:RegisterEffect(e1)
+	--unequip
+	local e2=Effect.CreateEffect(c)
+	e2:SetDescription(2)
+	e2:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	if quick then
+		e2:SetType(EFFECT_TYPE_QUICK_O)
+		e2:SetCode(EVENT_FREE_CHAIN)
+	else
+		e2:SetType(EFFECT_TYPE_IGNITION)
+	end
+	e2:SetRange(LOCATION_SZONE)
+	if oldequip then
+		e2:SetCondition(Auxiliary.IsUnionState)
+	end
+	e2:SetTarget(Auxiliary.UnionSumTarget(oldequip))
+	e2:SetOperation(Auxiliary.UnionSumOperation(oldequip))
+	c:RegisterEffect(e2)
+	--destroy sub
+	local e3=Effect.CreateEffect(c)
+	e3:SetType(EFFECT_TYPE_EQUIP)
+	e3:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+	e3:SetCode(EFFECT_DESTROY_SUBSTITUTE)
+	if oldprotect then
+		e3:SetCondition(Auxiliary.IsUnionState)
+	end
+	e3:SetValue(Auxiliary.UnionReplace(oldprotect))
+	c:RegisterEffect(e3)
+	--eqlimit
+	local e4=Effect.CreateEffect(c)
+	e4:SetType(EFFECT_TYPE_SINGLE)
+	e4:SetCode(EFFECT_UNION_LIMIT)
+	e4:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+	e4:SetValue(Auxiliary.UnionLimit(f))
+	c:RegisterEffect(e4)
+	--auxiliary function compatibility
+	if oldequip then
+		local m=c:GetMetatable()
+		m.old_union=true
+	end
+	return e1,e2,e3,e4
+end
+if not Card.CheckUnionTarget then
+	Card.CheckUnionTarget=function(c,target)
+		local ct1,ct2=c:GetUnionCount()
+		return c:IsHasEffect(EFFECT_UNION_LIMIT) and (((not c:IsHasEffect(EFFECT_OLDUNION_STATUS)) or ct1 == 0)
+			and ((not c:IsHasEffect(EFFECT_UNION_STATUS)) or ct2 == 0))
+	
+	end
+end
+function Auxiliary.UnionFilter(c,f,oldrule)
+	local ct1,ct2=c:GetUnionCount()
+	if c:IsFaceup() and (not f or f(c)) then
+		if oldrule then
+			return ct1==0
+		else
+			return ct2==0
+		end
+	else
+		return false
+	end
+end
+function Auxiliary.UnionTarget(f,oldrule)
+	return function (e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+		local c=e:GetHandler()
+		local code=c:GetOriginalCode()
+		if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and Auxiliary.UnionFilter(c,f,oldrule) end
+		if chk==0 then return e:GetHandler():GetFlagEffect(code)==0 and Duel.GetLocationCount(tp,LOCATION_SZONE)>0
+			and Duel.IsExistingTarget(Auxiliary.UnionFilter,tp,LOCATION_MZONE,0,1,c,f,oldrule) end
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_EQUIP)
+		local g=Duel.SelectTarget(tp,Auxiliary.UnionFilter,tp,LOCATION_MZONE,0,1,1,c,f,oldrule)
+		Duel.SetOperationInfo(0,CATEGORY_EQUIP,g,1,0,0)
+		c:RegisterFlagEffect(code,RESET_EVENT+(RESETS_STANDARD-RESET_TOFIELD-RESET_LEAVE)+RESET_PHASE+PHASE_END,0,1)
+	end
+end
+function Auxiliary.UnionOperation(f)
+	return function (e,tp,eg,ep,ev,re,r,rp)
+		local c=e:GetHandler()
+		local tc=Duel.GetFirstTarget()
+		if not c:IsRelateToEffect(e) or c:IsFacedown() then return end
+		if not tc:IsRelateToEffect(e) or (f and not f(tc)) then
+			Duel.SendtoGrave(c,REASON_EFFECT)
+			return
+		end
+		if not Duel.Equip(tp,c,tc,false) then return end
+		aux.SetUnionState(c)
+	end
+end
+function Auxiliary.UnionSumTarget(oldrule)
+	return function (e,tp,eg,ep,ev,re,r,rp,chk)
+		local c=e:GetHandler()
+		local code=c:GetOriginalCode()
+		local pos=POS_FACEUP
+		if oldrule then pos=POS_FACEUP_ATTACK end
+		if chk==0 then return c:GetFlagEffect(code)==0 and Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+			and e:GetHandler():IsCanBeSpecialSummoned(e,0,tp,true,false,pos) end
+		Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,c,1,0,0)
+		c:RegisterFlagEffect(code,RESET_EVENT+(RESETS_STANDARD-RESET_TOFIELD-RESET_LEAVE)+RESET_PHASE+PHASE_END,0,1)
+	end
+end
+function Auxiliary.UnionSumOperation(oldrule)
+	return function (e,tp,eg,ep,ev,re,r,rp)
+		local c=e:GetHandler()
+		if not c:IsRelateToEffect(e) then return end
+		local pos=POS_FACEUP
+		if oldrule then pos=POS_FACEUP_ATTACK end
+		if Duel.SpecialSummon(c,0,tp,tp,true,false,pos)==0 and Duel.GetLocationCount(tp,LOCATION_MZONE)<=0
+			and c:IsCanBeSpecialSummoned(e,0,tp,true,false,pos) then
+			Duel.SendtoGrave(c,REASON_RULE)
+		end
+	end
+end
+function Auxiliary.UnionReplace(oldrule)
+	return function (e,re,r,rp)
+		if oldrule then
+			return (r&REASON_BATTLE)~=0
+		else
+			return (r&REASON_BATTLE)~=0 or (r&REASON_EFFECT)~=0
+		end
+	end
+end
+function Auxiliary.UnionLimit(f)
+	return function (e,c)
+		return (not f or f(c)) or e:GetHandler():GetEquipTarget()==c
+	end
+end
