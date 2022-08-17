@@ -2,6 +2,8 @@
 local cid,id=GetID()
 function cid.initial_effect(c)
 c:EnableReviveLimit()
+   aux.AddOrigConjointType(c)
+	aux.EnableConjointAttribute(c,1)
 	   aux.AddOrigEvoluteType(c)
 	 aux.AddEvoluteProc(c,nil,6,aux.OR(cid.filter1,cid.filter2),2,99)  
 	 local e3=Effect.CreateEffect(c)
@@ -45,7 +47,7 @@ end
 function cid.discon(e,tp,eg,ep,ev,re,r,rp)
 	if e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED) then return false end
 	local loc=Duel.GetChainInfo(ev,CHAININFO_TRIGGERING_LOCATION)
-	return loc==LOCATION_MZONE and re:IsActiveType(TYPE_MONSTER)
+	return  re:IsActiveType(TYPE_MONSTER)
 		and Duel.IsChainNegatable(ev)
 end
 
