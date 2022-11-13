@@ -17,6 +17,10 @@ CATEGORY_FLAG_SELF					= 0x1
 --Effects
 GLOBAL_EFFECT_RESET	=	10203040
 
+--Properties
+EFFECT_FLAG_DD = EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL
+EFFECT_FLAG_DDD = EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL
+
 --zone constants
 EXTRA_MONSTER_ZONE=0x60
 
@@ -64,12 +68,15 @@ function Duel.Group(f,tp,loc1,loc2,exc,...)
 	local g=Duel.GetMatchingGroup(f,tp,loc1,loc2,exc,...)
 	return g
 end
-function Auxiliary.Faceup(f,...)
+function Duel.HintMessage(tp,msg)
+	return Duel.Hint(HINT_SELECTMSG,tp,msg)
+end
+function Auxiliary.Faceup(f)
 	return	function(c,...)
 				return (not f or f(c,...)) and c:IsFaceup()
 			end
 end
-function Auxiliary.Facedown(f,...)
+function Auxiliary.Facedown(f)
 	return	function(c,...)
 				return (not f or f(c,...)) and c:IsFacedown()
 			end
@@ -181,6 +188,7 @@ function Duel.PositionChange(c)
 	return Duel.ChangePosition(c,POS_FACEUP_DEFENSE,POS_FACEDOWN_DEFENSE,POS_FACEUP_ATTACK,POS_FACEUP_ATTACK)
 end
 function Duel.Search(g,tp)
+	if aux.GetValueType(g)=="Card" then g=Group.FromCards(g) end
 	local ct=Duel.SendtoHand(g,tp,REASON_EFFECT)
 	local cg=g:Filter(aux.PLChk,nil,tp,LOCATION_HAND)
 	if #cg>0 then
@@ -191,29 +199,29 @@ end
 
 function Duel.ShuffleIntoDeck(g,p)
 	local ct=Duel.SendtoDeck(g,p,SEQ_DECKSHUFFLE,REASON_EFFECT)
-	if ct>0 and aux.PLChk(g,p,LOCATION_DECK) then
+	if ct>0 then
 		aux.AfterShuffle(g)
-		if aux.GetValueType(g)=="Card" and aux.PLChk(g,p,LOCATION_DECK) then
+		if aux.GetValueType(g)=="Card" and aux.PLChk(g,p,LOCATION_DECK+LOCATION_EXTRA) then
 			return 1
 		elseif aux.GetValueType(g)=="Group" then
-			return g:FilterCount(aux.PLChk,nil,p,LOCATION_DECK)
+			return g:FilterCount(aux.PLChk,nil,p,LOCATION_DECK+LOCATION_EXTRA)
 		end
 	end
 	return 0
 end
-function Auxiliary.PLChk(c,p,loc)
+function Auxiliary.PLChk(c,p,loc,min)
+	if not min then min=1 end
 	if aux.GetValueType(c)=="Card" then
 		return (not p or c:IsControler(p)) and (not loc or c:IsLocation(loc))
 	elseif aux.GetValueType(c)=="Group" then
-		return c:IsExists(aux.PLChk,1,nil,p,loc)
+		return c:IsExists(aux.PLChk,min,nil,p,loc)
 	else
 		return false
 	end
 end
 function Auxiliary.AfterShuffle(g)
-	if aux.GetValueType(g)=="Card" then g=Group.FromCards(g) end
 	for p=0,1 do
-		if g:IsExists(aux.PLChk,1,nil,p,LOCATION_DECK) then
+		if aux.PLChk(g,p,LOCATION_DECK) then
 			Duel.ShuffleDeck(p)
 		end
 	end
@@ -275,19 +283,22 @@ function Card.IsOriginalRace(c,rc)
 	return c:GetOriginalRace()&rc>0
 end
 
+function Card.HasRank(c)
+	return c:IsType(TYPE_XYZ) or c:IsOriginalType(TYPE_XYZ) or c:IsHasEffect(EFFECT_ORIGINAL_LEVEL_RANK_DUALITY)
+end
 function Card.GetRating(c)
 	local list={false,false,false,false}
 	if c:HasLevel() then
-		list[1]=(c:GetLevel())
+		list[1]=c:GetLevel()
 	end
 	if c:IsOriginalType(TYPE_XYZ) then
-		list[2]=(c:GetRank())
+		list[2]=c:GetRank()
 	end
 	if c:IsOriginalType(TYPE_LINK) then
-		list[3]=(c:GetLink())
+		list[3]=c:GetLink()
 	end
 	if c:IsOriginalType(TYPE_TIMELEAP) then
-		list[4]=(c:GetFuture())
+		list[4]=c:GetFuture()
 	end
 	return list
 end
@@ -321,6 +332,10 @@ function Card.ByBattleOrEffect(c,f,p)
 	return	function(e,tp,eg,ep,ev,re,r,rp)
 				return c:IsReason(REASON_BATTLE) or c:IsReason(REASON_EFFECT) and (not f or re and f(re:GetHandler(),e,tp,eg,ep,ev,re,r,rp)) and (not p or rp~=(1-p))
 			end
+end
+
+function Card.IsContained(c,g)
+	return g:IsContains(c)
 end
 
 --Chain Info
@@ -381,6 +396,10 @@ function Auxiliary.ActivateException(e,chk)
 		return nil
 	end
 end
+function Auxiliary.ExceptThis(c)
+	if aux.GetValueType(c)=="Effect" then c=c:GetHandler() end
+	if c:IsRelateToChain() then return c else return nil end
+end
 
 --Descriptions
 function Effect.Desc(e,id,...)
@@ -418,9 +437,36 @@ function Auxiliary.Option(id,tp,desc,...)
 	return sel
 end
 
+--Filters
+function Auxiliary.Filter(f,...)
+	local ext_params={...}
+	return aux.FilterBoolFunction(f,table.unpack(ext_params))
+end
+function Auxiliary.FaceupFilter(f,...)
+	local ext_params={...}
+	return	function(target)
+				return target:IsFaceup() and f(target,table.unpack(ext_params))
+			end
+end
+function Auxiliary.MonsterFilter(f,...)
+	local ext_params={...}
+	return	function(target)
+				return target:IsMonster() and f(target,table.unpack(ext_params))
+			end
+end
+function Auxiliary.STFilter(f,...)
+	local ext_params={...}
+	return	function(target)
+				return target:IsST() and f(target,table.unpack(ext_params))
+			end
+end
+
 --Flag Effects
 function Card.HasFlagEffect(c,id)
 	return c:GetFlagEffect(id)>0
+end
+function Duel.PlayerHasFlagEffect(p,id)
+	return Duel.GetFlagEffect(p,id)>0
 end
 function Card.UpdateFlagEffectLabel(c,id,ct)
 	if not ct then ct=1 end
@@ -430,7 +476,24 @@ function Duel.UpdateFlagEffectLabel(p,id,ct)
 	if not ct then ct=1 end
 	return Duel.SetFlagEffectLabel(p,id,Duel.GetFlagEffectLabel(p,id)+ct)
 end
-
+function Card.HasFlagEffectLabel(c,id,val)
+	if not c:HasFlagEffect(id) then return false end
+	for _,label in ipairs({c:GetFlagEffectLabel(id)}) do
+		if label==val then
+			return true
+		end
+	end
+	return false
+end
+function Duel.PlayerHasFlagEffectLabel(p,id,val)
+	if Duel.GetFlagEffect(tp,id)==0 then return false end
+	for _,label in ipairs({Duel.GetFlagEffectLabel(tp,id)}) do
+		if label==val then
+			return true
+		end
+	end
+	return false
+end
 --Gain Effect
 function Auxiliary.GainEffectType(c,oc,reset)
 	if not oc then oc=c end
@@ -440,7 +503,7 @@ function Auxiliary.GainEffectType(c,oc,reset)
 		e:SetType(EFFECT_TYPE_SINGLE)
 		e:SetCode(EFFECT_ADD_TYPE)
 		e:SetValue(TYPE_EFFECT)
-		e:SetReset(RESET_EVENT+RESETS_STANDARD)
+		e:SetReset(RESET_EVENT+RESETS_STANDARD+reset)
 		c:RegisterEffect(e,true)
 	end
 end
@@ -486,6 +549,9 @@ function Card.IsInMainSequence(c)
 	return c:IsSequenceBelow(4)
 end
 
+function Card.IsSpellTrapOnField(c)
+	return not c:IsLocation(LOCATION_MZONE) or (c:IsFaceup() and c:IsST())
+end
 function Card.NotOnFieldOrFaceup(c)
 	return not c:IsOnField() or c:IsFaceup()
 end
@@ -495,6 +561,23 @@ end
 function Card.NotInExtraOrFaceup(c)
 	return not c:IsLocation(LOCATION_EXTRA) or c:IsFaceup()
 end
+
+function Card.GetPreviousZone(c)
+	return 1<<c:GetPreviousSequence()
+end
+function Duel.CheckPendulumZones(tp)
+	return Duel.CheckLocation(tp,LOCATION_PZONE,0) or Duel.CheckLocation(tp,LOCATION_PZONE,1)
+end
+function Card.IsInLinkedZone(c,cc)
+	return cc:GetLinkedGroup():IsContains(c)
+end
+function Card.WasInLinkedZone(c,cc)
+	return cc:GetLinkedZone(c:GetPreviousControler())&c:GetPreviousZone()~=0
+end
+function Card.HasBeenInLinkedZone(c,cc)
+	return cc:GetLinkedGroup():IsContains(c) or (not c:IsLocation(LOCATION_MZONE) and cc:GetLinkedZone(c:GetPreviousControler())&c:GetPreviousZone()~=0)
+end
+
 
 --Once per turn
 function Effect.OPT(e,ct)
@@ -524,6 +607,24 @@ function Effect.HOPT(e,oath)
 	
 	return e:SetCountLimit(1,cid+flag)
 end
+function Effect.SHOPT(e,oath)
+	if not e:GetOwner() then return end
+	local c=e:GetOwner()
+	local cid=c:GetOriginalCode()
+	if not aux.HOPTTracker[c] then
+		aux.HOPTTracker[c]=0
+	end
+	if type(aux.HOPTTracker[c])=="number" then
+		cid=cid+aux.HOPTTracker[c]*100
+	end
+	
+	local flag=0
+	if oath then
+		flag=flag|EFFECT_COUNT_CODE_OATH
+	end
+	
+	return e:SetCountLimit(1,cid+flag)
+end
 
 --Phases
 function Duel.IsDrawPhase(tp)
@@ -533,7 +634,8 @@ function Duel.IsStandbyPhase(tp)
 	return (not tp or Duel.GetTurnPlayer()==tp) and Duel.GetCurrentPhase()==PHASE_STANDBY
 end
 function Duel.IsMainPhase(tp,ct)
-	return (not tp or Duel.GetTurnPlayer()==tp) and (not ct and (Duel.GetCurrentPhase()==PHASE_MAIN1 or Duel.GetCurrentPhase()==PHASE_MAIN2) or ct==1 and Duel.GetCurrentPhase()==PHASE_MAIN1 or ct==2 and Duel.GetCurrentPhase()==PHASE_MAIN2)
+	return (not tp or Duel.GetTurnPlayer()==tp)
+		and (not ct and (Duel.GetCurrentPhase()==PHASE_MAIN1 or Duel.GetCurrentPhase()==PHASE_MAIN2) or ct==1 and Duel.GetCurrentPhase()==PHASE_MAIN1 or ct==2 and Duel.GetCurrentPhase()==PHASE_MAIN2)
 end
 function Duel.IsBattlePhase(tp)
 	local ph=Duel.GetCurrentPhase()
@@ -542,6 +644,18 @@ end
 function Duel.IsEndPhase(tp)
 	return (not tp or Duel.GetTurnPlayer()==tp) and Duel.GetCurrentPhase()==PHASE_END
 end
+
+--Location Check
+function Auxiliary.AddThisCardBanishedAlreadyCheck(c)
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
+	e1:SetCode(EVENT_REMOVE)
+	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+	e1:SetOperation(Auxiliary.ThisCardInGraveAlreadyCheckOperation)
+	c:RegisterEffect(e1)
+	return e1
+end
+
 -----------------------------------------------------------------------
 function Card.Ignition(c,desc,ctg,prop,range,ctlim,cond,cost,tg,op,reset,quickcon)
 	if not range then range=c:GetOriginalType()&TYPE_FIELD>0 and LOCATION_FZONE or c:GetOriginalType()&TYPE_ST>0 and LOCATION_SZONE or LOCATION_MZONE end
@@ -560,15 +674,27 @@ function Card.Ignition(c,desc,ctg,prop,range,ctlim,cond,cost,tg,op,reset,quickco
 			e1:SetCategory(ctg)
 		end
 	end
-	if aux.GetValueType(prop)=="number" then
+	if aux.GetValueType(prop)=="number" and prop~=0 then
 		e1:SetProperty(prop)
 	end	
 	e1:SetType(EFFECT_TYPE_IGNITION)
 	e1:SetRange(range)
 	if ctlim then
-		if aux.GetValueType(ctlim)=="table" then
-			local flag=#ctlim>2 and ctlim[3] or 0
-			e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+		if type(ctlim)=="boolean" then
+			e1:HOPT()
+		elseif type(ctlim)=="table" then
+			if type(ctlim[1])=="boolean" then
+				local shopt=ctlim[2]
+				local oath=ctlim[3]
+				if shopt then
+					e1:SHOPT(oath)
+				else
+					e1:HOPT(oath)
+				end
+			else
+				local flag=#ctlim>2 and ctlim[3] or 0
+				e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+			end
 		else
 			e1:SetCountLimit(ctlim)
 		end
@@ -616,7 +742,7 @@ function Card.Ignition(c,desc,ctg,prop,range,ctlim,cond,cost,tg,op,reset,quickco
 	end
 	return e1
 end
-function Card.Activate(c,desc,ctg,prop,event,ctlim,cond,cost,tg,op,handcon)
+function Card.Activate(c,desc,ctg,prop,event,ctlim,cond,cost,tg,op,handcon,timing)
 	local event = event and event or EVENT_FREE_CHAIN
 	---
 	local e1=Effect.CreateEffect(c)
@@ -639,11 +765,30 @@ function Card.Activate(c,desc,ctg,prop,event,ctlim,cond,cost,tg,op,handcon)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(event)
 	if ctlim then
-		if aux.GetValueType(ctlim)=="table" then
-			local flag=#ctlim>2 and ctlim[3] or 0
-			e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+		if type(ctlim)=="boolean" then
+			e1:HOPT()
+		elseif type(ctlim)=="table" then
+			if type(ctlim[1])=="boolean" then
+				local shopt=ctlim[2]
+				local oath=ctlim[3]
+				if shopt then
+					e1:SHOPT(oath)
+				else
+					e1:HOPT(oath)
+				end
+			else
+				local flag=#ctlim>2 and ctlim[3] or 0
+				e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+			end
 		else
 			e1:SetCountLimit(ctlim)
+		end
+	end
+	if timing then
+		if type(timing)=="table" then
+			e1:SetHintTiming(timing[1],timing[2])
+		else
+			e1:SetHintTiming(0,timing)
 		end
 	end
 	if cond then
@@ -676,7 +821,7 @@ function Card.Activate(c,desc,ctg,prop,event,ctlim,cond,cost,tg,op,handcon)
 	end
 	return e1
 end
-function Card.Quick(c,forced,desc,ctg,prop,event,range,ctlim,cond,cost,tg,op)
+function Card.Quick(c,forced,desc,ctg,prop,event,range,ctlim,cond,cost,tg,op,timing)
 	if not range then range=c:GetOriginalType()&TYPE_FIELD>0 and LOCATION_FZONE or c:GetOriginalType()&TYPE_ST>0 and LOCATION_SZONE or LOCATION_MZONE end
 	if not event then event=EVENT_FREE_CHAIN end
 	local quick_type=(not forced) and EFFECT_TYPE_QUICK_O or EFFECT_TYPE_QUICK_F
@@ -706,11 +851,30 @@ function Card.Quick(c,forced,desc,ctg,prop,event,range,ctlim,cond,cost,tg,op)
 	e1:SetCode(event)
 	e1:SetRange(range)
 	if ctlim then
-		if aux.GetValueType(ctlim)=="table" then
-			local flag=#ctlim>2 and ctlim[3] or 0
-			e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+		if type(ctlim)=="boolean" then
+			e1:HOPT()
+		elseif type(ctlim)=="table" then
+			if type(ctlim[1])=="boolean" then
+				local shopt=ctlim[2]
+				local oath=ctlim[3]
+				if shopt then
+					e1:SHOPT(oath)
+				else
+					e1:HOPT(oath)
+				end
+			else
+				local flag=#ctlim>2 and ctlim[3] or 0
+				e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+			end
 		else
 			e1:SetCountLimit(ctlim)
+		end
+	end
+	if timing then
+		if type(timing)=="table" then
+			e1:SetHintTiming(timing[1],timing[2])
+		else
+			e1:SetHintTiming(0,timing)
 		end
 	end
 	if cond then
@@ -727,4 +891,90 @@ function Card.Quick(c,forced,desc,ctg,prop,event,range,ctlim,cond,cost,tg,op)
 	end
 	c:RegisterEffect(e1)
 	return e1
+end
+
+function Card.CreateNegateEffect(c,negateact,rp,rf,desc,range,ctlim,cond,cost,tg,negatedop,negatecat)
+	local negcategory = negateact and CATEGORY_NEGATE or CATEGORY_DISABLE
+	local negcategory2 = (negatecat and negatecat) or (type(negatedop)=="number" and negatedop) or 0
+	local negatedop = negatedop or 0
+	if c:IsOriginalType(TYPE_MONSTER) then
+		local range = range and range or (c:IsOriginalType(TYPE_MONSTER)) and LOCATION_MZONE or (c:IsOriginalType(TYPE_FIELD)) and LOCATION_FZONE or LOCATION_SZONE
+		local e1=Effect.CreateEffect(c)
+		if desc then
+			e1:Desc(desc)
+		end
+		e1:SetCategory(negcategory+negcategory2)
+		e1:SetType(EFFECT_TYPE_QUICK_O)
+		if negateact then
+			e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
+		end
+		e1:SetCode(EVENT_CHAINING)
+		e1:SetRange(range)
+		if ctlim then
+			if type(ctlim)=="boolean" then
+				e1:HOPT()
+			elseif type(ctlim)=="table" then
+				if type(ctlim[1])=="boolean" then
+					local shopt=ctlim[2]
+					local oath=ctlim[3]
+					if shopt then
+						e1:SHOPT(oath)
+					else
+						e1:HOPT(oath)
+					end
+				else
+					local flag=#ctlim>2 and ctlim[3] or 0
+					e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+				end
+			else
+				e1:SetCountLimit(ctlim)
+			end
+		end
+		e1:SetCondition(aux.NegateCondition(true,negateact,rp,rf,cond))
+		if cost then e1:SetCost(cost) end
+		e1:SetTarget(aux.NegateTarget(negateact,negatedop,tg))
+		e1:SetOperation(aux.NegateOperation(negateact,negatedop))
+		c:RegisterEffect(e1)
+	else
+		local e1=Effect.CreateEffect(c)
+		if desc then
+			e1:Desc(desc)
+		end
+		e1:SetCategory(negcategory+negcategory2)
+		if not range then
+			e1:SetType(EFFECT_TYPE_ACTIVATE)
+		else
+			e1:SetType(EFFECT_TYPE_QUICK_O)
+			e1:SetRange(range)
+		end
+		if negateact then
+			e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
+		end
+		e1:SetCode(EVENT_CHAINING)
+		if ctlim then
+			if type(ctlim)=="boolean" then
+				e1:HOPT()
+			elseif type(ctlim)=="table" then
+				if type(ctlim[1])=="boolean" then
+					local shopt=ctlim[2]
+					local oath=ctlim[3]
+					if shopt then
+						e1:SHOPT(oath)
+					else
+						e1:HOPT(oath)
+					end
+				else
+					local flag=#ctlim>2 and ctlim[3] or 0
+					e1:SetCountLimit(ctlim[1],c:GetOriginalCode()+ctlim[2]*100+flag)
+				end
+			else
+				e1:SetCountLimit(ctlim)
+			end
+		end
+		e1:SetCondition(aux.NegateCondition(false,negateact,rp,rf,cond))
+		if cost then e1:SetCost(cost) end
+		e1:SetTarget(aux.NegateTarget(negateact,negatedop,tg))
+		e1:SetOperation(aux.NegateOperation(negateact,negatedop))
+		c:RegisterEffect(e1)
+	end
 end
