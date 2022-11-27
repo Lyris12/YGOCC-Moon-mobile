@@ -8,14 +8,14 @@ function c249000437.initial_effect(c)
 				local code=c:GetOriginalCode()
 				local mt=_G["c" .. code]
 				if f1 then
-					mt.tuner_filter=function(mc) return mc and f1(mc) end
+					mt.c249000437_tuner_filter=function(mc) return mc and f1(mc) end
 				else
-					mt.tuner_filter=function(mc) return true end
+					mt.c249000437_tuner_filter=function(mc) return true end
 				end
 				if f2 then
-					mt.nontuner_filter=function(mc,c) return mc and f2(mc,c) end
+					mt.c249000437_nontuner_filter=function(mc,c) return mc and f2(mc,c) end
 				else
-					mt.nontuner_filter=function(mc,c) return true end
+					mt.c249000437_nontuner_filter=function(mc,c) return true end
 				end
 				mt.minntct=minc
 				if maxc==nil then mt.maxntct=99 else mt.maxntct=maxc end
@@ -47,7 +47,7 @@ function c249000437.costfilter(c)
 end
 function c249000437.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(c249000437.costfilter,tp,LOCATION_HAND,0,1,nil) end
-	if Duel.GetLP(tp) < 2000 then
+	if Duel.GetLP(tp) < 4000 then
 		Duel.PayLPCost(tp,math.floor(Duel.GetLP(tp)/2))
 	else
 		Duel.PayLPCost(tp,2000)
@@ -57,8 +57,8 @@ end
 function c249000437.matfilter(c,lv,syncard,mclv)
 	local code=syncard:GetOriginalCode()
 	local mt=_G["c" .. code]
-	return c:GetSynchroLevel(syncard)==lv-mclv and c:IsNotTuner(syncard) and c:IsAbleToRemove() 
-		and mt.nontuner_filter and mt.nontuner_filter(c,syncard)
+	return c:IsLevelAbove(5) and c:GetSynchroLevel(syncard)==lv-mclv and c:IsNotTuner(syncard) and c:IsAbleToRemove() 
+		and mt.c249000437_nontuner_filter and mt.c249000437_nontuner_filter(c,syncard)
 end
 function c249000437.filter(c,e,tp,mc)
 	local code=c:GetOriginalCode()
@@ -67,14 +67,14 @@ function c249000437.filter(c,e,tp,mc)
 	local mclv=mc:GetSynchroLevel(c)
 	return c:IsType(TYPE_SYNCHRO) and c:IsCanBeSpecialSummoned(e,SUMMON_TYPE_SYNCHRO,tp,true,false)
 		and Duel.IsExistingMatchingCard(c249000437.matfilter,tp,LOCATION_GRAVE,0,1,nil,c:GetLevel(),c,mclv) 
-		and mt.sync and mt.minntct and mt.minntct==1 and mt.tuner_filter and mt.tuner_filter(mc)
+		and mt.sync and mt.minntct and mt.minntct==1 and mt.c249000437_tuner_filter and mt.c249000437_tuner_filter(mc)
 end
 function c249000437.tgfilter(c)
-	return c:IsAbleToRemove() and not c:IsType(TYPE_TUNER)
+	return c:IsAbleToRemove() and not c:IsType(TYPE_TUNER) and c:IsLevelAbove(5)
 end
 function c249000437.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>-1 and c:IsAbleToRemove() 
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and c:IsAbleToRemove() 
 		and Duel.IsExistingMatchingCard(c249000437.tgfilter,tp,LOCATION_GRAVE,0,1,c) end
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,0,0)
 end
@@ -82,11 +82,12 @@ function c249000437.operation(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 	local c=e:GetHandler()
 	if not c:IsRelateToEffect(e) then return end
-	local ac=Duel.AnnounceCardFilter(tp,TYPE_SYNCHRO,OPCODE_ISTYPE,c:GetOriginalCode(),OPCODE_ISCODE,OPCODE_OR)
+	local ac=Duel.AnnounceCardFilter(tp,TYPE_SYNCHRO,OPCODE_ISTYPE,249000437,OPCODE_ISCODE,OPCODE_OR)
 	local tc=Duel.CreateToken(tp,ac)
+	if tc:IsCode(249000437) then return end
 	while not c249000437.filter(tc,e,tp,c)
 	do
-		ac=Duel.AnnounceCardFilter(tp,TYPE_SYNCHRO,OPCODE_ISTYPE,c:GetOriginalCode(),OPCODE_ISCODE,OPCODE_OR)
+		ac=Duel.AnnounceCardFilter(tp,TYPE_SYNCHRO,OPCODE_ISTYPE,249000437,OPCODE_ISCODE,OPCODE_OR)
 		tc=Duel.CreateToken(tp,ac)
 		if tc:IsCode(249000437) then return end
 	end

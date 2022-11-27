@@ -202,6 +202,7 @@ function Auxiliary.EngageOperation(e,tp)
 	if not c:IsLocation(LOCATION_HAND) or not c:IsCanEngage(tp) then return end
 	Duel.Hint(HINT_CARD,tp,c:GetOriginalCode())
 	aux.CheckEnergyOperation(e,tp)
+	Duel.ConfirmCards(1-tp,c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)
 	e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE+EFFECT_FLAG_CANNOT_DISABLE)
@@ -454,11 +455,15 @@ function Card.UpdateEnergy(c,val,p,r,reset,rc)
 	e:SetCode(EFFECT_UPDATE_ENERGY)
 	e:SetValue(val)
 	if reset then
-		reset = rc==c and reset|RESET_DISABLE or reset
+		if r&REASON_EFFECT>0 then
+			reset = rc==c and reset|RESET_DISABLE or reset
+		end
 		e:SetReset(RESET_EVENT+RESETS_STANDARD+reset)
 	end
 	c:RegisterEffect(e)
-	aux.CheckEnergyOperation(e,p)
+	if r&REASON_TEMPORARY==0 then
+		aux.CheckEnergyOperation(e,p)
+	end
 	if reset then
 		return e,c:GetEnergy()-en
 	else
@@ -475,11 +480,15 @@ function Card.ChangeEnergy(c,val,p,r,reset,rc)
 	e:SetCode(EFFECT_CHANGE_ENERGY)
 	e:SetValue(val)
 	if reset then
-		reset = rc==c and reset|RESET_DISABLE or reset
+		if r&REASON_EFFECT>0 then
+			reset = rc==c and reset|RESET_DISABLE or reset
+		end
 		e:SetReset(RESET_EVENT+RESETS_STANDARD+reset)
 	end
 	c:RegisterEffect(e)
-	aux.CheckEnergyOperation(e,p)
+	if r&REASON_TEMPORARY==0 then
+		aux.CheckEnergyOperation(e,p)
+	end
 	if reset then
 		return e,c:GetEnergy()
 	else
@@ -500,4 +509,11 @@ function Auxiliary.IsExistingEngagedCond(p)
 				local p = (not p or p==0) and tp or 1-tp
 				return Duel.GetEngagedCard(p)~=nil
 			end
+end
+function Card.DueToHavingZeroEnergy(c)
+	return c:IsReason(REASON_RULE) and c:HasFlagEffect(FLAG_ZERO_ENERGY)
+end
+function Auxiliary.DueToHavingZeroEnergyCond(e)
+	local c=e:GetHandler()
+	return c:IsReason(REASON_RULE) and c:HasFlagEffect(FLAG_ZERO_ENERGY)
 end
