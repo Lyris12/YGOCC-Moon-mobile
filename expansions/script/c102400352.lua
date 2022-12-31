@@ -48,12 +48,12 @@ function s.lim(e,c,sump,sumtype,sumpos,targetp)
 	if sumpos and bit.band(sumpos,POS_FACEDOWN)>0 then return false end
 	local tp=sump
 	if targetp then tp=targetp end
-	return s[tp][c:GetRace()]>1
+	return s[tp][c:GetRace()] and s[tp][c:GetRace()]>1
 end
 function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
 	local g=c:GetOverlayGroup():Filter(Card.IsSetCard,nil,0xd76)
-	if chk==0 then return c:CheckRemoveOverlayCard(tp,1,REASON_COST) #g>0 end
+	if chk==0 then return c:CheckRemoveOverlayCard(tp,1,REASON_COST) and #g>0 end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVEXYZ)
 	Duel.SendtoGrave(g:Select(tp,1,1,nil),REASON_COST)
 	Duel.RaiseSingleEvent(c,EVENT_DETACH_MATERIAL,e,0,0,0,0)

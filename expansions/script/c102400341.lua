@@ -7,7 +7,7 @@ function s.initial_effect(c)
 	e1:SetCode(EFFECT_EXTRA_ATTACK)
 	e1:SetRange(LOCATION_HAND+LOCATION_MZONE)
 	e1:SetTargetRange(LOCATION_MZONE,LOCATION_MZONE)
-	e1:SetCondition(function() return c:IsPublic() or c:IsSummonType(SUMMON_TYPE_SPECIAL))
+	e1:SetCondition(function() return c:IsPublic() or c:IsSummonType(SUMMON_TYPE_SPECIAL) end)
 	e1:SetTarget(aux.TargetBoolFunction(Card.IsSetCard,0xd76))
 	e1:SetValue(1)
 	c:RegisterEffect(e1)
@@ -50,6 +50,12 @@ function s.rchk(e,tp,eg)
 			rc=rc<<1
 		end
 	end end
+end
+function s.lim(e,c,sump,sumtype,sumpos,targetp)
+	if sumpos and bit.band(sumpos,POS_FACEDOWN)>0 then return false end
+	local tp=sump
+	if targetp then tp=targetp end
+	return s[tp][c:GetRace()] and s[tp][c:GetRace()]>1
 end
 function s.filter(c)
 	return c:IsFaceup() and c:IsSetCard(0xd76)

@@ -2,6 +2,10 @@
 --機氷竜アークティック
 local s,id,o=GetID()
 function s.initial_effect(c)
+	local e0=Effect.CreateEffect(c)
+	e0:SetType(EFFECT_TYPE_ACTIVATE)
+	e0:SetCode(EVENT_FREE_CHAIN)
+	c:RegisterEffect(e0)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_FIELD)
 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
@@ -57,7 +61,7 @@ function s.lim(e,c,sump,sumtype,sumpos,targetp)
 	if sumpos and bit.band(sumpos,POS_FACEDOWN)>0 then return false end
 	local tp=sump
 	if targetp then tp=targetp end
-	return s[tp][c:GetRace()]>1
+	return s[tp][c:GetRace()] and s[tp][c:GetRace()]>1
 end
 function s.pfilter(c)
 	return c:IsSetCard(0xd76) and c:IsPublic()
@@ -65,7 +69,7 @@ end
 function s.atkcon(e)
 	local tp=e:GetHandler():GetControler()
 	local ct=Duel.GetMatchingGroupCount(s.pfilter,tp,LOCATION_HAND,0,nil)
-	return Duel.IsExistingMatchingCard(Card.IsAttackable,tp,0,LOCATION_MZONE,ct+1,nil)
+	return not Duel.IsExistingMatchingCard(Card.IsAttackable,tp,0,LOCATION_MZONE,ct+1,nil)
 end
 function s.rfilter(c,e,tp)
 	return c:IsSetCard(0xd76) and c:IsType(TYPE_MONSTER) and not c:IsPublic() and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_GRAVE,0,1,nil,e,tp)

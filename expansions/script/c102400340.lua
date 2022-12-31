@@ -46,7 +46,7 @@ function s.lim(e,c,sump,sumtype,sumpos,targetp)
 	if sumpos and bit.band(sumpos,POS_FACEDOWN)>0 then return false end
 	local tp=sump
 	if targetp then tp=targetp end
-	return c~=e:GetOwner() and s[tp][c:GetRace()]>1
+	return s[tp][c:GetRace()] and s[tp][c:GetRace()]>1
 end
 function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
@@ -92,7 +92,9 @@ function s.op(e,tp,eg,ep,ev,re,r,rp)
 		if #g>0 and Duel.SelectEffectYesNo(tp,c) then
 			Duel.BreakEffect()
 			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-			Duel.Destroy(g:Select(tp,1,maxc,nil),REASON_EFFECT)
+			local sg=g:Select(tp,1,maxc,nil)
+			Duel.HintSelection(sg)
+			Duel.Destroy(sg,REASON_EFFECT)
 		end
 	end
 end

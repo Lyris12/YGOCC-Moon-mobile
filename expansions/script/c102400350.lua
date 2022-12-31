@@ -9,6 +9,7 @@ function s.initial_effect(c)
 	e1:SetRange(LOCATION_MZONE)
 	e1:SetCountLimit(1)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	e1:SetCost(s.cost)
 	e1:SetTarget(s.target)
 	e1:SetOperation(s.operation)
 	c:RegisterEffect(e1)
@@ -71,7 +72,7 @@ function s.lim(e,c,sump,sumtype,sumpos,targetp)
 	if sumpos and bit.band(sumpos,POS_FACEDOWN)>0 then return false end
 	local tp=sump
 	if targetp then tp=targetp end
-	return s[tp][c:GetRace()]>1
+	return s[tp][c:GetRace()] and s[tp][c:GetRace()]>1
 end
 function s.operation(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetFlagEffect(tp,id)==0 then

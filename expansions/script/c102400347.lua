@@ -74,8 +74,9 @@ function s.op(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS)
 	if not g then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-	local sc=g:FilterSelect(aux.AND(Card.IsRelateToEffect,Card.IsAbleToHand),nil,e):GetFirst()
+	local sc=g:FilterSelect(tp,aux.AND(Card.IsRelateToEffect,Card.IsAbleToHand),1,1,nil,e):GetFirst()
 	if Duel.SendtoHand(sc,nil,REASON_EFFECT)==0 then return end
+	Duel.ConfirmCards(1-tp,sc)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)
 	e1:SetDescription(66)
@@ -92,5 +93,5 @@ function s.lim(e,c,sump,sumtype,sumpos,targetp)
 	if sumpos and bit.band(sumpos,POS_FACEDOWN)>0 then return false end
 	local tp=sump
 	if targetp then tp=targetp end
-	return s[tp][c:GetRace()]>1
+	return s[tp][c:GetRace()] and s[tp][c:GetRace()]>1
 end
