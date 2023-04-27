@@ -18,13 +18,28 @@ function Auxiliary.CreateCost(...)
 	return f
 end
 
+function Auxiliary.RevealFilter(f)
+	return	function(c,...)
+				return not c:IsPublic() and (not f or f(c,...))
+			end
+end
+
 -----------------------------------------------------------------------
+function Auxiliary.ConfirmRuleCost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	Duel.ConfirmCards(1-tp,Group.FromCards(e:GetHandler()))
+end
 function Auxiliary.InfoCost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return true end
 	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
 end
 function Auxiliary.LabelCost(e,tp,eg,ep,ev,re,r,rp,chk)
 	e:SetLabel(1)
+	if chk==0 then return true end
+end
+function Auxiliary.LabelCost2(e,tp,eg,ep,ev,re,r,rp,chk)
+	local l1,l2=e:GetLabel()
+	e:SetLabel(1,l2)
 	if chk==0 then return true end
 end
 function Auxiliary.CustomLabelCost(lab)
@@ -60,6 +75,37 @@ function Auxiliary.BanishCost(f,loc1,loc2,min,max,exc)
 				end
 				return g,0
 			end
+end
+function Auxiliary.RevealCost(f,min,max,exc,reset,rct)
+	if not min then min=1 end
+	if not max then max=min end
+	
+	if not reset then
+		return	function(e,tp,eg,ep,ev,re,r,rp,chk)
+					local exc=(not exc) and nil or e:GetHandler()
+					if chk==0 then return Duel.IsExistingMatchingCard(aux.RevealFilter(f),tp,LOCATION_HAND,0,min,exc) end
+					Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_CONFIRM)
+					local g=Duel.SelectMatchingCard(tp,aux.RevealFilter(f),tp,LOCATION_HAND,0,min,max,exc,e,tp,eg,ep,ev,re,r,rp)
+					if #g>0 then
+						Duel.ConfirmCards(1-tp,g)
+					end
+				end
+	else
+		if not rct then rct=1 end
+		return	function(e,tp,eg,ep,ev,re,r,rp,chk)
+					local exc=(not exc) and nil or e:GetHandler()
+					if chk==0 then return Duel.IsExistingMatchingCard(aux.RevealFilter(f),tp,LOCATION_HAND,0,min,exc) end
+					Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_CONFIRM)
+					local g=Duel.SelectMatchingCard(tp,aux.RevealFilter(f),tp,LOCATION_HAND,0,min,max,exc,e,tp,eg,ep,ev,re,r,rp)
+					for tc in aux.Next(g) do
+						local e1=Effect.CreateEffect(e:GetHandler())
+						e1:SetType(EFFECT_TYPE_SINGLE)
+						e1:SetCode(EFFECT_PUBLIC)
+						e1:SetReset(RESET_EVENT|RESETS_STANDARD|reset,rct)
+						tc:RegisterEffect(e1)
+					end
+				end
+	end
 end
 function Auxiliary.ToGraveCost(f,loc1,loc2,min,max,exc)
 	if not loc1 then loc1=LOCATION_ONFIELD end
@@ -111,6 +157,10 @@ function Auxiliary.ToDeckCost(f,loc1,loc2,min,max,exc,main_or_extra)
 					local hg=g:Filter(Card.IsLocation,nil,LOCATION_GRAVE+LOCATION_REMOVED)
 					if #hg>0 then
 						Duel.HintSelection(hg)
+					end
+					local cfg=g:Filter(Card.IsLocation,nil,LOCATION_HAND)
+					if #cfg>0 then
+						Duel.ConfirmCards(1-tp,cfg)
 					end
 					local ct=Duel.SendtoDeck(g,nil,SEQ_DECKSHUFFLE,REASON_COST)
 					return g,ct
@@ -175,6 +225,28 @@ function Auxiliary.DetachSelfCost(min,max)
 						local ct=Duel.AnnounceNumber(tp,table.unpack(list))
 						c:RemoveOverlayCard(tp,ct,ct,REASON_COST)
 					end
+				end
+	end
+end
+function Auxiliary.RevealSelfCost(reset,rct)
+	if not rct then rct=1 end
+	
+	if not reset then
+		return	function(e,tp,eg,ep,ev,re,r,rp,chk)
+				local c=e:GetHandler()
+				if chk==0 then return not c:IsPublic() end
+				Duel.ConfirmCards(1-tp,c)
+			end
+	else
+		if not rct then rct=1 end
+		return	function(e,tp,eg,ep,ev,re,r,rp,chk)
+					local c=e:GetHandler()
+					if chk==0 then return not c:IsPublic() end
+					local e1=Effect.CreateEffect(c)
+					e1:SetType(EFFECT_TYPE_SINGLE)
+					e1:SetCode(EFFECT_PUBLIC)
+					e1:SetReset(RESET_EVENT|RESETS_STANDARD|reset,rct)
+					c:RegisterEffect(e1)
 				end
 	end
 end
@@ -243,13 +315,13 @@ function Auxiliary.TributeForSummonFilter(f,sumtype,sump,ign1,ign2,pos,recp,zone
 		return	function(c,e,tp,...)
 					local pg=aux.GetMustBeMaterialGroup(sump,Group.CreateGroup(),sump,c,nil,reason)
 					return #pg<=0 and (not f or f(c,e,tp,...)) and c:IsCanBeSpecialSummoned(e,sumtype,sump,ign1,ign2,pos,recp,zone)
-						and ((not c:IsLocation(LOCATION_EXTRA) and Duel.GetLocationCount(recp,LOCATION_MZONE,sump,LOCATION_REASON_TOFIELD,zone)>0)
+						and ((not c:IsLocation(LOCATION_EXTRA) and Duel.GetMZoneCount(recp,e:GetHandler(),sump,LOCATION_REASON_TOFIELD,zone)>0)
 						or (c:IsLocation(LOCATION_EXTRA) and Duel.GetLocationCountFromEx(recp,sump,e:GetHandler(),c,zone)>0))
 				end
 	else
 		return	function(c,e,tp,...)
 					return (not f or f(c,e,tp,...)) and c:IsCanBeSpecialSummoned(e,sumtype,sump,ign1,ign2,pos,recp,zone)
-						and ((not c:IsLocation(LOCATION_EXTRA) and Duel.GetLocationCount(recp,LOCATION_MZONE,sump,LOCATION_REASON_TOFIELD,zone)>0)
+						and ((not c:IsLocation(LOCATION_EXTRA) and Duel.GetMZoneCount(recp,e:GetHandler(),sump,LOCATION_REASON_TOFIELD,zone)>0)
 						or (c:IsLocation(LOCATION_EXTRA) and Duel.GetLocationCountFromEx(recp,sump,e:GetHandler(),c,zone)>0))
 				end
 	end
@@ -306,7 +378,7 @@ function Auxiliary.AttackRestrictionCost(oath,reset,desc)
 				c:RegisterEffect(e1)
 			end
 end
-function Auxiliary.SSRestrictionCost(f,oath,reset,id,cf,desc)
+function Auxiliary.SSRestrictionCost(f,oath,reset,id,cf,desc,cost)
 	if id then
 		if not cf then
 			aux.AddSSCounter(id,f)
@@ -322,7 +394,7 @@ function Auxiliary.SSRestrictionCost(f,oath,reset,id,cf,desc)
 	if not reset then reset=RESET_PHASE+PHASE_END end
 	
 	return	function(e,tp,eg,ep,ev,re,r,rp,chk)
-				if chk==0 then return Duel.GetCustomActivityCount(id,tp,ACTIVITY_SPSUMMON)==0 end
+				if chk==0 then return Duel.GetCustomActivityCount(id,tp,ACTIVITY_SPSUMMON)==0 and (not cost or cost(e,tp,eg,ep,ev,re,r,rp,chk)) end
 				local e1=Effect.CreateEffect(e:GetHandler())
 				if desc then e1:Desc(desc) end
 				e1:SetType(EFFECT_TYPE_FIELD)
@@ -335,6 +407,9 @@ function Auxiliary.SSRestrictionCost(f,oath,reset,id,cf,desc)
 								end
 							)
 				Duel.RegisterEffect(e1,tp)
+				if cost then
+					cost(e,tp,eg,ep,ev,re,r,rp,chk)
+				end
 			end
 end
 

@@ -24,7 +24,7 @@ function s.initial_effect(c)
 	--boost
 	c:UpdateATKDEFField(500,500,LOCATION_MZONE,LOCATION_MZONE,0,s.target)
 	--search
-	c:Ignition(3,CATEGORIES_SEARCH,nil,LOCATION_MZONE,1,
+	c:Ignition(3,CATEGORIES_SEARCH+CATEGORY_DRAW,nil,LOCATION_MZONE,1,
 		nil,
 		aux.DiscardCost(),
 		s.thtg,
@@ -42,7 +42,7 @@ function s.spfilter(c,e,tp)
 	return c:IsSetCard(0x7ec) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and Duel.IsExistingMatchingCard(s.spfilter,tp,0,LOCATION_HAND+LOCATION_GRAVE,1,nil,e,tp) end
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_HAND+LOCATION_GRAVE,0,1,nil,e,tp) end
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND+LOCATION_GRAVE)
 end
 function s.spop(e,tp,eg,ep,ev,re,r,rp)
@@ -76,20 +76,13 @@ function s.target(e,c)
 end
 
 function s.thfilter(c)
-	return c:IsSetCard(0x7eb) and c:IsAbleToHand()
+	return c:IsSetCard(0x7ea) and c:IsAbleToHand()
 end
 function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then
 		return Duel.IsExistingMatchingCard(s.thfilter,tp,LOCATION_GRAVE,0,1,nil)
-			and (not Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsSetCard,0x7ec),tp,LOCATION_MZONE,0,1,nil) or Duel.IsPlayerCanDraw(tp,1))
 	end
 	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_GRAVE)
-	if Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsSetCard,0x7ec),tp,LOCATION_MZONE,0,1,nil) then
-		e:SetCategory(CATEGORIES_SEARCH+CATEGORY_DRAW)
-		Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)
-	else
-		e:SetCategory(CATEGORIES_SEARCH)
-	end
 end
 function s.thop(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.Select(HINTMSG_ATOHAND,false,tp,aux.NecroValleyFilter(s.thfilter),tp,LOCATION_GRAVE,0,1,1,nil)

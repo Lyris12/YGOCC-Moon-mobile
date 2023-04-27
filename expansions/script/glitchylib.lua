@@ -3,14 +3,19 @@ EFFECT_CANNOT_ACTIVATE_LMARKER=8000
 EFFECT_CANNOT_DEACTIVATE_LMARKER=8001
 EFFECT_PRE_LOCATION=8002
 EFFECT_NO_ARCHETYPE=8003
-EFFECT_GLITCHY_EXTRA_FUSION_MATERIAL 	= 8004
-EFFECT_GLITCHY_EXTRA_LINK_MATERIAL	    = 8005
-EFFECT_GLITCHY_EXTRA_MATERIAL_FLAG		= 8006
-EFFECT_GLITCHY_HACK_CODE 				= 8007
-EFFECT_NAME_DECLARED					= 8008
-EFFECT_GLITCHY_CANNOT_DISABLE			= 8009
-EFFECT_GLITCHY_FUSION_SUBSTITUTE 		= 8010
-EFFECT_GLITCHY_CANNOT_CHANGE_ATK		= 8011
+EFFECT_GLITCHY_EXTRA_FUSION_MATERIAL 			= 8004
+EFFECT_GLITCHY_EXTRA_LINK_MATERIAL	    		= 8005
+EFFECT_GLITCHY_EXTRA_MATERIAL_FLAG				= 8006
+EFFECT_GLITCHY_HACK_CODE 						= 8007
+EFFECT_NAME_DECLARED							= 8008
+EFFECT_GLITCHY_CANNOT_DISABLE					= 8009
+EFFECT_GLITCHY_FUSION_SUBSTITUTE 				= 8010
+EFFECT_GLITCHY_CANNOT_CHANGE_ATK				= 8011
+EFFECT_GLITCHY_ADD_CUSTOM_SETCODE				= 8012
+EFFECT_GLITCHY_ADD_ORIGINAL_CUSTOM_SETCODE		= 8013
+EFFECT_GLITCHY_PREVIOUS_CUSTOM_SETCODE			= 8014
+EFFECT_GLITCHY_ADD_FUSION_CUSTOM_SETCODE		= 8015
+EFFECT_GLITCHY_ADD_LINK_CUSTOM_SETCODE			= 8016
 
 FLAG_UNCOUNTED_NORMAL_SUMMON			= 8000
 FLAG_UNCOUNTED_NORMAL_SET				= 8001
@@ -22,6 +27,406 @@ EFFECT_REVERSE_WHEN_IF=48928491
 
 UNIVERSAL_GLITCHY_TOKEN = 1231
 
+-------------------------------------------------------------------------------------
+-------------------------------TABLES-------------------------------------------------
+function Auxiliary.FindInTable(tab,a,...)
+	local extras={...}
+	if a then
+		table.insert(extras,a)
+	end
+	
+	for _,param in ipairs(extras) do
+		for _,elem in ipairs(tab) do
+			if elem==param then
+				return true
+			end
+		end
+	end
+	
+	return false
+end
+
+-------------------------------------------------------------------------------------
+-------------------------------CUSTOM ARCHETYPES-------------------------------------
+function Auxiliary.IsCustomSetCardTemplate(effect_code,c,hex,...)
+	if not c:IsHasEffect(effect_code) then return false end
+	
+	local setcodes={...}
+	if hex then
+		table.insert(setcodes,1,hex)
+	end
+	
+	local ct=#setcodes
+	
+	local egroup={c:IsHasEffect(effect_code)}
+	for _,e in ipairs(egroup) do
+		if e and e.GetValue and aux.GetValueType(e)=="Effect" then
+			local value=e:GetValue()
+			if value then
+				local settype0,setsubtype0 = value&0xfff, value%0xf000
+				for i=1,ct do
+					local setc=setcodes[i]
+					local settype1,setsubtype1 = setc&0xfff, setc%0xf000
+					if settype1==settype0 and (setsubtype1==0 or setsubtype1==setsubtype0) then
+						return true
+					end
+				end
+			end
+		end
+	end
+	
+	return false
+end
+function Card.IsCustomSetCard(c,hex,...)
+	return aux.IsCustomSetCardTemplate(EFFECT_GLITCHY_ADD_CUSTOM_SETCODE,c,hex,...)
+end
+function Card.IsOriginalCustomSetCard(c,hex,...)
+	return aux.IsCustomSetCardTemplate(EFFECT_GLITCHY_ADD_ORIGINAL_CUSTOM_SETCODE,c,hex,...)
+end
+function Card.IsPreviousCustomSetCard(c,hex,...)
+	return aux.IsCustomSetCardTemplate(EFFECT_GLITCHY_PREVIOUS_CUSTOM_SETCODE,c,hex,...)
+end
+function Card.IsFusionCustomSetCard(c,hex,...)
+	return aux.IsCustomSetCardTemplate(EFFECT_GLITCHY_ADD_FUSION_CUSTOM_SETCODE,c,hex,...)
+end
+function Card.IsLinkCustomSetCard(c,hex,...)
+	return aux.IsCustomSetCardTemplate(EFFECT_GLITCHY_ADD_LINK_CUSTOM_SETCODE,c,hex,...)
+end
+
+function Card.GetCustomSetCard(c)
+	if not c:IsHasEffect(EFFECT_GLITCHY_ADD_CUSTOM_SETCODE) then return false end
+	
+	local setcodes={}
+	local egroup={c:IsHasEffect(EFFECT_GLITCHY_ADD_CUSTOM_SETCODE)}
+	for _,e in ipairs(egroup) do
+		if e and e.GetValue and aux.GetValueType(e)=="Effect" then
+			local value=e:GetValue()
+			if value then
+				table.insert(setcodes,value)
+			end
+		end
+	end
+	
+	if #setcodes>0 then
+		return table.unpack(setcodes)
+	else
+		return 0
+	end
+end
+
+aux.RegisteredCustomSetCards = {}
+function Duel.RegisterCustomSetCard(c,id1,id2,hex,...)
+	local setcodes={}
+	if hex then
+		table.insert(setcodes,1,hex)
+	end
+	
+	for i,setcode in ipairs(setcodes) do
+		if c then
+			local e1=Effect.CreateEffect(c)
+			e1:SetType(EFFECT_TYPE_SINGLE)
+			e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_IGNORE_IMMUNE|EFFECT_FLAG_UNCOPYABLE|EFFECT_FLAG_SET_AVAILABLE)
+			e1:SetCode(EFFECT_GLITCHY_ADD_ORIGINAL_CUSTOM_SETCODE)
+			e1:SetValue(setcode)
+			c:RegisterEffect(e1,true)
+		end
+		
+		if #aux.RegisteredCustomSetCards==0 or not aux.FindInTable(aux.RegisteredCustomSetCards,setcode) then
+			table.insert(aux.RegisteredCustomSetCards,setcode)
+			local e2=Effect.GlobalEffect()
+			e2:SetType(EFFECT_TYPE_FIELD)
+			e2:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_IGNORE_IMMUNE|EFFECT_FLAG_UNCOPYABLE|EFFECT_FLAG_SET_AVAILABLE|EFFECT_FLAG_IGNORE_RANGE)
+			e2:SetCode(EFFECT_GLITCHY_ADD_CUSTOM_SETCODE)
+			e2:SetTarget(	function(e,card)
+								local codes={card:GetCode()}
+								for i,code in ipairs(codes) do
+									if code>=id1 and code<=id2 then
+										return true
+									end
+								end
+								return false
+							end
+						)
+			e2:SetValue(setcode)
+			Duel.RegisterEffect(e2,0)
+			local e3=e2:Clone()
+			e3:SetCode(EFFECT_GLITCHY_ADD_FUSION_CUSTOM_SETCODE)
+			e3:SetTarget(	function(e,card)
+								local codes={card:GetFusionCode()}
+								for i,code in ipairs(codes) do
+									if code>=id1 and code<=id2 then
+										return true
+									end
+								end
+								return false
+							end
+						 )
+			Duel.RegisterEffect(e3,0)
+			local e4=e2:Clone()
+			e4:SetCode(EFFECT_GLITCHY_ADD_LINK_CUSTOM_SETCODE)
+			e4:SetTarget(	function(e,card)
+								local codes={card:GetLinkCode()}
+								for i,code in ipairs(codes) do
+									if code>=id1 and code<=id2 then
+										return true
+									end
+								end
+								return false
+							end
+						 )
+			Duel.RegisterEffect(e4,0)
+			
+			local e5=Effect.GlobalEffect()
+			e5:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+			e5:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_IGNORE_IMMUNE|EFFECT_FLAG_UNCOPYABLE)
+			e5:SetCode(EVENT_LEAVE_FIELD_P)
+			e5:SetOperation(aux.RegisterPreviousCustomSetCard)
+			Duel.RegisterEffect(e5,0)
+		end
+	end
+
+end
+function Auxiliary.RegisterPreviousCustomSetCard(e,tp,eg,ep,ev,re,r,rp)
+	for c in aux.Next(eg) do
+		local egroup={c:IsHasEffect(EFFECT_GLITCHY_ADD_CUSTOM_SETCODE)}
+		for _,e in ipairs(egroup) do
+			if e and e.GetValue and aux.GetValueType(e)=="Effect" then
+				local value=e:GetValue()
+				if value then
+					local e1=Effect.CreateEffect(c)
+					e1:SetType(EFFECT_TYPE_SINGLE)
+					e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_IGNORE_IMMUNE|EFFECT_FLAG_UNCOPYABLE|EFFECT_FLAG_SET_AVAILABLE)
+					e1:SetCode(EFFECT_GLITCHY_PREVIOUS_CUSTOM_SETCODE)
+					e1:SetValue(value)
+					e1:SetReset(RESET_EVENT|RESET_TOFIELD)
+					c:RegisterEffect(e1,true)
+				end
+			end
+		end
+	end
+end
+---------------------------------------------------------------------------------
+-------------------------------DELAYED EVENT-------------------------------------
+function Auxiliary.RegisterMergedDelayedEventGlitchy(c,code,event,f,flag,range,evgcheck,check_if_already_in_location)
+	if type(event)~="table" then event={event} end
+	if not f then f=aux.TRUE end
+	if not flag then flag=c:GetOriginalCode() end
+	local se
+	if check_if_already_in_location then
+		if check_if_already_in_location&LOCATION_GRAVE>0 then
+			se=aux.AddThisCardInGraveAlreadyCheck(c)
+		end
+	end
+	
+	local g=Group.CreateGroup()
+	g:KeepAlive()
+	if se~=nil then
+		se:SetLabelObject(g)
+	end
+	if range then
+		local ge1
+		for _,ev in ipairs(event) do
+			ge1=Effect.CreateEffect(c)
+			ge1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+			ge1:SetCode(ev)
+			ge1:SetRange(range)
+			ge1:SetLabel(code)
+			if se==nil then
+				ge1:SetLabelObject(g)
+			else
+				ge1:SetLabelObject(se)
+			end
+			ge1:SetOperation(Auxiliary.MergedDelayEventCheckGlitchy1(flag,f,range,evgcheck,se))
+			Duel.RegisterEffect(ge1,0)
+		end
+		local ge2=ge1:Clone()
+		ge2:SetCode(EVENT_CHAIN_END)
+		ge2:SetOperation(Auxiliary.MergedDelayEventCheckGlitchy2(flag,range,evgcheck,se))
+		Duel.RegisterEffect(ge2,0)
+	else
+		local mt=getmetatable(c)
+		if mt[event]==true then return end
+		mt[event]=true
+		local ge1
+		for _,ev in ipairs(event) do
+			local ge1=Effect.CreateEffect(c)
+			ge1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+			ge1:SetCode(ev)
+			ge1:SetLabel(code)
+			if se==nil then
+				ge1:SetLabelObject(g)
+			else
+				ge1:SetLabelObject(se)
+			end
+			ge1:SetOperation(Auxiliary.MergedDelayEventCheckGlitchy1(flag,f,nil,evgcheck,se))
+			Duel.RegisterEffect(ge1,0)
+		end
+		local ge2=ge1:Clone()
+		ge2:SetCode(EVENT_CHAIN_END)
+		ge2:SetOperation(Auxiliary.MergedDelayEventCheckGlitchy2(flag,nil,evgcheck,se))
+		Duel.RegisterEffect(ge2,0)
+	end
+end
+function Auxiliary.MergedDelayEventCheckGlitchy1(id,f,range,evgcheck,se)
+	return	function(e,tp,eg,ep,ev,re,r,rp)
+				local c=e:GetOwner()
+				if range then
+					if range==LOCATION_ENGAGED then
+						if not c:IsLocation(LOCATION_HAND) or not c:IsEngaged() then
+							return
+						end
+					else
+						if not c:IsLocation(range) then
+							return
+						end
+					end
+				end
+				local label = (range) and c:GetFieldID() or 0
+				local engage_label = (range==LOCATION_ENGAGED) and c:GetEngagedID() or 0
+				local g
+				if se==nil then
+					g=e:GetLabelObject()
+				else
+					g=e:GetLabelObject():GetLabelObject()
+				end
+				if aux.GetValueType(g)~="Group" then return end
+				local evg=eg:Filter(f,nil,e,tp,eg,ep,ev,re,r,rp,se)
+				--Debug.Message(#evg)
+				for tc in aux.Next(evg) do
+					tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD-RESET_TURN_SET,EFFECT_FLAG_SET_AVAILABLE,1,label)
+					if engage_label~=0 then
+						tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD-RESET_TURN_SET,EFFECT_FLAG_SET_AVAILABLE,1,engage_label)
+					end
+				end
+				g:Merge(evg)
+				--Debug.Message('gsize '..tostring(#g))
+				if Duel.GetCurrentChain()==0 and not Duel.CheckEvent(EVENT_CHAIN_END) then
+					local _eg=g:Clone()
+					_eg=_eg:Filter(Card.HasFlagEffectLabel,nil,id,label)
+					if engage_label~=0 then
+						_eg=_eg:Filter(Card.HasFlagEffectLabel,nil,id,engage_label)
+					end
+					if #_eg>0 then
+						for tc in aux.Next(_eg) do
+							tc:ResetFlagEffect(id)
+						end
+						if not evgcheck or evgcheck(_eg,e,tp,ep,ev,re,r,rp) then
+							--Debug.Message('a')
+							Duel.RaiseEvent(_eg,EVENT_CUSTOM+e:GetLabel(),re,r,rp,ep,ev)
+						end
+					end
+					g:Clear()
+				end
+			end
+end
+function Auxiliary.MergedDelayEventCheckGlitchy2(id,range,evgcheck,se)
+	return	function(e,tp,eg,ep,ev,re,r,rp)
+				local c=e:GetOwner()
+				if range then					
+					if range==LOCATION_ENGAGED then
+						if not c:IsLocation(LOCATION_HAND) or not c:IsEngaged() then
+							return
+						end
+					else
+						if not c:IsLocation(range) then
+							return
+						end
+					end
+				end
+				local label = (range) and c:GetFieldID() or 0
+				local engage_label = (range==LOCATION_ENGAGED) and c:GetEngagedID() or 0
+				local g
+				if se==nil then
+					g=e:GetLabelObject()
+				else
+					g=e:GetLabelObject():GetLabelObject()
+				end
+				if aux.GetValueType(g)~="Group" then return end
+				--Debug.Message('test')
+				if #g>0 then
+					local _eg=g:Clone()
+					_eg=_eg:Filter(Card.HasFlagEffectLabel,nil,id,label)
+					--Debug.Message(#_eg)
+					if engage_label~=0 then
+						_eg=_eg:Filter(Card.HasFlagEffectLabel,nil,id,engage_label)
+						Debug.Message(#_eg)
+					end
+					if #_eg>0 then
+						for tc in aux.Next(_eg) do
+							tc:ResetFlagEffect(id)
+						end
+						--Debug.Message('b')
+						if not evgcheck or evgcheck(_eg,e,tp,ep,ev,re,r,rp) then
+							Duel.RaiseEvent(_eg,EVENT_CUSTOM+e:GetLabel(),re,r,rp,ep,ev)
+						end
+					end
+					g:Clear()
+				end
+			end
+end
+
+
+---------------------------------------------------------------------------------
+-------------------------------CONTACT FUSION---------------------------------
+function Auxiliary.AddContactFusionProcedureGlitchy(c,desc,rule,sumtype,filter,self_location,opponent_location,mat_operation,...)
+	if not sumtype then sumtype=SUMMON_TYPE_FUSION end
+	local self_location=self_location or 0
+	local opponent_location=opponent_location or 0
+	
+	local condition
+	if type(mat_operation)=="table" then
+		condition=mat_operation[1]
+		mat_operation=mat_operation[#mat_operation]
+	end
+	
+	local operation_params={...}
+	
+	local prop=EFFECT_FLAG_UNCOPYABLE
+	if rule then
+		prop=prop|EFFECT_FLAG_CANNOT_DISABLE
+	end
+	local e2=Effect.CreateEffect(c)
+	e2:Desc(desc)
+	e2:SetType(EFFECT_TYPE_FIELD)
+	e2:SetCode(EFFECT_SPSUMMON_PROC)
+	e2:SetProperty(prop)
+	e2:SetRange(LOCATION_EXTRA)
+	e2:SetCondition(Auxiliary.ContactFusionConditionGlitchy(filter,self_location,opponent_location,sumtype,condition))
+	e2:SetOperation(Auxiliary.ContactFusionOperationGlitchy(filter,self_location,opponent_location,sumtype,mat_operation,operation_params))
+	e2:SetValue(sumtype)
+	c:RegisterEffect(e2)
+	return e2
+end
+function Auxiliary.ContactFusionMaterialFilterGlitchy(c,fc,filter,sumtype)
+	return c:IsCanBeFusionMaterial(fc,sumtype) and (not filter or filter(c,fc))
+end
+function Auxiliary.ContactFusionConditionGlitchy(filter,self_location,opponent_location,sumtype,condition)
+	return	function(e,c)
+				if c==nil then return true end
+				if c:IsType(TYPE_PENDULUM) and c:IsFaceup() then return false end
+				local tp=c:GetControler()
+				local mg=Duel.GetMatchingGroup(Auxiliary.ContactFusionMaterialFilterGlitchy,tp,self_location,opponent_location,c,c,filter,sumtype)
+				return (sumtype==0 or c:IsCanBeSpecialSummoned(e,sumtype,tp,false,false)) and c:CheckFusionMaterial(mg,nil,tp|0x200)
+					and (not condition or condition(e,c,tp,mg))
+			end
+end
+function Auxiliary.ContactFusionOperationGlitchy(filter,self_location,opponent_location,sumtype,mat_operation,operation_params)
+	if type(mat_operation)=="function" then
+		return	function(e,tp,eg,ep,ev,re,r,rp,c)
+					local mg=Duel.GetMatchingGroup(Auxiliary.ContactFusionMaterialFilterGlitchy,tp,self_location,opponent_location,c,c,filter,sumtype)
+					local g=Duel.SelectFusionMaterial(tp,c,mg,nil,tp|0x200)
+					c:SetMaterial(g)
+					mat_operation(g,table.unpack(operation_params))
+				end
+	else
+		return	function(e,tp,eg,ep,ev,re,r,rp,c)
+					local mg=Duel.GetMatchingGroup(Auxiliary.ContactFusionMaterialFilterGlitchy,tp,self_location,opponent_location,c,c,filter,sumtype)
+					local g=Duel.SelectFusionMaterial(tp,c,mg,nil,tp|0x200)
+					c:SetMaterial(g)
+					operation_params[1](g,e,tp,eg,ep,ev,re,r,rp,c)
+				end
+	end
+end
 
 ---------------------------------------------------------------------------------
 -------------------------------NORMAL SUMMON/SET---------------------------------
@@ -107,6 +512,8 @@ function Auxiliary.GlitchyCannotDisable(f)
 				return not f or f(e,c)
 			end
 end
+
+
 
 -----------------------------------------------------------------------
 -------------------------------TRIBUTE-------------------------------
@@ -1517,8 +1924,59 @@ Duel.SendtoHand = function(tg,p,reason)
 	end
 	return ct1+ct2
 end
+-------------------------------SYNCHRO-------------------------------
+function Auxiliary.SynchroMaterialCustomForNonTuner(c,customf,loc1,loc2,tg,tg_alt,op,op_alt)
+	local ifTuner=Effect.CreateEffect(c)
+	ifTuner:SetType(EFFECT_TYPE_SINGLE)
+	ifTuner:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_UNCOPYABLE)
+	ifTuner:SetCode(EFFECT_SYNCHRO_MATERIAL_CUSTOM)
+	ifTuner:SetValue(1)
+	ifTuner:SetCondition(aux.IsTunerCond)
+	ifTuner:SetTarget(tg)
+	ifTuner:SetOperation(op)
+	c:RegisterEffect(ifTuner)
+	local ifNonTuner=Effect.CreateEffect(c)
+	ifNonTuner:SetType(EFFECT_TYPE_SINGLE)
+	ifNonTuner:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_UNCOPYABLE)
+	ifNonTuner:SetCode(EFFECT_SYNCHRO_MATERIAL_CUSTOM)
+	ifNonTuner:SetValue(1)
+	ifNonTuner:SetLabelObject(c)
+	ifNonTuner:SetTarget(tg_alt)
+	ifNonTuner:SetOperation(op_alt)
+	local grant=Effect.CreateEffect(c)
+	grant:SetType(EFFECT_TYPE_FIELD|EFFECT_TYPE_GRANT)
+	grant:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_UNCOPYABLE|EFFECT_FLAG_IGNORE_IMMUNE)
+	grant:SetRange(LOCATION_MZONE)
+	grant:SetTargetRange(loc1,loc2)
+	grant:SetCondition(aux.NOT(aux.IsTunerCond))
+	grant:SetTarget(customf)
+	grant:SetLabelObject(ifNonTuner)
+	c:RegisterEffect(grant)
+	local ed=Effect.CreateEffect(c)
+	ed:SetType(EFFECT_TYPE_FIELD)
+	ed:SetProperty(EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_UNCOPYABLE|EFFECT_FLAG_IGNORE_IMMUNE)
+	ed:SetCode(EFFECT_EXTRA_SYNCHRO_MATERIAL)
+	ed:SetRange(LOCATION_MZONE)
+	ed:SetTargetRange(loc1,loc2)
+	ed:SetCondition(aux.NOT(aux.IsTunerCond))
+	ed:SetTarget(customf)
+	ed:SetValue(1)
+	c:RegisterEffect(ed)
+	return ifTuner,ifNonTuner,grant,ed
+end
+function Auxiliary.IsTunerCond(e)
+	local c=e:GetHandler()
+	return c:IsType(TYPE_TUNER)
+end
 
---Modified Functions: LINKS
+-------------------------------XYZ-----------------------------------
+local _XyzLevelFreeGoal = Auxiliary.XyzLevelFreeGoal
+
+Auxiliary.XyzLevelFreeGoal = function(g,tp,xyzc,gf)
+	return (not gf or gf(g,tp,xyzc)) and Duel.GetLocationCountFromEx(tp,tp,g,xyzc)>0
+end
+
+-------------------------------LINKS-----------------------------------
 function Auxiliary.ExtraLinkFilter0(c,ce,tg,lc)
 	return c:IsCanBeLinkMaterial(lc) and tg(ce,c)
 end
@@ -1548,7 +2006,7 @@ Auxiliary.LinkCondition = function(f,minc,maxc,gf)
 					if not Auxiliary.LConditionFilter(lmat,f,c,e) then return false end
 					mg:AddCard(lmat)
 				end
-				local fg=Auxiliary.GetMustMaterialGroup(tp,EFFECT_MUST_BE_LMATERIAL)
+				local fg=Duel.GetMustMaterial(tp,EFFECT_MUST_BE_LMATERIAL)
 				if fg:IsExists(Auxiliary.MustMaterialCounterFilter,1,nil,mg) then return false end
 				Duel.SetSelectedCard(fg)
 				
@@ -1622,7 +2080,7 @@ Auxiliary.LinkTarget = function(f,minc,maxc,gf)
 					if not Auxiliary.LConditionFilter(lmat,f,c,e) then return false end
 					mg:AddCard(lmat)
 				end
-				local fg=Auxiliary.GetMustMaterialGroup(tp,EFFECT_MUST_BE_LMATERIAL)
+				local fg=Duel.GetMustMaterial(tp,EFFECT_MUST_BE_LMATERIAL)
 				Duel.SetSelectedCard(fg)
 				
 				if not Duel.IsPlayerAffectedByEffect(tp,EFFECT_GLITCHY_EXTRA_LINK_MATERIAL) then
@@ -1803,3 +2261,4 @@ Auxiliary.LCheckGoal = function(sg,tp,lc,gf,lmat)
 	end
 	return _LCheckGoal(sg,tp,lc,gf,lmat)
 end
+

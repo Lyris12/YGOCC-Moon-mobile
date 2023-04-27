@@ -21,6 +21,15 @@ function s.initial_effect(c)
 	e2:SetTarget(s.target)
 	e2:SetOperation(s.operation)
 	c:RegisterEffect(e2)
+	local e4=e2:Clone()
+	e4:SetCode(EVENT_SPSUMMON_SUCCESS)
+	c:RegisterEffect(e4)
+	local e3=Effect.CreateEffect(c)
+	e3:SetType(EFFECT_TYPE_XMATERIAL)
+	e3:SetCode(EFFECT_CHANGE_BATTLE_DAMAGE)
+	e3:SetCondition(function(e) local tc=e:GetHandler() local bc=tc:GetBattleTarget() return tc:IsSetCard(0xbb2) and Duel.GetAttacker()==tc and bc and bc:IsDefensePos() end)
+	e3:SetValue(aux.ChangeBattleDamage(1,DOUBLE_DAMAGE))
+	c:RegisterEffect(e3)
 end
 function s.atkfilter(c)
 	return c:IsFaceup() and c:IsSetCard(0xbb2)
@@ -41,12 +50,13 @@ function s.operation(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 	local g=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
 	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)~=0
-		and Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)<Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE) and Duel.GetLocationCount(tp,LOCATION_MZONE)>0
-		and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_DECK,0,1,nil,e,tp)
-		and Duel.SelectYesNo(tp,2) then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local tc=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_DECK,0,1,1,nil,e,tp)
-		Duel.BreakEffect()
-		Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)
+		and Duel.GetLocationCount(tp,LOCATION_MZONE)>0 then
+		local sg=Duel.GetMatchingGroup(aux.NecroValleyFilter(s.filter),tp,LOCATION_GRAVE,0,nil,e,tp)
+		if #sg>0 and Duel.SelectYesNo(tp,2) then
+			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+			local tc=sg:Select(tp,1,1,nil):GetFirst()
+			Duel.BreakEffect()
+			Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)
+		end
 	end
 end

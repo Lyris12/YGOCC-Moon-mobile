@@ -1,6 +1,7 @@
 --Not yet finalized values
 --Custom constants
 self_reference_effect				= nil
+current_triggering_player			= nil
 current_reason_effect				= nil
 
 EFFECT_DEFAULT_CALL					=31993443
@@ -83,6 +84,7 @@ CARD_POLYMERIZATION					= 24094653
 CARD_PSYFRAME_DRIVER				= 49036338
 CARD_PSYFRAME_LAMBDA				= 8802510
 CARD_QUEEN_KNIGHT					= 25652259
+CARD_QUICKDRAW_SYNCHRON				= 20932152
 CARD_RA								= 10000010
 CARD_REDEYES_B_DRAGON				= 74677422
 CARD_RICE_SUSHIP					= 24639891
@@ -104,6 +106,7 @@ CARD_VALIANTS_KOENIGWISSEN			= 100427112
 CARD_VALIANTS_SHINRABANSHO			= 100427111
 CARD_VIJAM							= 15610297
 CARD_VISAS_STAFROST					= 56099748
+CARD_WICKED_AVATAR					= 21208154
 
 --Commonly used Tokens
 TOKEN_BRAVE							= 3285552
@@ -148,6 +151,10 @@ REASON_EXTRA					=REASON_FUSION+REASON_SYNCHRO+REASON_XYZ+REASON_LINK
 function Card.IsCustomType(c,tpe,scard,sumtype,p)
 	return (c:GetType(scard,sumtype,p)>>32)&tpe>0
 end
+function Card.IsPreviousCustomTypeOnField(c,tpe)
+	local custpe=tpe>>32
+	return (c:GetPreviousTypeOnField()>>32)&custpe>0
+end
 function Card.IsCustomReason(c,rs)
 	return (c:GetReason()>>32)&rs>0
 end
@@ -185,8 +192,8 @@ dofile("expansions/script/proc_evolve.lua") --Evolves
 dofile("expansions/script/proc_drive.lua") --Drive
 dofile("expansions/script/muse_proc.lua") --"Muse"
 dofile("expansions/script/tables.lua") --Special Tables
--- dofile("expansions/script/proc_harmony.lua") --Harmonies
--- dofile("expansions/script/proc_accent.lua") --Accents
+dofile("expansions/script/proc_harmony.lua") --Harmonies
+dofile("expansions/script/proc_accent.lua") --Accents
 -- dofile("expansions/script/proc_bypath.lua") --Bypaths
 -- dofile("expansions/script/proc_toxia.lua") --Toxias
 -- dofile("expansions/script/proc_annotee.lua") --Annotees
@@ -231,20 +238,35 @@ Card.IsType=function(c,tpe,scard,sumtype,p)
 	if custpe<=0 then return false end
 	return c:IsCustomType(custpe,scard,sumtype,p)
 end
-Card.IsRitualType=function(c,typ)
-	return (c:GetRitualType(c)&typ)>0
+Card.IsRitualType=function(c,tpe)
+	local custpe=tpe>>32
+	local otpe=tpe&0xffffffff
+	local stpe=c:GetRitualType()
+	return stpe&otpe>0 or (stpe>>32)&custpe>0
 end
-Card.IsFusionType=function(c,typ)
-	return (c:GetFusionType(c)&typ)>0
+Card.IsFusionType=function(c,tpe)
+	local custpe=tpe>>32
+	local otpe=tpe&0xffffffff
+	local stpe=c:GetFusionType()
+	return stpe&otpe>0 or (stpe>>32)&custpe>0
 end
-Card.IsSynchroType=function(c,typ)
-	return (c:GetSynchroType(c)&typ)>0
+Card.IsSynchroType=function(c,tpe)
+	local custpe=tpe>>32
+	local otpe=tpe&0xffffffff
+	local stpe=c:GetSynchroType()
+	return stpe&otpe>0 or (stpe>>32)&custpe>0
 end
-Card.IsXyzType=function(c,typ)
-	return (c:GetXyzType(c)&typ)>0
+Card.IsXyzType=function(c,tpe)
+	local custpe=tpe>>32
+	local otpe=tpe&0xffffffff
+	local stpe=c:GetXyzType()
+	return stpe&otpe>0 or (stpe>>32)&custpe>0
 end
-Card.IsLinkType=function(c,typ)
-	return (c:GetLinkType(c)&typ)>0
+Card.IsLinkType=function(c,tpe)
+	local custpe=tpe>>32
+	local otpe=tpe&0xffffffff
+	local stpe=c:GetLinkType()
+	return stpe&otpe>0 or (stpe>>32)&custpe>0
 end
 
 Card.RemoveCounter=function(c,p,typ,ct,r)
@@ -1524,6 +1546,9 @@ function Effect.GLGetReset(e)
 	local rct=global_reset_effect_table[e][2]
 	return reset,rct
 end
+function Effect.GetReset(e)
+	return e:GLGetReset()
+end
 
 function Auxiliary.SetOperationResultAsLabel(op)
 	return	function(e,tp,eg,ep,ev,re,r,rp)
@@ -1823,379 +1848,383 @@ function Auxiliary.GLGetLinkedZoneManually(c,f)
 end
 
 --Custom Synchro Table to enable multi-material effects
-local synchro_proc, synchro_mix_proc = Auxiliary.AddSynchroProcedure, Auxiliary.AddSynchroMixProcedure
+-- local synchro_proc, synchro_mix_proc = Auxiliary.AddSynchroProcedure, Auxiliary.AddSynchroMixProcedure
 
-SYNCHRO_MIX_FUNCTION_COUNT=3
+-- SYNCHRO_MIX_FUNCTION_COUNT=3
 
-Auxiliary.AddSynchroProcedure=function(c,f1,f2,minc,maxc)
-	if c.extradeckproc==nil then
-		local mt=getmetatable(c)
-		mt.extradeckproc={}
-	end
-	local syn={"Synchro",f1,f2,minc,maxc}
-	table.insert(c.extradeckproc,syn)
-	if f1==nil then f1=aux.Tuner(nil) end
-	if f2==nil then f2=false end
-	Auxiliary.XSynchroProcedure(c,false,f2,minc,maxc,nil,aux.Tuner(f1))
-end
+-- Auxiliary.AddSynchroProcedure=function(c,f1,f2,minc,maxc)
+	-- if c.extradeckproc==nil then
+		-- local mt=getmetatable(c)
+		-- mt.extradeckproc={}
+	-- end
+	-- local syn={"Synchro",f1,f2,minc,maxc}
+	-- table.insert(c.extradeckproc,syn)
+	-- if f1==nil then f1=aux.Tuner(nil) end
+	-- if f2==nil then f2=false end
+	-- Auxiliary.XSynchroProcedure(c,false,f2,minc,maxc,nil,aux.Tuner(f1))
+-- end
 
-Auxiliary.AddSynchroMixProcedure=function(c,f1,f2,f3,f4,minc,maxc,gc)
-	if c.extradeckproc==nil then
-		local mt=getmetatable(c)
-		mt.extradeckproc={}
-	end
-	local syn={"SynchroMix",f1,f2,f3,f4,minc,maxc,gc}
-	table.insert(c.extradeckproc,syn)
-	Auxiliary.XSynchroProcedure(c,false,f4,minc,maxc,gc,f1,f2,f3)
-	--synchro_mix_proc(c,f1,f2,f3,f4,minc,maxc,gc)
-end
+-- Auxiliary.AddSynchroMixProcedure=function(c,f1,f2,f3,f4,minc,maxc,gc)
+	-- if c.extradeckproc==nil then
+		-- local mt=getmetatable(c)
+		-- mt.extradeckproc={}
+	-- end
+	-- local syn={"SynchroMix",f1,f2,f3,f4,minc,maxc,gc}
+	-- table.insert(c.extradeckproc,syn)
+	-- Auxiliary.XSynchroProcedure(c,false,f4,minc,maxc,gc,f1,f2,f3)
+	-- --synchro_mix_proc(c,f1,f2,f3,f4,minc,maxc,gc)
+-- end
 
---Synchro monster, f1~f3 each 1 MONSTER + f4 min to max monsters
-function Auxiliary.XSynchroProcedure(c,metacheck,f,minc,maxc,gc,...)
-	local fx={...}
-	if metacheck then
-		if c.extradeckproc==nil then
-			local mt=getmetatable(c)
-			mt.extradeckproc={}
-		end
-		local syn={"XSynchro",f,minc,maxc,gc,table.unpack(fx)}
-		table.insert(c.extradeckproc,syn)
-	end
-	if not minc then minc=1 end
-	if not maxc then maxc=99 end
-	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(1164)
-	e1:SetType(EFFECT_TYPE_FIELD)
-	e1:SetCode(EFFECT_SPSUMMON_PROC)
-	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
-	e1:SetRange(LOCATION_EXTRA)
-	e1:SetCondition(Auxiliary.XSynMixCondition(f,minc,maxc,gc,table.unpack(fx)))
-	e1:SetTarget(Auxiliary.XSynMixTarget(f,minc,maxc,gc,table.unpack(fx)))
-	e1:SetOperation(Auxiliary.XSynMixOperation(f,minc,maxc,gc,table.unpack(fx)))
-	e1:SetValue(SUMMON_TYPE_SYNCHRO)
-	c:RegisterEffect(e1)
-end
-function Auxiliary.XSynMaterialFilter(c,syncard)
-	if c:IsLocation(LOCATION_MZONE) then
-		return c:IsFaceup() and c:IsCanBeSynchroMaterial(syncard)
-	else
-		if c:IsLocation(LOCATION_REMOVED) and not c:IsFaceup() then return false end
-		local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_EXTRA)}
-		for _,ce in ipairs(egroup) do
-			if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and c:IsCanBeSynchroMaterial(syncard) then
-				return true
-			end
-		end
-		return false
-	end
-end
-function Auxiliary.XGetSynMaterials(tp,syncard)
-	local mg=Duel.GetMatchingGroup(Auxiliary.XSynMaterialFilter,tp,LOCATION_MZONE+LOCATION_SZONE+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED,LOCATION_MZONE+LOCATION_SZONE+LOCATION_HAND+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED,nil,syncard)
-	if mg:IsExists(Card.GetHandSynchro,1,nil) then
-		local mg2=Duel.GetMatchingGroup(Card.IsCanBeSynchroMaterial,tp,LOCATION_HAND,0,nil,syncard)
-		if mg2:GetCount()>0 then mg:Merge(mg2) end
-	end
-	return mg
-end
-function Auxiliary.XSynMixCondition(f,minc,maxc,gc,...)
-	local fx={...}
-	return	function(e,c,smat,mg1,min,max)
-				if c==nil then return true end
-				if c:IsType(TYPE_PENDULUM) and c:IsFaceup() then return false end
-				local minc=minc
-				local maxc=maxc
-				if min then
-					if min>minc then minc=min end
-					if max<maxc then maxc=max end
-					if minc>maxc then return false end
-				end
-				local tp=c:GetControler()
-				local mg
-				local mgchk=false
-				if mg1 then
-					mg=mg1
-					mgchk=true
-				else
-					mg=Auxiliary.XGetSynMaterials(tp,c)
-				end
-				if smat~=nil then mg:AddCard(smat) end
-				return mg:IsExists(Auxiliary.XSynMixFilterRecursive,1,nil,f,minc,maxc,c,mg,smat,gc,mgchk,nil,1,table.unpack(fx))
-			end
-end
-function Auxiliary.XSynMixFilterRecursive(c,f,minc,maxc,syncard,mg,smat,gc,mgchk,exg,index,...)
-	local fx={...}
-	local exg=exg
-	if exg==nil then
-		exg=Group.CreateGroup()
-		exg:KeepAlive()
-	end
-	if index>#fx then
-		return mg:IsExists(Auxiliary.XSynMixFilterFinal,1,exg,f,minc,maxc,syncard,mg,smat,gc,mgchk,exg)
-	else
-		exg:AddCard(c)
-		local indexskip,safelock=1,false
-		if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
-			local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
-			for _,ce in ipairs(egroup) do
-				if safelock then break end
-				if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,f,minc,maxc,syncard)>1) or ce:GetValue()>1) then
-					local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
-					local check=0
-					for i=index,#fx do
-						if fx[i]~=nil and (not fx[i] or fx[i](c,syncard)) then
-							check=check+1
-						end
-					end
-					if check>=skip then
-						indexskip=indexskip+skip-1
-						safelock=true
-					end
-				end
-			end
-		end
-		local check=(fx[index]~=nil and (fx[index]==false or fx[index](c,syncard)) and mg:IsExists(Auxiliary.XSynMixFilterRecursive,1,exg,f,minc,maxc,syncard,mg,smat,gc,mgchk,exg,index+indexskip,table.unpack(fx)))
-		exg:RemoveCard(c)
-		return check
-	end
-end
-function Auxiliary.XSynMixFilterFinal(c,f,minc,maxc,syncard,mg1,smat,gc,mgchk,exg)
-	if f and not f(c,syncard) then return false end
-	local sg=exg:Clone()
-	sg:AddCard(c)
-	local mg=mg1:Clone()
-	if f then
-		mg=mg:Filter(f,sg,syncard)
-	else
-		mg:Sub(sg)
-	end
-	local ctfix=1
-	if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
-		local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
-		local safelock=false
-		for _,ce in ipairs(egroup) do
-			if safelock then break end
-			if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,nil,minc,nil,syncard)>1) or ce:GetValue()>1) then
-				local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
-				ctfix=ctfix+skip-1
-				safelock=true
-			end
-		end
-	end
-	return Auxiliary.XSynMixCheck(mg,sg,minc-ctfix,maxc-ctfix,syncard,smat,gc,mgchk)
-end
-function Auxiliary.XSynMixCheck(mg,sg1,minc,maxc,syncard,smat,gc,mgchk)
-	local tp=syncard:GetControler()
-	local sg=Group.CreateGroup()
-	--Debug.Message(tostring(minc).." "..tostring(syncard:GetCode()))
-	if minc==0 and Auxiliary.XSynMixCheckGoal(tp,sg1,0,0,syncard,sg,smat,gc,mgchk) then return true end
-	if maxc==0 then return false end
-	return mg:IsExists(Auxiliary.XSynMixCheckRecursive,1,nil,tp,sg,mg,0,minc,maxc,syncard,sg1,smat,gc,mgchk)
-end
-function Auxiliary.XSynMixCheckRecursive(c,tp,sg,mg,ct,minc,maxc,syncard,sg1,smat,gc,mgchk)
-	sg:AddCard(c)
-	local ctfix=1
-	if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
-		local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
-		local safelock=false
-		for _,ce in ipairs(egroup) do
-			if safelock then break end
-			if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,nil,minc,nil,syncard)>1) or ce:GetValue()>1) then
-				local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
-				ctfix=ctfix+skip-1
-				safelock=true
-			end
-		end
-	end
-	ct=ct+ctfix
-	local res=Auxiliary.XSynMixCheckGoal(tp,sg,minc,ct,syncard,sg1,smat,gc,mgchk)
-		or (ct<maxc and mg:IsExists(Auxiliary.XSynMixCheckRecursive,1,sg,tp,sg,mg,ct,minc,maxc,syncard,sg1,smat,gc,mgchk))
-	sg:RemoveCard(c)
-	ct=ct-ctfix
-	return res
-end
-function Auxiliary.XSynMixCheckGoal(tp,sg,minc,ct,syncard,sg1,smat,gc,mgchk)
-	if ct<minc then return false end
-	local g=sg:Clone()
-	g:Merge(sg1)
-	if Duel.GetLocationCountFromEx(tp,tp,g,syncard)<=0 then return false end
-	if gc and not gc(g) then return false end
-	if smat and not g:IsContains(smat) then return false end
-	if not Auxiliary.MustMaterialCheck(g,tp,EFFECT_MUST_BE_SMATERIAL) then return false end
-	
-	-- local ctfix=0
-	-- local gg=sg:Filter(Card.IsHasEffect,nil,EFFECT_SYNCHRO_MATERIAL_MULTIPLE)
-	-- if #gg>0 then
-		-- for c in aux.Next(gg) do
-			-- if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
-				-- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
-				-- local safelock=false
-				-- for _,ce in ipairs(egroup) do
-					-- if safelock then break end
-					-- if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,nil,minc,nil,syncard)>1) or ce:GetValue()>1) then
-						-- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
-						-- ctfix=ctfix+skip-1
+-- --Synchro monster, f1~f3 each 1 MONSTER + f4 min to max monsters
+-- function Auxiliary.XSynchroProcedure(c,metacheck,f,minc,maxc,gc,...)
+	-- local fx={...}
+	-- if metacheck then
+		-- if c.extradeckproc==nil then
+			-- local mt=getmetatable(c)
+			-- mt.extradeckproc={}
+		-- end
+		-- local syn={"XSynchro",f,minc,maxc,gc,table.unpack(fx)}
+		-- table.insert(c.extradeckproc,syn)
+	-- end
+	-- if not minc then minc=1 end
+	-- if not maxc then maxc=99 end
+	-- local e1=Effect.CreateEffect(c)
+	-- e1:SetDescription(1164)
+	-- e1:SetType(EFFECT_TYPE_FIELD)
+	-- e1:SetCode(EFFECT_SPSUMMON_PROC)
+	-- e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	-- e1:SetRange(LOCATION_EXTRA)
+	-- e1:SetCondition(Auxiliary.XSynMixCondition(f,minc,maxc,gc,table.unpack(fx)))
+	-- e1:SetTarget(Auxiliary.XSynMixTarget(f,minc,maxc,gc,table.unpack(fx)))
+	-- e1:SetOperation(Auxiliary.XSynMixOperation(f,minc,maxc,gc,table.unpack(fx)))
+	-- e1:SetValue(SUMMON_TYPE_SYNCHRO)
+	-- c:RegisterEffect(e1)
+-- end
+-- function Auxiliary.XSynMaterialFilter(c,syncard)
+	-- if c:IsLocation(LOCATION_MZONE) then
+		-- return c:IsFaceup() and c:IsCanBeSynchroMaterial(syncard)
+	-- else
+		-- if c:IsLocation(LOCATION_REMOVED) and not c:IsFaceup() then return false end
+		-- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_EXTRA)}
+		-- for _,ce in ipairs(egroup) do
+			-- if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and c:IsCanBeSynchroMaterial(syncard) then
+				-- return true
+			-- end
+		-- end
+		-- return false
+	-- end
+-- end
+-- function Auxiliary.XGetSynMaterials(tp,syncard)
+	-- local mg=Duel.GetMatchingGroup(Auxiliary.XSynMaterialFilter,tp,LOCATION_MZONE+LOCATION_SZONE+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED,LOCATION_MZONE+LOCATION_SZONE+LOCATION_HAND+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED,nil,syncard)
+	-- if mg:IsExists(Card.GetHandSynchro,1,nil) then
+		-- local mg2=Duel.GetMatchingGroup(Card.IsCanBeSynchroMaterial,tp,LOCATION_HAND,0,nil,syncard)
+		-- if mg2:GetCount()>0 then mg:Merge(mg2) end
+	-- end
+	-- return mg
+-- end
+-- function Auxiliary.XSynMixCondition(f,minc,maxc,gc,...)
+	-- local fx={...}
+	-- return	function(e,c,smat,mg1,min,max)
+				-- if c==nil then return true end
+				-- if c:IsType(TYPE_PENDULUM) and c:IsFaceup() then return false end
+				-- local minc=minc
+				-- local maxc=maxc
+				-- if min then
+					-- if min>minc then minc=min end
+					-- if max<maxc then maxc=max end
+					-- if minc>maxc then return false end
+				-- end
+				-- local tp=c:GetControler()
+				-- local mg
+				-- local mgchk=false
+				-- if mg1 then
+					-- mg=mg1
+					-- mgchk=true
+				-- else
+					-- mg=Auxiliary.XGetSynMaterials(tp,c)
+				-- end
+				-- if smat~=nil then mg:AddCard(smat) end
+				-- return mg:IsExists(Auxiliary.XSynMixFilterRecursive,1,nil,f,minc,maxc,c,mg,smat,gc,mgchk,nil,1,table.unpack(fx))
+			-- end
+-- end
+-- function Auxiliary.XSynMixFilterRecursive(c,f,minc,maxc,syncard,mg,smat,gc,mgchk,exg,index,...)
+	-- local fx={...}
+	-- local exg=exg
+	-- if exg==nil then
+		-- exg=Group.CreateGroup()
+		-- exg:KeepAlive()
+	-- end
+	-- if index>#fx then
+		-- return mg:IsExists(Auxiliary.XSynMixFilterFinal,1,exg,f,minc,maxc,syncard,mg,smat,gc,mgchk,exg)
+	-- else
+		-- exg:AddCard(c)
+		-- local indexskip,safelock=1,false
+		-- if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
+			-- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
+			-- for _,ce in ipairs(egroup) do
+				-- if safelock then break end
+				-- if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,f,minc,maxc,syncard)>1) or ce:GetValue()>1) then
+					-- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
+					-- local check=0
+					-- for i=index,#fx do
+						-- if fx[i]~=nil and (not fx[i] or fx[i](c,syncard)) then
+							-- check=check+1
+						-- end
+					-- end
+					-- if check>=skip then
+						-- indexskip=indexskip+skip-1
 						-- safelock=true
 					-- end
 				-- end
 			-- end
 		-- end
+		-- local check=(fx[index]~=nil and (fx[index]==false or fx[index](c,syncard)) and mg:IsExists(Auxiliary.XSynMixFilterRecursive,1,exg,f,minc,maxc,syncard,mg,smat,gc,mgchk,exg,index+indexskip,table.unpack(fx)))
+		-- exg:RemoveCard(c)
+		-- return check
 	-- end
+-- end
+-- function Auxiliary.XSynMixFilterFinal(c,f,minc,maxc,syncard,mg1,smat,gc,mgchk,exg)
+	-- if f and not f(c,syncard) then return false end
+	-- local sg=exg:Clone()
+	-- sg:AddCard(c)
+	-- local mg=mg1:Clone()
+	-- if f then
+		-- mg=mg:Filter(f,sg,syncard)
+	-- else
+		-- mg:Sub(sg)
+	-- end
+	-- local ctfix=1
+	-- if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
+		-- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
+		-- local safelock=false
+		-- for _,ce in ipairs(egroup) do
+			-- if safelock then break end
+			-- if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,nil,minc,nil,syncard)>1) or ce:GetValue()>1) then
+				-- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
+				-- ctfix=ctfix+skip-1
+				-- safelock=true
+			-- end
+		-- end
+	-- end
+	-- return Auxiliary.XSynMixCheck(mg,sg,minc-ctfix,maxc-ctfix,syncard,smat,gc,mgchk)
+-- end
+-- function Auxiliary.XSynMixCheck(mg,sg1,minc,maxc,syncard,smat,gc,mgchk)
+	-- local tp=syncard:GetControler()
+	-- local sg=Group.CreateGroup()
+	-- --Debug.Message(tostring(minc).." "..tostring(syncard:GetCode()))
+	-- if minc<=0 and Auxiliary.XSynMixCheckGoal(tp,sg1,0,0,syncard,sg,smat,gc,mgchk) then return true end
+	-- if maxc==0 then return false end
+	-- return mg:IsExists(Auxiliary.XSynMixCheckRecursive,1,nil,tp,sg,mg,0,minc,maxc,syncard,sg1,smat,gc,mgchk)
+-- end
+-- function Auxiliary.XSynMixCheckRecursive(c,tp,sg,mg,ct,minc,maxc,syncard,sg1,smat,gc,mgchk)
+	-- sg:AddCard(c)
+	-- local ctfix=1
+	-- if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
+		-- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
+		-- local safelock=false
+		-- for _,ce in ipairs(egroup) do
+			-- if safelock then break end
+			-- if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,nil,minc,nil,syncard)>1) or ce:GetValue()>1) then
+				-- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
+				-- ctfix=ctfix+skip-1
+				-- safelock=true
+			-- end
+		-- end
+	-- end
+	-- ct=ct+ctfix
+	-- local res=Auxiliary.XSynMixCheckGoal(tp,sg,minc,ct,syncard,sg1,smat,gc,mgchk)
+		-- or (ct<maxc and mg:IsExists(Auxiliary.XSynMixCheckRecursive,1,sg,tp,sg,mg,ct,minc,maxc,syncard,sg1,smat,gc,mgchk))
+	-- sg:RemoveCard(c)
+	-- ct=ct-ctfix
+	-- return res
+-- end
+-- function Auxiliary.XSynMixCheckGoal(tp,sg,minc,ct,syncard,sg1,smat,gc,mgchk)
+	-- if ct<minc then return false end
+	-- local g=sg:Clone()
+	-- g:Merge(sg1)
+	-- if Duel.GetLocationCountFromEx(tp,tp,g,syncard)<=0 then return false end
+	-- if gc and not gc(g) then return false end
+	-- if smat and not g:IsContains(smat) then return false end
+	-- if not Auxiliary.MustMaterialCheck(g,tp,EFFECT_MUST_BE_SMATERIAL) then return false end
+	
+	-- -- local ctfix=0
+	-- -- local gg=sg:Filter(Card.IsHasEffect,nil,EFFECT_SYNCHRO_MATERIAL_MULTIPLE)
+	-- -- if #gg>0 then
+		-- -- for c in aux.Next(gg) do
+			-- -- if c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
+				-- -- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
+				-- -- local safelock=false
+				-- -- for _,ce in ipairs(egroup) do
+					-- -- if safelock then break end
+					-- -- if ce and (not ce:GetTarget() or ce:GetTarget()(syncard)) and ((type(ce:GetValue())=="function" and ce:GetValue()(c,nil,minc,nil,syncard)>1) or ce:GetValue()>1) then
+						-- -- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(c,f,minc,maxc,syncard) or ce:GetValue()
+						-- -- ctfix=ctfix+skip-1
+						-- -- safelock=true
+					-- -- end
+				-- -- end
+			-- -- end
+		-- -- end
+	-- -- end
 			
-	if not g:CheckWithSumEqual(Card.GetSynchroLevel,syncard:GetLevel(),g:GetCount(),g:GetCount(),syncard)
-		and (not g:IsExists(Card.IsHasEffect,1,nil,89818984)
-		or not g:CheckWithSumEqual(Auxiliary.GetSynchroLevelFlowerCardian,syncard:GetLevel(),g:GetCount(),g:GetCount(),syncard))
-		then return false end
-	local hg=g:Filter(Card.IsLocation,nil,LOCATION_HAND):Filter(Card.IsControler,nil,tp)
-	local hct=hg:GetCount()
-	if hct>0 and not mgchk then
-		local found=false
-		for c in aux.Next(g) do
-			local he,hf,hmin,hmax=c:GetHandSynchro()
-			if he then
-				found=true
-				if hf and hg:IsExists(Auxiliary.SynLimitFilter,1,c,hf,he,syncard) then return false end
-				if (hmin and hct<hmin) or (hmax and hct>hmax) then return false end
-			end
-		end
-		if not found then return false end
-	end
-	local eg1=g:Filter(Card.IsLocation,nil,LOCATION_SZONE+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED):Filter(Card.IsControler,nil,tp):Filter(Card.IsHasEffect,nil,EFFECT_SYNCHRO_MATERIAL_EXTRA)
-	local eg2=g:Filter(Card.IsLocation,nil,LOCATION_SZONE+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED+LOCATION_HAND):Filter(Card.IsControler,nil,1-tp):Filter(Card.IsHasEffect,nil,EFFECT_SYNCHRO_MATERIAL_EXTRA)
-	eg1:Merge(eg2)
-	local ect=eg1:GetCount()
-	if ect>0 and not mgchk then
-		local found=false
-		for c in aux.Next(g) do
-			local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_EXTRA)}
-			local found=false
-			for _,ce in ipairs(egroup) do
-				if ce then
-					local hf,hmin,hmax=ce:GetValue(),target_range_table[ce][1],target_range_table[ce][2]
-					found=true
-					if hf and hg:IsExists(Auxiliary.SynLimitFilter,1,c,hf,ce,syncard) then return false end
-					if (hmin and ect<hmin) or (hmax and ect>hmax) then return false end
-				end
-			end
-		end
-		if not found then return false end
-	end
-	for c in aux.Next(g) do
-		local le,lf,lloc,lmin,lmax=c:GetTunerLimit()
-		if le then
-			local lct=g:GetCount()-1
-			if lloc then
-				local llct=g:FilterCount(Card.IsLocation,c,lloc)
-				if llct~=lct then return false end
-			end
-			if lf and g:IsExists(Auxiliary.SynLimitFilter,1,c,lf,le,syncard) then return false end
-			if (lmin and lct<lmin) or (lmax and lct>lmax) then return false end
-		end
-	end
-	return true
-end
-function Auxiliary.XSynMixTarget(f,minc,maxc,gc,...)
-	local fx={...}
-	return	function(e,tp,eg,ep,ev,re,r,rp,chk,c,smat,mg1,min,max)
-				local minc=minc
-				local maxc=maxc
-				if min then
-					if min>minc then minc=min end
-					if max<maxc then maxc=max end
-					if minc>maxc then return false end
-				end
-				local g=Group.CreateGroup()
-				g:KeepAlive()
-				local mg
-				if mg1 then
-					mg=mg1
-				else
-					mg=Auxiliary.XGetSynMaterials(tp,c)
-				end
-				if smat~=nil then mg:AddCard(smat) end
-				if #fx>0 then
-					local fct=#fx
-					for index=1,#fx do
-						if index>fct then break end
-						Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SMATERIAL)
-						local cc=mg:FilterSelect(tp,Auxiliary.XSynMixFilterRecursive,1,1,g,f,minc,maxc,c,mg,smat,gc,nil,g,index,table.unpack(fx)):GetFirst()
-						local indexskip,safelock=1,false
-						if cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
-							local egroup={cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
-							for _,ce in ipairs(egroup) do
-								if safelock then break end
-								if ce and (not ce:GetTarget() or ce:GetTarget()(c)) and ((type(ce:GetValue())=="function" and ce:GetValue()(cc,f,minc,maxc,c)>1) or ce:GetValue()>1) then
-									local skip=(type(ce:GetValue())=="function") and ce:GetValue()(cc,f,minc,maxc,c) or ce:GetValue()
-									local check=0
-									for i=1,#fx do
-										if fx[i]~=nil and (not fx[i] or fx[i](cc,c)) then
-											check=check+1
-										end
-									end
-									if check>=skip then
-										fct=fct-skip+1
-										safelock=true
-									end
-								end
-							end
-						end
-						g:AddCard(cc)
-					end
-				end
-				local gf=Group.CreateGroup()
-				local fct=maxc-1
-				for i=0,maxc-1 do
-					if i>fct then break end
-					local mg2=mg:Clone()
-					if f then
-						mg2=mg2:Filter(f,g,c)
-					else
-						mg2:Sub(g)
-					end
-					local cg=mg2:Filter(Auxiliary.XSynMixCheckRecursive,gf,tp,gf,mg2,i,minc,maxc,c,g,smat,gc)
-					if cg:GetCount()==0 then break end
-					local minct=1
-					if Auxiliary.SynMixCheckGoal(tp,gf,minc,i,c,g,smat,gc) then
-						minct=0
-					end
-					Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SMATERIAL)
-					local tg=cg:Select(tp,minct,1,nil)
-					local cc=tg:GetFirst()
-					local indexskip,safelock=1,false
-					if cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
-						local egroup={cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
-						for _,ce in ipairs(egroup) do
-							if safelock then break end
-							if ce and (not ce:GetTarget() or ce:GetTarget()(c)) and ((type(ce:GetValue())=="function" and ce:GetValue()(cc,f,minc,maxc,c)>1) or ce:GetValue()>1) then
-								local skip=(type(ce:GetValue())=="function") and ce:GetValue()(cc,f,minc,maxc,c) or ce:GetValue()
-								fct=fct-skip+1
-								safelock=true
-							end
-						end
-					end
-					if tg:GetCount()==0 then break end
-					gf:Merge(tg)
-				end
-				g:Merge(gf)
-				if g:GetCount()>0 then
-					e:SetLabelObject(g)
-					return true
-				else return false end
-			end
-end
-function Auxiliary.XSynMixOperation(f,minct,maxc,gc,...)
-	return	function(e,tp,eg,ep,ev,re,r,rp,c,smat,mg,min,max)
-				local g=e:GetLabelObject()
-				c:SetMaterial(g)
-				Duel.SendtoGrave(g,REASON_MATERIAL+REASON_SYNCHRO)
-				g:DeleteGroup()
-			end
-end
+	-- if not g:CheckWithSumEqual(Card.GetSynchroLevel,syncard:GetLevel(),g:GetCount(),g:GetCount(),syncard)
+		-- and (not g:IsExists(Card.IsHasEffect,1,nil,89818984)
+		-- or not g:CheckWithSumEqual(Auxiliary.GetSynchroLevelFlowerCardian,syncard:GetLevel(),g:GetCount(),g:GetCount(),syncard))
+		-- then return false end
+	-- local hg=g:Filter(Card.IsLocation,nil,LOCATION_HAND):Filter(Card.IsControler,nil,tp)
+	-- local hct=hg:GetCount()
+	-- if hct>0 and not mgchk then
+		-- local found=false
+		-- for c in aux.Next(g) do
+			-- local he,hf,hmin,hmax=c:GetHandSynchro()
+			-- if he then
+				-- found=true
+				-- if hf and hg:IsExists(Auxiliary.SynLimitFilter,1,c,hf,he,syncard) then return false end
+				-- if (hmin and hct<hmin) or (hmax and hct>hmax) then return false end
+			-- end
+		-- end
+		-- if not found then return false end
+	-- end
+	-- local eg1=g:Filter(Card.IsLocation,nil,LOCATION_SZONE+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED):Filter(Card.IsControler,nil,tp):Filter(Card.IsHasEffect,nil,EFFECT_SYNCHRO_MATERIAL_EXTRA)
+	-- local eg2=g:Filter(Card.IsLocation,nil,LOCATION_SZONE+LOCATION_GRAVE+LOCATION_DECK+LOCATION_EXTRA+LOCATION_REMOVED+LOCATION_HAND):Filter(Card.IsControler,nil,1-tp):Filter(Card.IsHasEffect,nil,EFFECT_SYNCHRO_MATERIAL_EXTRA)
+	-- eg1:Merge(eg2)
+	-- local ect=eg1:GetCount()
+	-- if ect>0 and not mgchk then
+		-- local found=false
+		-- for c in aux.Next(g) do
+			-- local egroup={c:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_EXTRA)}
+			-- local found=false
+			-- for _,ce in ipairs(egroup) do
+				-- if ce then
+					-- local hf,hmin,hmax=ce:GetValue(),target_range_table[ce][1],target_range_table[ce][2]
+					-- found=true
+					-- if hf and hg:IsExists(Auxiliary.SynLimitFilter,1,c,hf,ce,syncard) then return false end
+					-- if (hmin and ect<hmin) or (hmax and ect>hmax) then return false end
+				-- end
+			-- end
+		-- end
+		-- if not found then return false end
+	-- end
+	-- for c in aux.Next(g) do
+		-- local le,lf,lloc,lmin,lmax=c:GetTunerLimit()
+		-- if le then
+			-- local lct=g:GetCount()-1
+			-- if lloc then
+				-- local llct=g:FilterCount(Card.IsLocation,c,lloc)
+				-- if llct~=lct then return false end
+			-- end
+			-- if lf and g:IsExists(Auxiliary.SynLimitFilter,1,c,lf,le,syncard) then return false end
+			-- if (lmin and lct<lmin) or (lmax and lct>lmax) then return false end
+		-- end
+	-- end
+	-- return true
+-- end
+-- function Auxiliary.XSynMixTarget(f,minc,maxc,gc,...)
+	-- local fx={...}
+	-- return	function(e,tp,eg,ep,ev,re,r,rp,chk,c,smat,mg1,min,max)
+				-- local minc=minc
+				-- local maxc=maxc
+				-- if min then
+					-- if min>minc then minc=min end
+					-- if max<maxc then maxc=max end
+					-- if minc>maxc then return false end
+				-- end
+				-- local g=Group.CreateGroup()
+				-- g:KeepAlive()
+				-- local mg
+				-- if mg1 then
+					-- mg=mg1
+				-- else
+					-- mg=Auxiliary.XGetSynMaterials(tp,c)
+				-- end
+				-- if smat~=nil then mg:AddCard(smat) end
+				-- if #fx>0 then
+					-- local fct=#fx
+					-- for index=1,#fx do
+						-- if index>fct then break end
+						-- Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SMATERIAL)
+						-- local cc=mg:FilterSelect(tp,Auxiliary.XSynMixFilterRecursive,1,1,g,f,minc,maxc,c,mg,smat,gc,nil,g,index,table.unpack(fx)):GetFirst()
+						-- local indexskip,safelock=1,false
+						-- if cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
+							-- local egroup={cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
+							-- for _,ce in ipairs(egroup) do
+								-- if safelock then break end
+								-- if ce and (not ce:GetTarget() or ce:GetTarget()(c)) and ((type(ce:GetValue())=="function" and ce:GetValue()(cc,f,minc,maxc,c)>1) or ce:GetValue()>1) then
+									-- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(cc,f,minc,maxc,c) or ce:GetValue()
+									-- local check=0
+									-- for i=1,#fx do
+										-- if fx[i]~=nil and (not fx[i] or fx[i](cc,c)) then
+											-- check=check+1
+										-- end
+									-- end
+									-- if check>=skip then
+										-- fct=fct-skip+1
+										-- safelock=true
+									-- end
+								-- end
+							-- end
+						-- end
+						-- g:AddCard(cc)
+					-- end
+				-- end
+				-- local gf=Group.CreateGroup()
+				-- local fct=maxc-1
+				-- for i=0,maxc-1 do
+					-- if i>fct then break end
+					-- local mg2=mg:Clone()
+					-- if f then
+						-- mg2=mg2:Filter(f,g,c)
+					-- else
+						-- mg2:Sub(g)
+					-- end
+					-- local cg=mg2:Filter(Auxiliary.XSynMixCheckRecursive,gf,tp,gf,mg2,i,minc,maxc,c,g,smat,gc)
+					-- if cg:GetCount()==0 then break end
+					-- local minct=1
+					-- if Auxiliary.SynMixCheckGoal(tp,gf,minc,i,c,g,smat,gc) then
+						-- minct=0
+					-- end
+					-- Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SMATERIAL)
+					-- local tg=cg:Select(tp,minct,1,nil)
+					-- local cc=tg:GetFirst()
+					-- local indexskip,safelock=1,false
+					-- if cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE) then
+						-- local egroup={cc:IsHasEffect(EFFECT_SYNCHRO_MATERIAL_MULTIPLE)}
+						-- for _,ce in ipairs(egroup) do
+							-- if safelock then break end
+							-- if ce and (not ce:GetTarget() or ce:GetTarget()(c)) and ((type(ce:GetValue())=="function" and ce:GetValue()(cc,f,minc,maxc,c)>1) or ce:GetValue()>1) then
+								-- local skip=(type(ce:GetValue())=="function") and ce:GetValue()(cc,f,minc,maxc,c) or ce:GetValue()
+								-- fct=fct-skip+1
+								-- safelock=true
+							-- end
+						-- end
+					-- end
+					-- if tg:GetCount()==0 then break end
+					-- gf:Merge(tg)
+				-- end
+				-- g:Merge(gf)
+				-- if g:GetCount()>0 then
+					-- g:KeepAlive()
+					-- e:SetLabelObject(g)
+					-- return true
+				-- else return false end
+			-- end
+-- end
+-- function Auxiliary.XSynMixOperation(f,minct,maxc,gc,...)
+	-- return	function(e,tp,eg,ep,ev,re,r,rp,c,smat,mg,min,max)
+				-- local g=e:GetLabelObject()
+				-- c:SetMaterial(g)
+				-- Duel.SendtoGrave(g,REASON_MATERIAL+REASON_SYNCHRO)
+				-- g:DeleteGroup()
+			-- end
+-- end
 -----------------
 
 --EFFECT TABLES
 global_override_reason_effect_check = false
 
 --Global Card Effect Table
+function Card.GetEffects(c)
+	return global_card_effect_table[c]
+end
 if not global_card_effect_table_global_check then
 	global_card_effect_table_global_check=true
 	global_card_effect_table={}
@@ -2348,7 +2377,8 @@ if not global_card_effect_table_global_check then
 		if condition and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()==EFFECT_TYPE_XMATERIAL or e:GetType()==EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_FIELD or e:GetType()&EFFECT_TYPE_GRANT~=0)) then	
 			local newcon =	function(...)
 								local x={...}
-								self_reference_effect=e
+								self_reference_effect=x[1]
+								current_triggering_player = #x>1 and x[2] or x[1]:GetHandlerPlayer()
 								if global_override_reason_effect_check then
 									current_reason_effect = #x>=6 and x[6] or nil
 									if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2363,7 +2393,8 @@ if not global_card_effect_table_global_check then
 		if cost and not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()==EFFECT_TYPE_XMATERIAL or e:GetType()==EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_FIELD or e:GetType()&EFFECT_TYPE_GRANT~=0) then
 			local newcost =	function(...)
 								local x={...}
-								self_reference_effect=e
+								self_reference_effect=x[1]
+								current_triggering_player = #x>1 and x[2] or x[1]:GetHandlerPlayer()
 								if global_override_reason_effect_check then
 									current_reason_effect = #x>=6 and x[6] or nil
 									if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2379,7 +2410,8 @@ if not global_card_effect_table_global_check then
 			if e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()==EFFECT_TYPE_XMATERIAL or e:GetType()==EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_FIELD or e:GetType()&EFFECT_TYPE_GRANT~=0) then
 				local newtg =	function(...)
 									local x={...}
-									self_reference_effect=e
+									self_reference_effect=x[1]
+									current_triggering_player = #x>2 and x[2] or x[1]:GetHandlerPlayer()
 									if global_override_reason_effect_check then
 										current_reason_effect = #x>=6 and x[6] or nil
 										if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2395,7 +2427,8 @@ if not global_card_effect_table_global_check then
 		if op and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()==EFFECT_TYPE_XMATERIAL or e:GetType()==EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_FIELD or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 			local newop =	function(...)
 								local x={...}
-								self_reference_effect=e
+								self_reference_effect = x[1]
+								current_triggering_player = x[2]
 								if global_override_reason_effect_check then
 									current_reason_effect = #x>=6 and x[6] or nil
 									if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2411,6 +2444,7 @@ if not global_card_effect_table_global_check then
 			if type(val)=="function" and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()==EFFECT_TYPE_XMATERIAL or e:GetType()==EFFECT_TYPE_XMATERIAL+EFFECT_TYPE_FIELD or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 				local newval =	function(...)
 									self_reference_effect=e
+									current_triggering_player = self_reference_effect:GetHandlerPlayer()
 									return val(...)
 								end
 				e:SetValue(newval)
@@ -2427,6 +2461,18 @@ if not global_card_effect_table_global_check then
 		end
 		return self.register_global_card_effect_table(self,e,forced)
 	end
+end
+function Auxiliary.OperationRegistrationProcedure(e,tp,eg,ep,ev,re,r,rp)
+	self_reference_effect = e
+	current_triggering_player = tp
+	if global_override_reason_effect_check then
+		current_reason_effect = re
+		if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
+			re=current_reason_effect:GetCheatCodeValue(GECC_OVERRIDE_REASON_EFFECT)
+			current_reason_effect=re
+		end
+	end
+	return e,tp,eg,ep,ev,re,r,rp
 end
 
 --Global Card Effect Table (for Duel.RegisterEffect)
@@ -2538,7 +2584,8 @@ if not global_duel_effect_table_global_check then
 							if condition and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 								local newcon =	function(...)
 													local x={...}
-													self_reference_effect=e
+													self_reference_effect=x[1]
+													current_triggering_player = #x>1 and x[2] or x[1]:GetHandlerPlayer()
 													if global_override_reason_effect_check then
 														current_reason_effect = #x>=6 and x[6] or nil
 														if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2553,7 +2600,8 @@ if not global_duel_effect_table_global_check then
 							if cost and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 								local newcost =	function(...)
 													local x={...}
-													self_reference_effect=e
+													self_reference_effect=x[1]
+													current_triggering_player = #x>1 and x[2] or x[1]:GetHandlerPlayer()
 													if global_override_reason_effect_check then
 														current_reason_effect = #x>=6 and x[6] or nil
 														if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2569,7 +2617,8 @@ if not global_duel_effect_table_global_check then
 								if e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0) then
 									local newtg =	function(...)
 														local x={...}
-														self_reference_effect=e
+														self_reference_effect=x[1]
+														current_triggering_player = #x>2 and x[2] or x[1]:GetHandlerPlayer()
 														if global_override_reason_effect_check then
 															current_reason_effect = #x>=6 and x[6] or nil
 															if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2585,7 +2634,8 @@ if not global_duel_effect_table_global_check then
 							if op and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 								local newop =	function(...)
 													local x={...}
-													self_reference_effect=e
+													self_reference_effect=x[1]
+													current_triggering_player = #x>1 and x[2] or x[1]:GetHandlerPlayer()
 													if global_override_reason_effect_check then
 														current_reason_effect = #x>=6 and x[6] or nil
 														if aux.GetValueType(current_reason_effect)=="Effect" and current_reason_effect:IsHasCheatCode(GECC_OVERRIDE_REASON_EFFECT) then
@@ -2601,6 +2651,7 @@ if not global_duel_effect_table_global_check then
 								if type(val)=="function" and ((e:GetCode()==EFFECT_SPSUMMON_PROC or e:GetCode()==EFFECT_SPSUMMON_PROC_G) or not (e:GetType()==EFFECT_TYPE_FIELD or e:GetType()==EFFECT_TYPE_SINGLE or e:GetType()&EFFECT_TYPE_GRANT~=0)) then
 									local newval =	function(...)
 														self_reference_effect=e
+														current_triggering_player = e:GetHandlerPlayer()
 														return val(...)
 													end
 									e:SetValue(newval)
@@ -2624,11 +2675,11 @@ end
 ----------------------------------------------------------------------------------------------------------------
 --AUXS AND FUNCTIONS PORTED FROM EDOPRO (CAN BE EXPANDED FOR FACILITATING SCRIPT COMPATIBILITY BETWEEN THE SIMS)
 ----------------------------------------------------------------------------------------------------------------
-function Card.HasLevel(c)
+function Card.HasLevel(c,general)
 	if c:IsType(TYPE_MONSTER) then
 		return ((c:GetType()&TYPE_LINK~=TYPE_LINK and c:GetType()&TYPE_TIMELEAP~=TYPE_TIMELEAP and c:GetType()&TYPE_XYZ~=TYPE_XYZ) or c:IsHasEffect(EFFECT_GRANT_LEVEL) or c:IsHasEffect(EFFECT_ORIGINAL_LEVEL_RANK_DUALITY))
 			and not c:IsStatus(STATUS_NO_LEVEL)
-	elseif c:IsOriginalType(TYPE_MONSTER) then
+	elseif general and c:IsOriginalType(TYPE_MONSTER) then
 		return not (c:IsOriginalType(TYPE_XYZ+TYPE_LINK+TYPE_TIMELEAP) or c:IsStatus(STATUS_NO_LEVEL))
 	end
 	return false

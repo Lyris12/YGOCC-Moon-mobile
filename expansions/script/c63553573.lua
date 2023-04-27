@@ -33,7 +33,7 @@ function cid.initial_effect(c)
 	e2:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e2:SetCode(EVENT_DESTROYED)
-	e2:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
+	e2:SetProperty(EFFECT_FLAG_DDD)
 	e2:SetCountLimit(1,id+100)
 	e2:SetCondition(cid.spcon)
 	e2:SetTarget(cid.sptg)
@@ -65,7 +65,7 @@ end
 function cid.actop(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 or not aux.PandSSetCon(cid.setfilter,nil,LOCATION_DECK)(nil,e,tp,eg,ep,ev,re,r,rp) then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SET)
-	local g=Duel.SelectMatchingCard(tp,aux.PandSSetFilter(cid.setfilter),tp,LOCATION_DECK,0,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,aux.PandSSetFilter(cid.setfilter),tp,LOCATION_DECK,0,1,1,nil,e,tp,eg,ep,ev,re,r,rp)
 	if #g>0 then
 		aux.PandSSet(g,REASON_EFFECT,aux.GetOriginalPandemoniumType(g:GetFirst()))(e,tp,eg,ep,ev,re,r,rp)
 		Duel.ConfirmCards(1-tp,g)
@@ -88,7 +88,7 @@ function cid.spcon(e,tp,eg,ep,ev,re,r,rp)
 end
 function cid.filter(c,e,tp)
 	return c:IsType(TYPE_MONSTER) and c:IsSetCard(0x7a4) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
-		and (not c:IsLocation(LOCATION_EXTRA) and Duel.GetLocationCount(tp,LOCATION_MZONE)>0 or (c:IsFaceup() and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0))
+		and (not c:IsLocation(LOCATION_EXTRA) and Duel.GetLocationCount(tp,LOCATION_MZONE)>0 or (c:IsLocation(LOCATION_EXTRA) and c:IsFaceup() and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0))
 end
 function cid.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cid.filter,tp,LOCATION_GRAVE+LOCATION_EXTRA,0,1,nil,e,tp) end

@@ -1,8 +1,8 @@
 if not banned_list_table then banned_list_table={} end
 local string=require'string'
 local ls=[[
-#[2022.5 YGOCC+2022.12 TCG]
-!2022.12 YGOCC
+#[2023.3 YGOCC+2023.3 TCG]
+!2023.3 YGOCC
 #Forbidden YGOCC
 20181405 0 --Terradication Geryonarsenal
 33700082 0 --Anifriends Seiryu of the East
@@ -32,14 +32,10 @@ local ls=[[
 32904931 1 --Aeonbreaker Fusion
 33700058 1 --Miracle of the Sandstar
 33700065 1 --Anifriends PPP Gentoo
-33700311 1 --NEXTGal G
 33700744 1 --Anifriends "Ikkaku"
 33700746 1 --Anifriends Sky Impulse
-63553459 1 --Nethergear Unit
 37564903 1 --Sayuri - ALICE
 63553468 1 --Proxima Marshall
-96212378 1 --Spiral Drill Formation
-96212398 1 --Spiral Drill Formation
 #Semi-limited YGOCC
 --							New 2/11/2022
 97569832 0 --Flight of Star Regalia
@@ -57,6 +53,12 @@ local ls=[[
 26369260 2 --Psychostice Patrol
 --							New 7/6/2022
 53313934 1 --Disstonant Luster Dragon
+--							New 3/6/2023
+67723438 1 --Emergency Teleport
+#63553459 3 --Nethergear Unit
+#33700311 3 --NEXTGal G
+#96212378 3 --Spiral Drill Formation
+#96212398 3 --Spiral Drill Formation
 
 #RULE CARDS
 5000 1 --Manual Mode
@@ -97,7 +99,6 @@ local ls=[[
 3679218 0 --Knightmare Mermaid
 61665245 0 --Summon Sorceress
 22593417 0 --Topologic Gumblar Dragon
-25862681 0 --Ancient Fairy Dragon
 65536818 0 --Denglong, First of the Yang Zing
 94677445 0 --Ib the World Chalice Justiciar
 63101919 0 --Tempest Magician
@@ -229,7 +230,6 @@ local ls=[[
 83152482 0 --Union Carrier
 52653092 0 --Number S0: Utopic ZEXAL
 88581108 0 --True King of All Calamities
-77235086 1 --Cyber Angel Benten
 --							New 7/1/2021
 86148577 0 --Guardragon Elpy
 48905153 0 --Zoodiac Drident
@@ -282,6 +282,28 @@ local ls=[[
 76375976 0 --Mystic Mine
 17266660 1 --Herald of Orange Light
 8491961 2 --Lyrilusc - Recital Starling
+--							New 2/1/2022
+20292186 0 --Artifact Scythe
+27381364 0 --Spright Elf
+73356503 0 --Barrier Statue of the Stormwinds
+92731385 0 --Tearlaments Kitkallos
+572850 1 --Tearlaments Scheiren
+25926710 1 --Kelbek the Ancient Vanguard
+37961969 1 --Tearlaments Havnis
+62320425 1 --Agido the Ancient Sentinel
+63542003 1 --Keldo the Sacred Protector
+74078255 1 --Tearlaments Merrli
+99937011 1 --Mudora the Sword Oracle
+25862681 1 --Ancient Fairy Dragon
+3078576 3 --Yata-Garasu
+5560911 3 --Destrudo the Lost Dragon's Frisson
+9742784 3 --Jet Synchron
+30461781 3 --Legacy of Yata-Garasu
+30539496 3 --True King Lithosagym, the Disaster
+54631665 3 --SPYRAL Resort
+54631685 3 --SPYRAL Resort
+72291078 3 --Mecha Phantom Beast O-Lion
+92559258 3 --Servant of Endymion
 ]]
 for id in ls:sub(ls:find("!"),ls:find("!",ls:find("!")+1) and ls:find("!",ls:find("!")+1)-1 or -1):gmatch("([0-9]+) 0") do
 	banned_list_table[tonumber(id)]=true

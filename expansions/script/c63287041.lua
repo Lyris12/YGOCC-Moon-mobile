@@ -67,13 +67,12 @@ function s.op(e,tp,eg,ep,ev,re,r,rp)
 	if not tc:IsLocation(LOCATION_GRAVE) then return end
 	local e1=Effect.CreateEffect(e:GetHandler())
 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	e1:SetCode(EVENT_PHASE+PHASE_MAIN1)
+	e1:SetCode(EVENT_PHASE_START+PHASE_BATTLE_START)
 	e1:SetRange(LOCATION_GRAVE)
-	e1:SetCountLimit(1)
 	e1:SetOperation(s.spop)
-	e1:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_MAIN1)
+	e1:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_BATTLE_START)
 	tc:RegisterEffect(e1)
 end
 function s.spop(e,tp,eg,ep,ev,re,r,rp)
-	if Duel.GetLocationCount(tp,LOCATION_MZONE)>0 then Duel.SpecialSummon(e:GetHandler(),0,tp,tp,false,false,POS_FACEUP) end
+	Duel.SpecialSummon(e:GetHandler(),0,tp,tp,false,false,POS_FACEUP)
 end
